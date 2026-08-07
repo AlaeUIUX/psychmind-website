@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1c1917;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-ivar);
+  --font-display-alt: var(--font-ivar-display);
+
+  /* Brand */
+  --color-brand-primary: #c01048;
+
+  /* Warm gray scale (Figma: Colors/Background/*) */
+  --color-warm-25: #fdfdfc;
+  --color-warm-50: #fafaf9;
+  --color-warm-100: #f5f5f4;
+  --color-warm-200: #e7e5e4;
+  --color-warm-300: #d7d3d0;
+  --color-warm-600: #57534e;
+  --color-warm-700: #44403c;
+  --color-warm-800: #292524;
+  --color-warm-900: #1c1917;
+  --color-warm-950: #171412;
+
+  /* Text roles */
+  --color-text-primary: #1c1917;
+  --color-text-secondary: #44403c;
+  --color-text-tertiary: #57534e;
+  --color-text-placeholder: #79716b;
+  --color-text-on-brand: #ffffff;
+
+  /* Spacing scale (Figma: spacing-*) */
+  --spacing-xs: 4px;
+  --spacing-md: 8px;
+  --spacing-lg: 12px;
+  --spacing-xl: 16px;
+  --spacing-2xl: 20px;
+  --spacing-3xl: 24px;
+  --spacing-4xl: 32px;
+  --spacing-5xl: 40px;
+  --spacing-6xl: 48px;
+  --spacing-7xl: 64px;
+  --spacing-8xl: 80px;
+  --spacing-10xl: 128px;
+  --spacing-11xl: 160px;
+
+  /* Radii */
+  --radius-md: 8px;
+  --radius-4xl: 24px;
+  --radius-pill: 9999px;
+
+  /* Type scale (Figma: Font size / Line height) */
+  --text-xs: 12px;
+  --text-xs--line-height: 18px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-md: 16px;
+  --text-md--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 20px;
+  --text-xl--line-height: 30px;
+  --text-display-xs: 24px;
+  --text-display-xs--line-height: 32px;
+  --text-display-sm: 30px;
+  --text-display-sm--line-height: 38px;
+  --text-display-md: 36px;
+  --text-display-md--line-height: 44px;
+  --text-display-lg: 60px;
+  --text-display-lg--line-height: 60px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Hides the scrollbar on horizontally-scrollable rows (e.g. the stats strip)
+   while keeping the element scrollable via touch/drag/trackpad. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The recurring "lined paper" background (smart-search card, mission quote box,
+   footer CTA). Drawn in CSS instead of stretching an exported bitmap, so the grid
+   stays correctly scaled no matter how big or small the box is. */
+.paper-bg {
+  background-color: var(--color-warm-25);
+  background-image:
+    linear-gradient(to bottom, var(--color-brand-primary) 0, var(--color-brand-primary) 1px, transparent 1px),
+    repeating-linear-gradient(
+      to right,
+      rgba(59, 130, 246, 0.16) 0,
+      rgba(59, 130, 246, 0.16) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, 100% 100%;
+}
