@@ -1,11 +1,8 @@
 backend:
   name: github
-  # TODO: replace with the real GitHub "owner/repo" once the repo is created.
-  repo: YOUR-GITHUB-USERNAME/psychmind-website
+  repo: AlaeUIUX/psychmind-website
   branch: main
-  # TODO: replace with the real deployed domain once it's live on Vercel.
-  # For local testing, temporarily set this to http://localhost:3000.
-  base_url: https://YOUR-VERCEL-DOMAIN.vercel.app
+  base_url: https://psychmind-website.vercel.app
   auth_endpoint: api/auth
 
 media_folder: "public/images/blog/uploads"
