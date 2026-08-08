@@ -23,15 +23,18 @@ const socials = [
 ];
 
 export function SiteFooter() {
-  // Figma bleeds one oversized, rotated copy of the lined-paper texture across
-  // the whole footer (CTA banner + links + copyright), not just the CTA card —
-  // reproduced here with the shared .paper-bg pattern on the outer <footer>.
+  // Figma bleeds one continuous sheet of lined paper across the whole footer
+  // (CTA banner + links + copyright), not just the CTA card. Using the real
+  // exported paper photo (not a CSS approximation) tiled down a contained,
+  // page-shaped card — the shared .paper-bg gradient pattern is correct for
+  // the smaller frames it's used on (smart search, mission quote) but doesn't
+  // match this specific texture/scale.
   return (
-    <footer className="paper-bg w-full flex flex-col items-center gap-12 py-16 sm:py-24 md:py-32">
-      <div className="w-full flex justify-center px-6 sm:px-12">
-        <div className="relative w-full max-w-[1056px] overflow-hidden rounded-[20px] bg-black/[0.045] px-6 py-12 sm:px-16 sm:py-16">
-          <div className="relative flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
-            <div className="flex flex-col items-start gap-2 max-w-[400px]">
+    <footer className="w-full flex flex-col items-center py-16 sm:py-24 md:py-32 px-4 sm:px-8">
+      <div className="w-full max-w-[1056px] rounded-[20px] overflow-hidden bg-warm-25 bg-[url('/images/home/footer-bg.png')] bg-left-top bg-repeat-y [background-size:100%_auto] flex flex-col items-center gap-12 pb-12 sm:pb-14">
+        <div className="w-full p-2 sm:p-6">
+          <div className="relative w-full overflow-hidden rounded-[20px] bg-black/[0.045] px-6 py-10 sm:px-16 sm:py-14 md:min-h-[380px] lg:min-h-[420px]">
+            <div className="relative z-10 flex flex-col items-start gap-2 max-w-[380px]">
               <h2 className="font-display-alt text-text-primary text-display-md">
                 Ready to find help?
               </h2>
@@ -46,66 +49,67 @@ export function SiteFooter() {
                 <img src="/images/home/footer-arrow.svg" alt="" width={24} height={24} />
               </Link>
             </div>
-            <div className="hidden md:block relative w-[300px] h-[280px] shrink-0">
+            <div className="hidden md:block absolute -top-8 right-[-40px] w-[480px] h-[320px] lg:w-[600px] lg:h-[400px] lg:right-[-30px]">
               <Image
                 src="/images/home/footer-illustration.png"
                 alt=""
                 fill
-                className="object-contain"
+                className="object-contain object-right-bottom"
               />
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="w-full max-w-[794px] px-4 flex flex-col gap-10">
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-10">
-          <div className="flex gap-5">
-            <ul className="flex flex-col gap-5 w-[184px]">
-              {productLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-[rgba(25,25,25,0.8)] hover:text-text-primary transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <ul className="flex flex-col gap-5 w-[184px]">
-              {legalLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-[rgba(25,25,25,0.8)] hover:text-text-primary transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+        <div className="w-full max-w-[794px] px-4 flex flex-col gap-10">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-10">
+            <div className="flex gap-5">
+              <ul className="flex flex-col gap-5 w-[184px]">
+                {productLinks.map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="text-[rgba(25,25,25,0.8)] hover:text-text-primary transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <ul className="flex flex-col gap-5 w-[184px]">
+                {legalLinks.map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="text-[rgba(25,25,25,0.8)] hover:text-text-primary transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/login" className="rounded-pill px-3 py-1.5 text-xs font-semibold text-text-primary">
+                Log in
+              </Link>
+              <Link href="/signup" className="rounded-pill bg-warm-800 px-3 py-1.5 text-xs font-semibold text-white">
+                Create account
+              </Link>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Link href="/login" className="rounded-pill px-3 py-1.5 text-xs font-semibold text-text-primary">
-              Log in
-            </Link>
-            <Link href="/signup" className="rounded-pill bg-warm-800 px-3 py-1.5 text-xs font-semibold text-white">
-              Create account
-            </Link>
-          </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/images/home/logo.svg" alt="PsychMind" width={32} height={32} />
-            <span className="text-[rgba(25,25,25,0.5)]">
-              © {new Date().getFullYear()} PsychMind. All rights reserved.
-            </span>
-          </div>
-          <div className="flex items-center gap-5">
-            {socials.map((social) => (
-              <a key={social.label} href={social.href} aria-label={social.label}>
-                <img src={social.src} alt="" width={24} height={24} />
-              </a>
-            ))}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src="/images/home/logo.svg" alt="PsychMind" width={32} height={32} />
+              <span className="text-[rgba(25,25,25,0.5)]">
+                © {new Date().getFullYear()} PsychMind. All rights reserved.
+              </span>
+            </div>
+            <div className="flex items-center gap-5">
+              {socials.map((social) => (
+                <a key={social.label} href={social.href} aria-label={social.label}>
+                  <img src={social.src} alt="" width={24} height={24} />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </footer>
   );
 }
+
