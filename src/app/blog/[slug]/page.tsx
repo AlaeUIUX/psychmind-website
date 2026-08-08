@@ -65,7 +65,7 @@ export default async function BlogPostPage({
           remarkPlugins={[remarkGfm]}
           components={{
             h2: ({ children }) => (
-              <h2 className="font-['Geist:SemiBold'] font-semibold text-warm-900 text-display-xs pt-8 pb-2 first:pt-0">
+              <h2 className="font-sans font-semibold text-warm-900 text-display-xs pt-8 pb-2 first:pt-0">
                 {children}
               </h2>
             ),
