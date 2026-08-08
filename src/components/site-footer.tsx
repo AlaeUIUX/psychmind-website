@@ -32,11 +32,11 @@ export function SiteFooter() {
   return (
     <footer className="w-full flex flex-col items-center py-16 sm:py-24 md:py-32 px-4 sm:px-8">
       <div className="relative w-full max-w-[1056px] flex flex-col items-center">
-        <div className="absolute top-0 inset-x-0 h-[380px] sm:h-[420px] md:h-[440px] bg-[rgba(205,207,210,0.21)] rounded-[20px]" />
+        <div className="absolute top-0 inset-x-0 h-[420px] sm:h-[460px] md:h-[500px] bg-[rgba(205,207,210,0.21)] rounded-[20px]" />
 
         <div className="relative w-full max-w-[900px] rounded-[20px] bg-warm-25 bg-[url('/images/home/footer-bg.png')] bg-left-top bg-repeat-y [background-size:100%_auto] flex flex-col items-center gap-12 pb-12 sm:pb-14">
-          <div className="relative w-full px-6 py-10 sm:px-16 sm:py-14 md:min-h-[380px] lg:min-h-[420px]">
-            <div className="relative z-10 flex flex-col items-start gap-2 max-w-[380px]">
+          <div className="relative w-full px-6 py-10 sm:px-16 sm:py-14 md:min-h-[420px] lg:min-h-[480px]">
+            <div className="relative z-10 flex flex-col items-start gap-2 max-w-[360px]">
               <h2 className="font-display-alt text-text-primary text-display-md">
                 Ready to find help?
               </h2>
@@ -51,9 +51,12 @@ export function SiteFooter() {
                 <img src="/images/home/footer-arrow.svg" alt="" width={24} height={24} />
               </Link>
             </div>
-            <div className="hidden md:block absolute -top-10 right-0 w-[420px] h-[280px] lg:w-[520px] lg:h-[347px] pointer-events-none">
+            {/* Cropped tight to the artwork's own bounds (source PNG has a lot of
+                dead whitespace padding) so it can bleed close to the card's top
+                edge instead of leaving a gap above it. */}
+            <div className="hidden md:block absolute -top-2 right-[-8px] w-[440px] h-[376px] lg:w-[560px] lg:h-[478px] xl:w-[620px] xl:h-[530px] pointer-events-none">
               <Image
-                src="/images/home/footer-illustration.png"
+                src="/images/home/footer-illustration-crop.png"
                 alt=""
                 fill
                 className="object-contain object-right-bottom"
