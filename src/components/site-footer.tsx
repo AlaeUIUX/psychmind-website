@@ -34,7 +34,7 @@ export function SiteFooter() {
       <div className="relative w-full max-w-[1056px] flex flex-col items-center">
         <div className="absolute top-0 inset-x-0 h-[420px] sm:h-[460px] md:h-[500px] bg-[rgba(205,207,210,0.21)] rounded-[20px]" />
 
-        <div className="relative w-full max-w-[900px] rounded-[20px] bg-warm-25 bg-[url('/images/home/footer-bg.png')] bg-left-top bg-repeat-y [background-size:100%_auto] flex flex-col items-center gap-12 pb-12 sm:pb-14">
+        <div className="relative w-full max-w-[900px] rounded-[20px] bg-warm-25 bg-[url('/images/home/footer-bg-crop.png')] bg-left-top bg-repeat-y [background-size:100%_auto] flex flex-col items-center gap-12 pb-12 sm:pb-14">
           <div className="relative w-full px-6 py-10 sm:px-16 sm:py-14 md:min-h-[420px] lg:min-h-[480px]">
             <div className="relative z-10 flex flex-col items-start gap-2 max-w-[360px]">
               <h2 className="font-display-alt text-text-primary text-display-md">
