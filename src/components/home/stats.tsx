@@ -10,7 +10,9 @@ const baseStats = [
   { value: "100%", label: "confidential & private" },
 ];
 
-const VISIBLE_COUNT = 3;
+const DESKTOP_VISIBLE_COUNT = 3;
+const MOBILE_VISIBLE_COUNT = 2;
+const MOBILE_BREAKPOINT = "(min-width: 640px)";
 const AUTO_ADVANCE_MS = 3000;
 const TRANSITION_MS = 600;
 const RESUME_AFTER_TOUCH_MS = 5000;
@@ -19,8 +21,18 @@ export function Stats() {
   const [order, setOrder] = useState(() => baseStats.map((_, i) => i));
   const [offset, setOffset] = useState(0); // 0 = resting, 1 = mid-shift-by-one-card
   const [instant, setInstant] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(DESKTOP_VISIBLE_COUNT);
   const pausedRef = useRef(false);
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 3 cards side by side reads as cramped on narrow phones — show 2 there.
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_BREAKPOINT);
+    const update = () => setVisibleCount(mql.matches ? DESKTOP_VISIBLE_COUNT : MOBILE_VISIBLE_COUNT);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -74,7 +86,7 @@ export function Stats() {
           onTransitionEnd={handleTransitionEnd}
           className="flex"
           style={{
-            width: `${(baseStats.length / VISIBLE_COUNT) * 100}%`,
+            width: `${(baseStats.length / visibleCount) * 100}%`,
             transform: `translateX(-${offset * (100 / baseStats.length)}%)`,
             transition: instant ? "none" : `transform ${TRANSITION_MS}ms ease-in-out`,
           }}
