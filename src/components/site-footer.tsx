@@ -60,12 +60,13 @@ export function SiteFooter() {
                 <img src="/images/home/footer-arrow.svg" alt="" width={24} height={24} />
               </Link>
             </div>
-            {/* Cropped tight to the artwork's own bounds (source PNG has a lot of
-                dead whitespace padding) so it can bleed close to the card's top
-                edge instead of leaving a gap above it. */}
-            <div className="hidden md:block absolute -top-2 right-[-8px] w-[440px] h-[376px] lg:w-[560px] lg:h-[478px] xl:w-[620px] xl:h-[530px] pointer-events-none">
+            {/* Exported directly from the illustration's own Figma layer
+                (146:9033) at its native 700x466 ratio — the previous asset
+                was borrowed from a different, more tightly-cropped source
+                and rendered noticeably larger than the Figma reference. */}
+            <div className="hidden md:block absolute -top-2 right-[-8px] w-[360px] h-[240px] lg:w-[460px] lg:h-[306px] xl:w-[520px] xl:h-[346px] pointer-events-none">
               <Image
-                src="/images/home/footer-illustration-crop.png"
+                src="/images/home/footer-illustration-clean.png"
                 alt=""
                 fill
                 className="object-contain object-right-bottom"
