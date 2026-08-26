@@ -40,7 +40,7 @@ export function SiteFooter() {
             a fixed offset, rather than nesting it inside the paper). */}
         <div
           aria-hidden
-          className="absolute left-1/2 -translate-x-1/2 -top-[120px] -bottom-[24px] w-full max-w-[900px] rounded-[20px] bg-warm-25 bg-[url('/images/home/footer-bg-crop.png')] bg-left-top bg-repeat-y [background-size:100%_auto]"
+          className="absolute left-1/2 -translate-x-1/2 -top-[120px] -bottom-[24px] w-full max-w-[900px] rounded-[20px] bg-warm-25 bg-[url('/images/home/footer-paper-bg.png')] bg-left-top bg-repeat-y [background-size:100%_auto]"
         />
 
         <div className="relative z-10 w-full max-w-[900px] flex flex-col items-center gap-12 pb-12 sm:pb-14">
