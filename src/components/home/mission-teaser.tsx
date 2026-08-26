@@ -44,8 +44,8 @@ export function MissionTeaser() {
               . We&apos;re two people who believe that finding a provider should feel{" "}
               <span className="text-[#1c1c1c]">as safe as the therapy itself.</span>
             </p>
-            <div className="inline-flex items-center rounded-pill border-2 border-black/10 bg-warm-25 px-9 py-4 w-fit">
-              <p className="text-display-sm font-medium bg-gradient-to-r from-[#44403c] to-[#787878] bg-clip-text text-transparent">
+            <div className="inline-flex items-center rounded-pill border-2 border-black/10 bg-warm-25 px-5 py-3 sm:px-9 sm:py-4 w-fit">
+              <p className="text-lg sm:text-display-sm font-medium bg-gradient-to-r from-[#44403c] to-[#787878] bg-clip-text text-transparent">
                 PsychMind is our attempt to close that gap
               </p>
             </div>
