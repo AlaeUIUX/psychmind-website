@@ -45,7 +45,7 @@ export function SiteFooter() {
 
         <div className="relative z-10 w-full max-w-[900px] flex flex-col items-center gap-12 pb-12 sm:pb-14">
           <div className="relative w-full px-6 py-10 sm:px-16 sm:py-14 md:min-h-[420px] lg:min-h-[480px]">
-            <div className="relative z-10 flex flex-col items-start gap-2 max-w-[360px]">
+            <div className="relative z-10 flex flex-col items-center text-center md:items-start md:text-left gap-2 max-w-[360px] mx-auto md:mx-0">
               <h2 className="font-display-alt text-text-primary text-display-md">
                 Ready to find help?
               </h2>
@@ -96,7 +96,7 @@ export function SiteFooter() {
                   ))}
                 </ul>
               </div>
-              <div className="flex gap-3">
+              <div className="hidden sm:flex gap-3">
                 <Link href="/login" className="rounded-pill px-3 py-1.5 text-xs font-semibold text-text-primary">
                   Log in
                 </Link>
