@@ -5,17 +5,30 @@ import { TestimonialCard } from "@/components/home/testimonial-card";
 import { DesktopTestimonials } from "@/components/home/desktop-testimonials";
 import { MissionTeaser } from "@/components/home/mission-teaser";
 import { ResourcePreview } from "@/components/home/resource-preview";
+import { Reveal } from "@/components/reveal";
 
 export default function Home() {
   return (
     <>
-      <Hero />
-      <Stats />
-      <SmartSearchFeature />
-      <TestimonialCard />
-      <DesktopTestimonials />
-      <MissionTeaser />
-      <ResourcePreview />
+      <Reveal>
+        <Hero />
+      </Reveal>
+      <Reveal>
+        <Stats />
+      </Reveal>
+      <Reveal>
+        <SmartSearchFeature />
+      </Reveal>
+      <Reveal>
+        <TestimonialCard />
+        <DesktopTestimonials />
+      </Reveal>
+      <Reveal>
+        <MissionTeaser />
+      </Reveal>
+      <Reveal>
+        <ResourcePreview />
+      </Reveal>
     </>
   );
 }

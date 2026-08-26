@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MissionArticle } from "@/components/mission/article";
+import { Reveal } from "@/components/reveal";
 
 export const metadata: Metadata = {
   title: "Our mission — PsychMind",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function MissionPage() {
-  return <MissionArticle />;
+  return (
+    <Reveal>
+      <MissionArticle />
+    </Reveal>
+  );
 }
