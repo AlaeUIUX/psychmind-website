@@ -74,7 +74,11 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className="w-full max-w-[794px] px-8 sm:px-4 flex flex-col gap-10">
+          {/* The paper texture's red margin line sits at a fixed ~3% of the paper's
+              width, which itself scales with viewport — a fixed px padding here
+              would clear it at one width and fall short at another. Percentage
+              padding tracks the line proportionally at every size instead. */}
+          <div className="w-full max-w-[794px] px-[7%] flex flex-col gap-10">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-10">
               <div className="flex gap-5">
                 <ul className="flex flex-col gap-5 w-[184px]">
