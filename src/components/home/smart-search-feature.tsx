@@ -107,7 +107,7 @@ function VerifiedCredentialsFiller() {
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-warm-300">
             <img src="/images/how-it-works/check-icon.svg" alt="" width={14} height={14} className="opacity-50" />
           </span>
-          <p className="text-sm text-text-placeholder">{label}</p>
+          <p className="text-md text-text-placeholder">{label}</p>
         </div>
       ))}
     </div>
@@ -124,14 +124,14 @@ function BookingSlotsFiller() {
           i === 1 ? (
             <span
               key={slot}
-              className="rounded-pill bg-brand-primary px-4 py-2 text-sm font-medium text-white"
+              className="rounded-pill bg-brand-primary px-4 py-2 text-md font-medium text-white"
             >
               {slot}
             </span>
           ) : (
             <span
               key={slot}
-              className="rounded-pill border border-dashed border-warm-300 px-4 py-2 text-sm text-text-placeholder"
+              className="rounded-pill border border-dashed border-warm-300 px-4 py-2 text-md text-text-placeholder"
             >
               {slot}
             </span>
@@ -171,7 +171,7 @@ function SearchToolMockup() {
   return (
     <div className="rounded-4xl border border-warm-300 bg-warm-200 flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 px-2 py-2 w-full min-w-0">
       <div className="rounded-4xl bg-warm-100 flex flex-col gap-3 p-4 shrink-0">
-        <div className="flex items-center gap-3 text-sm font-medium">
+        <div className="flex items-center gap-3 text-md font-medium">
           <span className="text-text-placeholder">In-person</span>
           <span className="text-text-primary">Online</span>
         </div>
@@ -180,8 +180,8 @@ function SearchToolMockup() {
         </div>
       </div>
       <div className="rounded-4xl bg-warm-100 flex flex-col gap-1.5 p-4 flex-1 min-w-0">
-        <p className="text-sm font-medium text-text-primary">What&apos;s on your mind?</p>
-        <p className="text-sm text-text-placeholder">
+        <p className="text-md font-medium text-text-primary">What&apos;s on your mind?</p>
+        <p className="text-md text-text-placeholder">
           I need help with <span className="font-medium text-text-primary">Anxiety</span>
         </p>
       </div>
@@ -200,13 +200,13 @@ function VerifiedProfileMockup() {
       </div>
       <div className="flex flex-col gap-1.5 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-md font-semibold text-text-primary truncate">Sara Oliisi</p>
-          <span className="inline-flex items-center gap-1 rounded-md border border-warm-300 bg-white px-2 py-0.5 text-xs font-medium text-text-secondary shrink-0">
+          <p className="text-lg font-semibold text-text-primary truncate">Sara Oliisi</p>
+          <span className="inline-flex items-center gap-1 rounded-md border border-warm-300 bg-white px-2 py-0.5 text-sm font-medium text-text-secondary shrink-0">
             <img src="/images/how-it-works/verified-check-icon.svg" alt="" width={12} height={12} />
             Verified
           </span>
         </div>
-        <p className="text-sm text-text-secondary truncate">Counselor, LMHC, M.S., B.S.</p>
+        <p className="text-md text-text-secondary truncate">Counselor, LMHC, M.S., B.S.</p>
       </div>
     </div>
   );
@@ -219,8 +219,8 @@ function BookingMockup() {
         <img src="/images/how-it-works/check-icon.svg" alt="" width={20} height={20} />
       </span>
       <div className="flex flex-col gap-0.5 min-w-0">
-        <p className="text-md font-semibold text-text-primary">Session confirmed</p>
-        <p className="text-sm text-text-secondary truncate">Thursday · 4:00 PM · Online</p>
+        <p className="text-lg font-semibold text-text-primary">Session confirmed</p>
+        <p className="text-md text-text-secondary truncate">Thursday · 4:00 PM · Online</p>
       </div>
     </div>
   );
@@ -233,8 +233,8 @@ function ConfidentialityMockup() {
         <img src="/images/how-it-works/shield-icon.svg" alt="" width={20} height={20} />
       </span>
       <div className="flex flex-col gap-0.5 min-w-0">
-        <p className="text-md font-semibold text-text-primary">Your info is never shared</p>
-        <p className="text-sm text-text-secondary truncate">End-to-end confidential messaging</p>
+        <p className="text-lg font-semibold text-text-primary">Your info is never shared</p>
+        <p className="text-md text-text-secondary truncate">End-to-end confidential messaging</p>
       </div>
     </div>
   );
@@ -337,7 +337,9 @@ export function SmartSearchFeature() {
             style={{ transform: "rotate(50.4deg)" }}
           />
 
-          <div className="relative rounded-xl border border-warm-300 bg-warm-50 flex flex-col md:flex-row gap-2.5 p-2.5 overflow-hidden">
+          {/* Capped narrower than the paper-bg backdrop above so the right
+              panel can't balloon to fill however wide the outer card gets. */}
+          <div className="relative w-full max-w-[1040px] mx-auto rounded-xl border border-warm-300 bg-warm-50 flex flex-col md:flex-row gap-2.5 p-2.5 overflow-hidden">
             <div
               ref={leftRef}
               className="flex flex-col justify-center gap-6 sm:gap-8 flex-1 min-w-0 md:max-w-[400px] p-6 sm:p-8"
