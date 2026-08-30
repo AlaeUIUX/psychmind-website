@@ -96,7 +96,7 @@ export function SiteFooter() {
                   ))}
                 </ul>
               </div>
-              <div className="hidden sm:flex gap-3">
+              <div className="hidden md:flex gap-3">
                 <Link href="/login" className="rounded-pill px-3 py-1.5 text-xs font-semibold text-text-primary">
                   Log in
                 </Link>

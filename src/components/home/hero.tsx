@@ -42,7 +42,7 @@ export function Hero() {
 
 function MobileSearchTrigger() {
   return (
-    <button className="sm:hidden w-full max-w-[374px] rounded-[36px] border-[1.5px] border-warm-300 bg-warm-200 p-3">
+    <button className="xl:hidden w-full max-w-[374px] rounded-[36px] border-[1.5px] border-warm-300 bg-warm-200 p-3">
       <div className="flex items-center justify-between gap-3 rounded-[36px] bg-warm-100 p-6">
         <div className="flex flex-col items-start gap-1 text-left">
           <span className="flex items-center gap-2 text-md font-medium text-text-primary">
@@ -65,11 +65,13 @@ function Divider() {
 
 function SearchTool() {
   // The row layout below uses Figma's fixed desktop pixel widths (424.5px column, 81px
-  // padding, etc.) which only fit at genuinely wide viewports — stay stacked until xl
-  // (1280px) rather than md (768px) so it never overflows/clips on laptop-width screens.
+  // padding, etc.) which only fit at genuinely wide viewports. Rather than falling back
+  // to a stacked-but-still-desktop-styled layout between sm and xl (which just looked
+  // like an oversized, sparse mobile bar), the compact MobileSearchTrigger covers that
+  // whole range and this only renders once xl actually has room for it.
   return (
-    <div className="hidden sm:flex w-full max-w-[1230px] rounded-[36px] border-[1.5px] border-warm-300 bg-warm-200 p-3 flex-col xl:flex-row items-stretch gap-3 xl:gap-[27px] xl:pr-[30px]">
-      <div className="flex-1 rounded-[36px] bg-warm-100 flex flex-col xl:flex-row items-stretch gap-3 xl:gap-[3px] overflow-hidden">
+    <div className="hidden xl:flex w-full max-w-[1230px] rounded-[36px] border-[1.5px] border-warm-300 bg-warm-200 p-3 flex-row items-stretch gap-[27px] pr-[30px]">
+      <div className="flex-1 rounded-[36px] bg-warm-100 flex flex-row items-stretch gap-[3px] overflow-hidden">
         {/* Physical/Online toggle */}
         <div className="flex flex-col justify-center gap-[18px] p-9 shrink-0 xl:h-[156px]">
           <div className="flex items-center gap-[18px] text-xl font-medium">
