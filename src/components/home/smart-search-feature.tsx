@@ -340,7 +340,7 @@ export function SmartSearchFeature() {
           <div className="relative rounded-xl border border-warm-300 bg-warm-50 flex flex-col md:flex-row gap-2.5 p-2.5 overflow-hidden">
             <div
               ref={leftRef}
-              className="flex flex-col justify-center gap-10 sm:gap-16 lg:gap-24 flex-1 min-w-0 md:max-w-[400px] p-6 sm:p-9 lg:p-16"
+              className="flex flex-col justify-center gap-6 sm:gap-8 flex-1 min-w-0 md:max-w-[400px] p-6 sm:p-8"
             >
               <div className="flex flex-col gap-6">
                 <h3 className="font-display-alt text-display-md text-text-primary">{tab.title}</h3>
@@ -368,11 +368,14 @@ export function SmartSearchFeature() {
             </div>
 
             {/* Full-bleed panel: flush against the left content and the card's own top/right/bottom edges, no gap or independent rounding */}
-            <div className="flex-1 min-w-0 bg-warm-100 rounded-lg relative min-h-[420px] lg:min-h-[560px] p-6 flex flex-col gap-6">
+            <div className="flex-1 min-w-0 bg-warm-100 rounded-lg relative min-h-[280px] p-6 flex flex-col gap-6 overflow-hidden">
               <div ref={boxRef} style={{ opacity: 1 }} className="flex-1 flex flex-col gap-6">
                 <Mockup />
                 <Filler />
               </div>
+              {/* Fades whatever's left of the filler's empty space into the panel
+                  background instead of ending on a hard dashed edge. */}
+              <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-warm-100 pointer-events-none rounded-b-lg" />
             </div>
           </div>
         </div>
