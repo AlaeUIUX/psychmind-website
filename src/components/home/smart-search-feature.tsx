@@ -79,6 +79,94 @@ const tabs: Tab[] = [
   },
 ];
 
+// Fills the empty space below each mockup card with a dashed sketch of what
+// that tab's context produces — same dashed-stroke language as the card that
+// used to sit there empty, just made specific to each tab instead of generic.
+function SearchResultsFiller() {
+  return (
+    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-3">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-dashed border-warm-300 p-3 sm:p-4">
+          <div className="size-10 sm:size-12 rounded-full border border-dashed border-warm-300 shrink-0" />
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="h-2.5 w-1/3 rounded-full border border-dashed border-warm-300" />
+            <div className="h-2.5 w-2/3 rounded-full border border-dashed border-warm-300" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VerifiedCredentialsFiller() {
+  const rows = ["License verified", "Education confirmed", "Background checked"];
+  return (
+    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-3">
+      {rows.map((label) => (
+        <div key={label} className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-dashed border-warm-300 p-3 sm:p-4">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-warm-300">
+            <img src="/images/how-it-works/check-icon.svg" alt="" width={14} height={14} className="opacity-50" />
+          </span>
+          <p className="text-sm text-text-placeholder">{label}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BookingSlotsFiller() {
+  const slots = ["9:00 AM", "11:30 AM", "2:00 PM", "4:30 PM"];
+  return (
+    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-4">
+      <div className="h-2.5 w-1/4 rounded-full border border-dashed border-warm-300" />
+      <div className="flex flex-wrap gap-3">
+        {slots.map((slot, i) =>
+          i === 1 ? (
+            <span
+              key={slot}
+              className="rounded-pill bg-brand-primary px-4 py-2 text-sm font-medium text-white"
+            >
+              {slot}
+            </span>
+          ) : (
+            <span
+              key={slot}
+              className="rounded-pill border border-dashed border-warm-300 px-4 py-2 text-sm text-text-placeholder"
+            >
+              {slot}
+            </span>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConfidentialityFiller() {
+  return (
+    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-3 justify-center">
+      {[0, 1].map((i) => (
+        <div key={i} className={`flex items-center gap-3 ${i === 1 ? "self-end flex-row-reverse" : ""}`}>
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-warm-300">
+            <img src="/images/how-it-works/shield-icon.svg" alt="" width={14} height={14} className="opacity-50" />
+          </span>
+          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-warm-300 p-3">
+            <div className="h-2.5 w-32 rounded-full border border-dashed border-warm-300" />
+            <div className="h-2.5 w-20 rounded-full border border-dashed border-warm-300" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const fillers: Record<string, () => ReactElement> = {
+  search: SearchResultsFiller,
+  verified: VerifiedCredentialsFiller,
+  booking: BookingSlotsFiller,
+  confidential: ConfidentialityFiller,
+};
+
 function SearchToolMockup() {
   return (
     <div className="rounded-4xl border border-warm-300 bg-warm-200 flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 px-2 py-2 w-full min-w-0">
@@ -205,6 +293,7 @@ export function SmartSearchFeature() {
 
   const tab = tabs[active];
   const Mockup = mockups[tab.id];
+  const Filler = fillers[tab.id];
 
   return (
     <section className="w-full flex flex-col items-center gap-12 px-4 sm:px-12 md:px-20 py-12">
@@ -221,8 +310,9 @@ export function SmartSearchFeature() {
       </div>
 
       {/* Figma has this card at 1440px vs. the 1052px heading above it — noticeably
-          wider than the rest of the page's content column, not capped the same way. */}
-      <div className="w-full flex flex-col gap-5">
+          wider than the rest of the page's content column, but still capped (not
+          full-bleed) — otherwise it stretches absurdly on ultra-wide monitors. */}
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col gap-5">
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 md:flex-nowrap md:justify-center md:gap-[68px] font-display text-lg sm:text-display-xs whitespace-nowrap">
           {tabs.map((t, i) => (
             <button
@@ -279,10 +369,10 @@ export function SmartSearchFeature() {
 
             {/* Full-bleed panel: flush against the left content and the card's own top/right/bottom edges, no gap or independent rounding */}
             <div className="flex-1 min-w-0 bg-warm-100 rounded-lg relative min-h-[420px] lg:min-h-[560px] p-6 flex flex-col gap-6">
-              <div ref={boxRef} style={{ opacity: 1 }}>
+              <div ref={boxRef} style={{ opacity: 1 }} className="flex-1 flex flex-col gap-6">
                 <Mockup />
+                <Filler />
               </div>
-              <div className="flex-1 rounded-[24px] bg-warm-25 border border-dashed border-warm-300" />
             </div>
           </div>
         </div>
