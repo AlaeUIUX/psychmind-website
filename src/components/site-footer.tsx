@@ -74,7 +74,7 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className="w-full max-w-[794px] px-4 flex flex-col gap-10">
+          <div className="w-full max-w-[794px] px-8 sm:px-4 flex flex-col gap-10">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-10">
               <div className="flex gap-5">
                 <ul className="flex flex-col gap-5 w-[184px]">
