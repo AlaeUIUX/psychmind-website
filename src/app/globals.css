@@ -35,6 +35,26 @@
   --color-text-placeholder: #79716b;
   --color-text-on-brand: #ffffff;
 
+  /* shadcn/ui primitive tokens, mapped onto the palette above so imported
+     components (e.g. the login page) render in PsychMind's own language
+     instead of shadcn's stock theme. */
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: #ffffff;
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-brand-primary);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-warm-100);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-warm-100);
+  --color-muted-foreground: var(--color-text-placeholder);
+  --color-accent: var(--color-warm-100);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-destructive: #dc2626;
+  --color-border: var(--color-warm-200);
+  --color-input: var(--color-warm-200);
+  --color-ring: var(--color-brand-primary);
+
   /* Spacing scale (Figma: spacing-*) */
   --spacing-xs: 4px;
   --spacing-md: 8px;
