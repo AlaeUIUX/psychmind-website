@@ -1,15 +1,13 @@
 "use client";
 
-import { animate } from "animejs";
-import { useRef, useState, type ReactElement } from "react";
-
-type EnterAnim = {
-  translateY?: number;
-  translateX?: number;
-  scale?: number;
-  duration: number;
-  ease: string;
-};
+import { cn } from "cn";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
+import { Reveal } from "@/components/reveal";
+import { PrivacyPreview, RequestPreview, SearchPreview, VerifiedPreview } from "@/components/shared/product-preview";
+import { Button } from "@/components/ui/button";
+import { CircleArrowIcon, SearchIcon } from "@/components/ui/icons";
+import { Container, Section } from "@/components/ui/section";
+import { SectionHeader } from "@/components/ui/section-header";
 
 type Tab = {
   id: string;
@@ -18,10 +16,8 @@ type Tab = {
   description: string[];
   ctaLabel: string;
   ctaHref: string;
-  ctaIcon: string;
-  // Figma only designed the "Smart search" state — the other three panels
-  // are original mockups in the same visual language, not 1:1 Figma pulls.
-  enter: EnterAnim;
+  ctaIcon: "search" | "arrow";
+  Preview: () => ReactElement;
 };
 
 const tabs: Tab[] = [
@@ -35,8 +31,8 @@ const tabs: Tab[] = [
     ],
     ctaLabel: "Browse providers",
     ctaHref: "/providers",
-    ctaIcon: "/images/home/browse-providers-icon.svg",
-    enter: { translateY: 16, duration: 480, ease: "outQuad" },
+    ctaIcon: "search",
+    Preview: () => <SearchPreview />,
   },
   {
     id: "verified",
@@ -48,8 +44,8 @@ const tabs: Tab[] = [
     ],
     ctaLabel: "See how it works",
     ctaHref: "/how-it-works",
-    ctaIcon: "/images/how-it-works/cta-arrow-icon.svg",
-    enter: { scale: 0.92, duration: 420, ease: "outBack" },
+    ctaIcon: "arrow",
+    Preview: VerifiedPreview,
   },
   {
     id: "booking",
@@ -61,8 +57,8 @@ const tabs: Tab[] = [
     ],
     ctaLabel: "Start your search",
     ctaHref: "/providers",
-    ctaIcon: "/images/how-it-works/cta-arrow-icon.svg",
-    enter: { translateX: 28, duration: 380, ease: "outCubic" },
+    ctaIcon: "arrow",
+    Preview: () => <RequestPreview />,
   },
   {
     id: "confidential",
@@ -74,319 +70,202 @@ const tabs: Tab[] = [
     ],
     ctaLabel: "See how it works",
     ctaHref: "/how-it-works",
-    ctaIcon: "/images/how-it-works/cta-arrow-icon.svg",
-    enter: { duration: 620, ease: "outSine" },
+    ctaIcon: "arrow",
+    Preview: PrivacyPreview,
   },
 ];
 
-// Fills the empty space below each mockup card with a dashed sketch of what
-// that tab's context produces — same dashed-stroke language as the card that
-// used to sit there empty, just made specific to each tab instead of generic.
-function SearchResultsFiller() {
-  return (
-    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-3">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-dashed border-warm-300 p-3 sm:p-4">
-          <div className="size-10 sm:size-12 rounded-full border border-dashed border-warm-300 shrink-0" />
-          <div className="flex-1 flex flex-col gap-2">
-            <div className="h-2.5 w-1/3 rounded-full border border-dashed border-warm-300" />
-            <div className="h-2.5 w-2/3 rounded-full border border-dashed border-warm-300" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function VerifiedCredentialsFiller() {
-  const rows = ["License verified", "Education confirmed", "Background checked"];
-  return (
-    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-3">
-      {rows.map((label) => (
-        <div key={label} className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-dashed border-warm-300 p-3 sm:p-4">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-warm-300">
-            <img src="/images/how-it-works/check-icon.svg" alt="" width={14} height={14} className="opacity-50" />
-          </span>
-          <p className="text-md text-text-placeholder">{label}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function BookingSlotsFiller() {
-  const slots = ["9:00 AM", "11:30 AM", "2:00 PM", "4:30 PM"];
-  return (
-    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-4">
-      <div className="h-2.5 w-1/4 rounded-full border border-dashed border-warm-300" />
-      <div className="flex flex-wrap gap-3">
-        {slots.map((slot, i) =>
-          i === 1 ? (
-            <span
-              key={slot}
-              className="rounded-pill bg-brand-primary px-4 py-2 text-md font-medium text-white"
-            >
-              {slot}
-            </span>
-          ) : (
-            <span
-              key={slot}
-              className="rounded-pill border border-dashed border-warm-300 px-4 py-2 text-md text-text-placeholder"
-            >
-              {slot}
-            </span>
-          ),
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ConfidentialityFiller() {
-  return (
-    <div className="flex-1 rounded-[24px] border border-dashed border-warm-300 p-4 sm:p-6 flex flex-col gap-3 justify-center">
-      {[0, 1].map((i) => (
-        <div key={i} className={`flex items-center gap-3 ${i === 1 ? "self-end flex-row-reverse" : ""}`}>
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-warm-300">
-            <img src="/images/how-it-works/shield-icon.svg" alt="" width={14} height={14} className="opacity-50" />
-          </span>
-          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-warm-300 p-3">
-            <div className="h-2.5 w-32 rounded-full border border-dashed border-warm-300" />
-            <div className="h-2.5 w-20 rounded-full border border-dashed border-warm-300" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-const fillers: Record<string, () => ReactElement> = {
-  search: SearchResultsFiller,
-  verified: VerifiedCredentialsFiller,
-  booking: BookingSlotsFiller,
-  confidential: ConfidentialityFiller,
-};
-
-function SearchToolMockup() {
-  return (
-    <div className="rounded-4xl border border-warm-300 bg-warm-200 flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 px-2 py-2 w-full min-w-0">
-      <div className="rounded-4xl bg-warm-100 flex flex-col gap-3 p-4 shrink-0">
-        <div className="flex items-center gap-3 text-md font-medium">
-          <span className="text-text-placeholder">In-person</span>
-          <span className="text-text-primary">Online</span>
-        </div>
-        <div className="relative h-5 w-[70px] rounded-full bg-warm-200">
-          <div className="absolute right-0 top-0 h-5 w-5 rounded-full bg-brand-primary" />
-        </div>
-      </div>
-      <div className="rounded-4xl bg-warm-100 flex flex-col gap-1.5 p-4 flex-1 min-w-0">
-        <p className="text-md font-medium text-text-primary">What&apos;s on your mind?</p>
-        <p className="text-md text-text-placeholder">
-          I need help with <span className="font-medium text-text-primary">Anxiety</span>
-        </p>
-      </div>
-      <button aria-label="Search" className="rounded-full bg-brand-primary p-3 shrink-0">
-        <img src="/images/home/search-button-icon.svg" alt="" width={20} height={20} />
-      </button>
-    </div>
-  );
-}
-
-function VerifiedProfileMockup() {
-  return (
-    <div className="rounded-4xl border border-warm-300 bg-warm-25 flex items-center gap-4 p-4 w-full max-w-[380px]">
-      <div className="relative size-14 shrink-0 rounded-2xl border border-black/[0.08] bg-white overflow-hidden">
-        <img src="/images/how-it-works/profile-avatar.png" alt="" className="size-full object-cover" />
-      </div>
-      <div className="flex flex-col gap-1.5 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-lg font-semibold text-text-primary truncate">Sara Oliisi</p>
-          <span className="inline-flex items-center gap-1 rounded-md border border-warm-300 bg-white px-2 py-0.5 text-sm font-medium text-text-secondary shrink-0">
-            <img src="/images/how-it-works/verified-check-icon.svg" alt="" width={12} height={12} />
-            Verified
-          </span>
-        </div>
-        <p className="text-md text-text-secondary truncate">Counselor, LMHC, M.S., B.S.</p>
-      </div>
-    </div>
-  );
-}
-
-function BookingMockup() {
-  return (
-    <div className="rounded-4xl border border-warm-300 bg-warm-25 flex items-center gap-4 p-4 w-full max-w-[380px]">
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-primary/10">
-        <img src="/images/how-it-works/check-icon.svg" alt="" width={20} height={20} />
-      </span>
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <p className="text-lg font-semibold text-text-primary">Session confirmed</p>
-        <p className="text-md text-text-secondary truncate">Thursday · 4:00 PM · Online</p>
-      </div>
-    </div>
-  );
-}
-
-function ConfidentialityMockup() {
-  return (
-    <div className="rounded-4xl border border-warm-300 bg-warm-25 flex items-center gap-4 p-4 w-full max-w-[380px]">
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-primary/10">
-        <img src="/images/how-it-works/shield-icon.svg" alt="" width={20} height={20} />
-      </span>
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <p className="text-lg font-semibold text-text-primary">Your info is never shared</p>
-        <p className="text-md text-text-secondary truncate">End-to-end confidential messaging</p>
-      </div>
-    </div>
-  );
-}
-
-const mockups: Record<string, () => ReactElement> = {
-  search: SearchToolMockup,
-  verified: VerifiedProfileMockup,
-  booking: BookingMockup,
-  confidential: ConfidentialityMockup,
-};
+/** How long each tab stays up while auto-playing. */
+const TAB_MS = 8000;
 
 export function SmartSearchFeature() {
   const [active, setActive] = useState(0);
-  const busy = useRef(false);
-  const leftRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [autoplay, setAutoplay] = useState(true);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const tablistRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  function selectTab(index: number) {
-    if (busy.current || index === active) return;
-    busy.current = true;
-    const leftEl = leftRef.current;
-    const boxEl = boxRef.current;
+  // Only auto-advance while the feature is actually on screen, and never
+  // for people who prefer reduced motion.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const t = setTimeout(() => setAutoplay(false), 0);
+      return () => clearTimeout(t);
+    }
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.35 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
-    const fadeOut = [leftEl, boxEl]
-      .filter((el): el is HTMLDivElement => Boolean(el))
-      .map((el) => animate(el, { opacity: 0, duration: 150, ease: "inQuad" }).then());
+  // Keep the active tab visible in the horizontally-scrolling row on phones.
+  useEffect(() => {
+    const list = tablistRef.current;
+    const tab = tabRefs.current[active];
+    if (!list || !tab || list.scrollWidth <= list.clientWidth) return;
+    list.scrollTo({ left: tab.offsetLeft - 16, behavior: "smooth" });
+  }, [active]);
 
-    Promise.all(fadeOut).then(() => {
-      setActive(index);
-      requestAnimationFrame(() => {
-        const tab = tabs[index];
-        if (leftEl) {
-          leftEl.style.opacity = "0";
-          animate(leftEl, { opacity: 1, translateY: [12, 0], duration: 380, ease: "outQuad" });
-        }
-        if (boxEl) {
-          boxEl.style.opacity = "0";
-          const { translateY, translateX, scale, duration, ease } = tab.enter;
-          animate(boxEl, {
-            opacity: 1,
-            ...(translateY != null && { translateY: [translateY, 0] }),
-            ...(translateX != null && { translateX: [translateX, 0] }),
-            ...(scale != null && { scale: [scale, 1] }),
-            duration,
-            ease,
-          }).then(() => {
-            busy.current = false;
-          });
-        } else {
-          busy.current = false;
-        }
-      });
-    });
+  const running = autoplay && inView && !hovered;
+
+  function select(index: number) {
+    setActive(index);
+    // A deliberate choice stops the slideshow so it doesn't move out from under the reader.
+    setAutoplay(false);
+  }
+
+  // Arrow keys move between tabs (WAI-ARIA tabs pattern).
+  function onTabKeyDown(e: KeyboardEvent<HTMLButtonElement>, i: number) {
+    const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!delta) return;
+    e.preventDefault();
+    const next = (i + delta + tabs.length) % tabs.length;
+    tabRefs.current[next]?.focus();
+    select(next);
   }
 
   const tab = tabs[active];
-  const Mockup = mockups[tab.id];
-  const Filler = fillers[tab.id];
+  const Icon = tab.ctaIcon === "search" ? SearchIcon : CircleArrowIcon;
 
   return (
-    <section className="w-full flex flex-col items-center gap-12 px-4 sm:px-12 md:px-20 py-12">
-      <div className="flex flex-col items-center gap-6 w-full max-w-[1052px]">
-        <span className="inline-flex items-center gap-3 rounded-pill border border-black/10 bg-warm-25 pl-2 pr-[18px] py-2 text-lg font-medium">
-          <img src="/images/home/discovery-icon-32.svg" alt="" width={32} height={32} />
-          <span className="bg-gradient-to-r from-[#44403c] to-[#787878] bg-clip-text text-transparent">
-            Discovery
-          </span>
-        </span>
-        <h2 className="font-display text-warm-900 text-display-md tracking-[-0.46px] text-center">
-          Everything you need to begin your journey
-        </h2>
-      </div>
+    <Section>
+      <Container className="flex flex-col gap-10 sm:gap-12">
+        <SectionHeader
+          align="center"
+          badge={{ icon: "/images/home/discovery-icon-32.svg", label: "Discovery" }}
+          title="Everything you need to begin your journey"
+        />
+      </Container>
 
-      {/* Figma has this card at 1440px vs. the 1052px heading above it — noticeably
-          wider than the rest of the page's content column, but still capped (not
-          full-bleed) — otherwise it stretches absurdly on ultra-wide monitors. */}
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col gap-5">
-        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 md:flex-nowrap md:justify-center md:gap-[68px] font-display text-lg sm:text-display-xs whitespace-nowrap">
-          {tabs.map((t, i) => (
-            <button
-              key={t.id}
-              onClick={() => selectTab(i)}
-              className={i === active ? "underline text-warm-950" : "text-warm-600 hover:text-warm-800 transition-colors"}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Feature card: faint lined-paper texture peeking behind a raised card, matches the Figma frame 1:1 */}
-        <div className="paper-bg relative w-full rounded-[10px] overflow-hidden p-4 sm:p-6">
-          {/* pink washi-tape decorations */}
+      {/* Wider than the content column on purpose (Figma: 1440px frame), but
+          still capped so it doesn't stretch on ultra-wide monitors. */}
+      <Reveal className="mt-8 sm:mt-10">
+        <Container size="wide" className="flex flex-col gap-6">
           <div
-            className="hidden md:block absolute -top-6 -left-10 w-40 h-12 bg-[#ffd9dc]"
-            style={{ transform: "rotate(129.6deg) scaleY(-1)" }}
-          />
-          <div
-            className="hidden md:block absolute -top-6 -right-10 w-40 h-12 bg-[#ffd9dc]"
-            style={{ transform: "rotate(50.4deg)" }}
-          />
+            ref={tablistRef}
+            role="tablist"
+            aria-label="PsychMind features"
+            className="no-scrollbar -mx-4 flex gap-6 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:gap-10 sm:px-0 md:gap-14"
+          >
+            {tabs.map((t, i) => {
+              const selected = i === active;
+              return (
+                <button
+                  key={t.id}
+                  ref={(el) => {
+                    tabRefs.current[i] = el;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={`feature-tab-${t.id}`}
+                  aria-selected={selected}
+                  aria-controls="feature-panel"
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => select(i)}
+                  onKeyDown={(e) => onTabKeyDown(e, i)}
+                  className={cn(
+                    "relative shrink-0 whitespace-nowrap pt-2 pb-3 font-display text-lg tracking-[-0.01em] transition-colors duration-300 sm:text-display-xs",
+                    selected ? "text-warm-950" : "text-warm-600 hover:text-warm-800",
+                  )}
+                >
+                  {t.label}
+                  {/* Underline: a faint track, filled left → right while the tab is on the clock. */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute inset-x-0 bottom-1 h-px origin-left overflow-hidden bg-warm-300 transition-transform duration-500 ease-out-soft",
+                      selected ? "scale-x-100" : "scale-x-0",
+                    )}
+                  >
+                    {selected && (
+                      <span
+                        key={`${active}-${autoplay}`}
+                        onAnimationEnd={() => autoplay && setActive((a) => (a + 1) % tabs.length)}
+                        className="block h-full origin-left bg-warm-950"
+                        style={
+                          autoplay
+                            ? {
+                                animation: `progress-fill ${TAB_MS}ms linear both`,
+                                animationPlayState: running ? "running" : "paused",
+                              }
+                            : undefined
+                        }
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Capped narrower than the paper-bg backdrop above so the right
-              panel can't balloon to fill however wide the outer card gets. */}
-          <div className="relative w-full max-w-[1040px] mx-auto rounded-xl border border-warm-300 bg-warm-50 flex flex-col md:flex-row gap-2.5 p-2.5 overflow-hidden">
+          {/* Faint lined-paper texture peeking behind a raised card, matches the Figma frame */}
+          <div
+            ref={sectionRef}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className="paper-bg relative w-full overflow-hidden rounded-card p-3 sm:p-6"
+          >
+            {/* washi-tape decorations */}
             <div
-              ref={leftRef}
-              className="flex flex-col justify-center gap-6 sm:gap-8 flex-1 min-w-0 md:max-w-[400px] p-6 sm:p-8"
-            >
-              <div className="flex flex-col gap-6">
-                <h3 className="font-display-alt text-display-md text-text-primary">{tab.title}</h3>
-                <p className="text-lg sm:text-display-xs text-text-placeholder max-w-[371px]">
-                  {tab.description.map((line, i) => (
-                    <span key={i}>
-                      {i > 0 && (
-                        <>
-                          <br />
-                          <br />
-                        </>
-                      )}
-                      {line}
-                    </span>
-                  ))}
-                </p>
-              </div>
-              <a
-                href={tab.ctaHref}
-                className="inline-flex w-fit items-center gap-3 rounded-pill bg-warm-800 px-6 py-3 text-xl font-medium text-white hover:bg-warm-900 transition-colors"
-              >
-                <img src={tab.ctaIcon} alt="" width={24} height={24} />
-                {tab.ctaLabel}
-              </a>
-            </div>
+              className="absolute -top-6 -left-10 hidden h-12 w-40 bg-tape-rose md:block"
+              style={{ transform: "rotate(129.6deg) scaleY(-1)" }}
+            />
+            <div
+              className="absolute -top-6 -right-10 hidden h-12 w-40 bg-tape-rose md:block"
+              style={{ transform: "rotate(50.4deg)" }}
+            />
 
-            {/* Full-bleed panel: flush against the left content and the card's own top/right/bottom edges, no gap or independent rounding */}
-            <div className="flex-1 min-w-0 bg-warm-100 rounded-lg relative min-h-[280px] p-6 flex flex-col gap-6 overflow-hidden">
-              <div ref={boxRef} style={{ opacity: 1 }} className="flex-1 flex flex-col gap-6">
-                <Mockup />
-                <Filler />
+            <div
+              id="feature-panel"
+              role="tabpanel"
+              aria-labelledby={`feature-tab-${tab.id}`}
+              className="relative mx-auto flex w-full max-w-[1040px] flex-col gap-2.5 overflow-hidden rounded-field border border-warm-300 bg-warm-50 p-2.5 shadow-card md:flex-row"
+            >
+              <div key={tab.id} className="flex min-w-0 flex-1 flex-col justify-center gap-8 p-5 sm:p-8 md:max-w-[400px]">
+                <div className="flex flex-col gap-4 sm:gap-5">
+                  <h3 className="animate-rise-in type-h3 font-display-alt! text-text-primary">{tab.title}</h3>
+                  <div className="flex max-w-[371px] flex-col gap-4 type-body-lg text-text-tertiary sm:type-lead">
+                    {tab.description.map((line, i) => (
+                      <p key={line} className="animate-rise-in" style={{ animationDelay: `${80 + i * 80}ms` }}>
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+                <div className="animate-rise-in" style={{ animationDelay: "240ms" }}>
+                  <Button asChild size="lg">
+                    <a href={tab.ctaHref}>
+                      {tab.ctaIcon === "search" && <Icon />}
+                      {tab.ctaLabel}
+                      {tab.ctaIcon === "arrow" && <Icon />}
+                    </a>
+                  </Button>
+                </div>
               </div>
-              {/* Fades whatever's left of the filler's empty space into the panel
-                  background instead of ending on a hard dashed edge. */}
-              <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-warm-100 pointer-events-none rounded-b-lg" />
+
+              {/* Product preview, flush against the card's own edges */}
+              {/* Fixed height so switching tabs never makes the page jump. */}
+              <div className="relative flex h-[440px] min-w-0 flex-1 flex-col overflow-hidden rounded-tag bg-warm-100 p-3 sm:h-[520px] sm:p-5 md:h-[560px]">
+                <div key={tab.id} className="flex flex-1 flex-col justify-center-safe">
+                  <tab.Preview />
+                </div>
+                {/* Fades anything past the panel's height instead of a hard cut. */}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-b from-transparent to-warm-100" />
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </Container>
+      </Reveal>
 
-      <p className="font-display text-text-tertiary text-lg text-center tracking-[-0.46px] max-w-[462px]">
-        &ldquo;PsychMind makes it simple to find the right professional&rdquo; — no referrals, no
-        waitlists, no awkward phone calls.
-      </p>
-    </section>
+      <Reveal className="mt-10 sm:mt-12">
+        <p className="mx-auto max-w-[462px] text-center type-quote-sm text-text-tertiary">
+          &ldquo;PsychMind makes it simple to find the right professional&rdquo; — no referrals, no
+          waitlists, no awkward phone calls.
+        </p>
+      </Reveal>
+    </Section>
   );
 }

@@ -1,6 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
+import { Button } from "@/components/ui/button";
+
+const networks = [
+  {
+    label: "Share on X",
+    icon: "/images/legal/x-icon.svg",
+    base: "https://twitter.com/intent/tweet",
+    param: "url",
+  },
+  {
+    label: "Share on Facebook",
+    icon: "/images/legal/facebook-icon.svg",
+    base: "https://www.facebook.com/sharer/sharer.php",
+    param: "u",
+  },
+  {
+    label: "Share on LinkedIn",
+    icon: "/images/legal/linkedin-icon.svg",
+    base: "https://www.linkedin.com/sharing/share-offsite/",
+    param: "url",
+  },
+];
+
+// Opens the network's share dialog with the current page attached. The
+// plain href stays as a fallback for middle-click / no-JS.
+function share(e: MouseEvent<HTMLAnchorElement>, network: (typeof networks)[number]) {
+  e.preventDefault();
+  const url = `${network.base}?${network.param}=${encodeURIComponent(window.location.href)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
 
 export function ShareButtons() {
   const [copied, setCopied] = useState(false);
@@ -16,41 +46,24 @@ export function ShareButtons() {
   };
 
   return (
-    <div className="flex items-start gap-3">
-      <button
-        onClick={handleCopyLink}
-        className="inline-flex items-center gap-1 rounded-lg border border-warm-300 bg-warm-100 px-3.5 py-2.5 text-sm font-semibold text-warm-700 shadow-sm hover:bg-warm-200 transition-colors"
-      >
-        <img src="/images/legal/copy-icon.svg" alt="" width={20} height={20} />
+    <div className="flex items-center gap-2">
+      <Button variant="secondary" size="sm" className="h-10 sm:h-9" onClick={handleCopyLink} aria-live="polite">
+        <img src="/images/legal/copy-icon.svg" alt="" className="size-4" />
         {copied ? "Copied!" : "Copy link"}
-      </button>
-      <a
-        href="https://twitter.com/intent/tweet"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Share on X"
-        className="inline-flex items-center justify-center rounded-lg border border-warm-300 bg-warm-100 p-2.5 shadow-sm hover:bg-warm-200 transition-colors"
-      >
-        <img src="/images/legal/x-icon.svg" alt="" width={20} height={20} />
-      </a>
-      <a
-        href="https://www.facebook.com/sharer/sharer.php"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Share on Facebook"
-        className="inline-flex items-center justify-center rounded-lg border border-warm-300 bg-warm-100 p-2.5 shadow-sm hover:bg-warm-200 transition-colors"
-      >
-        <img src="/images/legal/facebook-icon.svg" alt="" width={20} height={20} />
-      </a>
-      <a
-        href="https://www.linkedin.com/sharing/share-offsite"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Share on LinkedIn"
-        className="inline-flex items-center justify-center rounded-lg border border-warm-300 bg-warm-100 p-2.5 shadow-sm hover:bg-warm-200 transition-colors"
-      >
-        <img src="/images/legal/linkedin-icon.svg" alt="" width={20} height={20} />
-      </a>
+      </Button>
+      {networks.map((network) => (
+        <Button key={network.label} asChild variant="secondary" size="icon-sm" className="size-10 sm:size-9">
+          <a
+            href={network.base}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={network.label}
+            onClick={(e) => share(e, network)}
+          >
+            <img src={network.icon} alt="" className="size-4" />
+          </a>
+        </Button>
+      ))}
     </div>
   );
 }

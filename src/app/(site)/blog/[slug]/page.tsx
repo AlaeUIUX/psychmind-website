@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
-import { ShareButtons } from "@/components/shared/share-buttons";
+import { Reveal } from "@/components/reveal";
+import { AuthorBar } from "@/components/shared/author-bar";
+import { Container, Section } from "@/components/ui/section";
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }));
@@ -34,90 +36,88 @@ export default async function BlogPostPage({
   const { frontmatter, content } = post;
 
   return (
-    <article className="w-full flex flex-col items-center gap-12 sm:gap-16 pb-20 sm:pb-32 md:pb-40">
-      <div className="w-full flex flex-col items-center gap-4 max-w-[720px] px-4 sm:px-8 pt-6 sm:pt-16 text-center">
-        <p className="text-warm-600 text-lg sm:text-display-xs">
-          {frontmatter.readTime} · {frontmatter.date}
-        </p>
-        <h1 className="font-display text-warm-900 text-[36px] sm:text-[48px] md:text-display-lg leading-[1.1] md:leading-[60px]">
-          {frontmatter.title}
-        </h1>
-        <div className="flex items-center gap-3 text-lg sm:text-display-xs">
-          <span className="text-warm-600">{frontmatter.category}</span>
-          <span className="size-[3px] shrink-0 rounded-full bg-[rgba(21,40,68,0.1)]" />
-          <span className="font-medium text-brand-primary">{frontmatter.author}</span>
-        </div>
-      </div>
+    <article className="flex w-full flex-col pb-20 sm:pb-28 md:pb-32">
+      <Section spacing="none" className="pt-6 pb-10 sm:pt-12 sm:pb-14">
+        <Reveal trigger="load" className="mx-auto flex max-w-[720px] flex-col items-center gap-4 text-center">
+          <p className="type-lead text-text-tertiary">
+            {frontmatter.readTime} · {frontmatter.date}
+          </p>
+          <h1 className="type-display text-text-primary">{frontmatter.title}</h1>
+          <div className="flex items-center gap-3 type-lead">
+            <span className="text-text-tertiary">{frontmatter.category}</span>
+            <span aria-hidden className="size-1 shrink-0 rounded-full bg-warm-600/40" />
+            <span className="font-medium text-brand-primary">{frontmatter.author}</span>
+          </div>
+        </Reveal>
+      </Section>
 
       {frontmatter.heroImage && (
-        <div className="w-full max-w-[1440px] px-4 sm:px-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={frontmatter.heroImage}
-            alt=""
-            className="w-full max-h-[521px] rounded-[20px] object-contain"
-          />
-        </div>
+        <Section spacing="none" className="pb-12 sm:pb-16">
+          <Reveal trigger="load" delay={250} className="mx-auto w-full max-w-[1240px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={frontmatter.heroImage}
+              alt=""
+              className="max-h-[521px] w-full rounded-card object-contain"
+            />
+          </Reveal>
+        </Section>
       )}
 
-      <div className="w-full max-w-[720px] px-4 sm:px-8 flex flex-col items-start gap-6 text-lg leading-[28px] text-text-tertiary [&_strong]:font-medium [&_strong]:text-warm-900 [&_a]:underline [&_a:hover]:text-warm-900 [&_a]:transition-colors">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            h2: ({ children }) => (
-              <h2 className="font-sans font-semibold text-warm-900 text-display-xs pt-8 pb-2 first:pt-0">
-                {children}
-              </h2>
-            ),
-            p: ({ children }) => <p className="leading-[28px]">{children}</p>,
-            ul: ({ children }) => (
-              <ul className="list-disc pl-[27px] flex flex-col gap-1">{children}</ul>
-            ),
-            ol: ({ children }) => (
-              <ol className="list-decimal pl-[27px] flex flex-col gap-1">{children}</ol>
-            ),
-            li: ({ children }) => <li className="leading-[28px]">{children}</li>,
-            blockquote: ({ children }) => (
-              <blockquote className="flex flex-col gap-2 border-l-2 border-warm-300 pl-5 py-2 [&>p:first-child]:font-medium [&>p:first-child]:text-display-xs [&>p:first-child]:leading-[32px] [&>p:first-child]:text-warm-900 [&>p:last-child]:text-md [&>p:last-child]:leading-6 [&>p:last-child]:text-text-tertiary">
-                {children}
-              </blockquote>
-            ),
-            img: ({ src, alt }) => (
-              <span className="flex flex-col gap-1.5 w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={typeof src === "string" ? src : undefined}
-                  alt={alt || ""}
-                  className="w-full rounded-[20px] object-cover"
-                />
-                {alt && <span className="text-sm text-text-tertiary">{alt}</span>}
-              </span>
-            ),
-          }}
+      <Section spacing="none">
+        <Container
+          size="prose"
+          className="flex flex-col items-start gap-6 type-body-lg text-text-tertiary [&_a]:underline [&_a]:underline-offset-2 [&_a]:transition-colors [&_a:hover]:text-text-primary [&_strong]:font-medium [&_strong]:text-text-primary"
         >
-          {content}
-        </ReactMarkdown>
-      </div>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              h2: ({ children }) => (
+                <h2 className="pt-6 type-h4 text-text-primary first:pt-0">{children}</h2>
+              ),
+              p: ({ children }) => <p>{children}</p>,
+              ul: ({ children }) => <ul className="flex list-disc flex-col gap-1.5 pl-6">{children}</ul>,
+              ol: ({ children }) => <ol className="flex list-decimal flex-col gap-1.5 pl-6">{children}</ol>,
+              li: ({ children }) => <li className="pl-1 marker:text-warm-600/60">{children}</li>,
+              blockquote: ({ children }) => (
+                <blockquote className="flex flex-col gap-2 border-l-2 border-brand-primary py-1 pl-5 [&>p:first-child]:type-h4 [&>p:first-child]:text-text-primary [&>p:last-child]:type-body [&>p:last-child]:text-text-tertiary">
+                  {children}
+                </blockquote>
+              ),
+              img: ({ src, alt }) => (
+                <span className="flex w-full flex-col gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={typeof src === "string" ? src : undefined}
+                    alt={alt || ""}
+                    className="w-full rounded-card object-cover"
+                  />
+                  {alt && <span className="type-small text-text-tertiary">{alt}</span>}
+                </span>
+              ),
+            }}
+          >
+            {content}
+          </ReactMarkdown>
 
-      <div className="w-full max-w-[720px] px-4 sm:px-8 flex flex-wrap items-start justify-between gap-y-6 border-t border-warm-200 pt-6">
-        <div className="flex items-center gap-3">
-          {frontmatter.authorAvatar && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={frontmatter.authorAvatar}
-              alt=""
-              className="size-12 shrink-0 rounded-full object-cover"
+          <div className="mt-6 w-full">
+            <AuthorBar
+              name={frontmatter.author}
+              role={frontmatter.authorTitle}
+              avatar={
+                frontmatter.authorAvatar && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={frontmatter.authorAvatar}
+                    alt=""
+                    className="size-12 shrink-0 rounded-full object-cover ring-1 ring-black/[0.06]"
+                  />
+                )
+              }
             />
-          )}
-          <div className="flex flex-col text-md leading-6">
-            <span className="font-semibold text-warm-900">{frontmatter.author}</span>
-            {frontmatter.authorTitle && (
-              <span className="text-text-tertiary">{frontmatter.authorTitle}</span>
-            )}
           </div>
-        </div>
-        <ShareButtons />
-      </div>
+        </Container>
+      </Section>
     </article>
   );
 }

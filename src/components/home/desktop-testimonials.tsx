@@ -1,7 +1,13 @@
 "use client";
 
 import { animate } from "animejs";
-import { useEffect, useRef, type PointerEvent } from "react";
+import { cn } from "cn";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { Reveal } from "@/components/reveal";
+import { ReviewBlock } from "@/components/shared/review-block";
+import { Button } from "@/components/ui/button";
+import { ArrowRightIcon } from "@/components/ui/icons";
+import { Container, Section } from "@/components/ui/section";
 import { reviews } from "./reviews-data";
 
 type RoleStyle = {
@@ -27,8 +33,14 @@ const ROLE_STYLE: RoleStyle[] = [
 // instead of just sliding sideways off the stack.
 const EXIT_UNDER: RoleStyle = { x: -20, y: 46, z: -180, rotate: -4, scale: 0.86, zIndex: 5 };
 
-const EASE = "inCubic";
-const DURATION = 480;
+// Same curve as --ease-out-soft in globals.css.
+const EASE = "cubicBezier(0.22, 1, 0.36, 1)";
+const DURATION = 560;
+const AUTO_MS = 6500;
+
+function reducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 function applyRole(el: HTMLDivElement, role: RoleStyle, animated: boolean) {
   return animate(el, {
@@ -37,22 +49,22 @@ function applyRole(el: HTMLDivElement, role: RoleStyle, animated: boolean) {
     translateZ: role.z,
     rotate: `${role.rotate}deg`,
     scale: role.scale,
-    duration: animated ? DURATION : 0,
+    duration: animated && !reducedMotion() ? DURATION : 0,
     ease: EASE,
   });
 }
 
 // Desktop-only counterpart to <TestimonialCard /> (which is mobile-only). Each
 // card element permanently owns one review; only its role (front / back1 /
-// back2) rotates. Dragging the front card past a threshold sends it under
-// the stack (z-index drops immediately, animates further back than the
-// resting back-of-stack spot) while the other two advance forward one slot.
+// back2) rotates. Drag the front card past a threshold — or use the arrow
+// buttons / dots — to send it under the stack while the other two advance.
 export function DesktopTestimonials() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const order = useRef<number[]>(reviews.map((_, i) => i));
   const phase = useRef<"idle" | "dragging" | "animating">("idle");
   const dragStartX = useRef(0);
   const dragEl = useRef<HTMLDivElement | null>(null);
+  const [front, setFront] = useState(0);
 
   useEffect(() => {
     order.current.forEach((reviewIndex, role) => {
@@ -63,7 +75,32 @@ export function DesktopTestimonials() {
     });
   }, []);
 
+  // Gently shuffles to the next review on its own while the stack is on
+  // screen; hovering (or reading) it holds the current card.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!inView || hovered || reducedMotion()) return;
+    const t = setInterval(() => {
+      if (phase.current === "idle") advance(1);
+    }, AUTO_MS);
+    return () => clearInterval(t);
+    // `advance` only touches refs and a state setter, so a stale copy is safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView, hovered]);
+
   function advance(direction: 1 | -1) {
+    if (phase.current === "animating") return;
     phase.current = "animating";
     const current = order.current;
     const outgoingReviewIndex = current[0];
@@ -73,6 +110,7 @@ export function DesktopTestimonials() {
       direction === 1
         ? [current[1], current[2], current[0]]
         : [current[2], current[0], current[1]];
+    setFront(nextOrder[0]);
 
     const animations = nextOrder.map((reviewIndex, role) => {
       const el = cardRefs.current[reviewIndex];
@@ -95,6 +133,12 @@ export function DesktopTestimonials() {
       }
       phase.current = "idle";
     });
+  }
+
+  function goTo(reviewIndex: number) {
+    const position = order.current.indexOf(reviewIndex);
+    if (position === 1) advance(1);
+    else if (position === 2) advance(-1);
   }
 
   function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
@@ -121,8 +165,10 @@ export function DesktopTestimonials() {
     const threshold = 110;
 
     if (dragX <= -threshold) {
+      phase.current = "idle";
       advance(1);
     } else if (dragX >= threshold) {
+      phase.current = "idle";
       advance(-1);
     } else {
       phase.current = "animating";
@@ -133,36 +179,68 @@ export function DesktopTestimonials() {
   }
 
   return (
-    <section className="hidden md:flex w-full flex-col items-center gap-10 px-12 lg:px-20 py-16">
-      <div className="relative w-full max-w-[947px] h-[520px] [perspective:1400px]">
-        {reviews.map((review, i) => (
+    <Section className="hidden md:block">
+      <Container className="max-w-[947px]">
+        <Reveal>
           <div
-            key={review.author}
-            ref={(el) => {
-              cardRefs.current[i] = el;
-            }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            className="absolute inset-0 rounded-[20px] cursor-grab select-none touch-none active:cursor-grabbing will-change-transform"
-            style={{ background: review.bg }}
+            ref={stageRef}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="Reviews"
+            className="relative h-[420px] [perspective:1400px] lg:h-[460px]"
           >
-            <div className="flex h-full flex-col items-center justify-center gap-6 px-10 lg:px-24 py-16 text-center">
-              <span className="inline-flex items-center gap-2.5 rounded-pill border border-black/10 bg-warm-25 pl-2 pr-4 py-2 text-lg font-medium">
-                <img src="/images/home/reviews-badge-icon.svg" alt="" width={28} height={28} />
-                <span className="bg-gradient-to-r from-[#44403c] to-[#787878] bg-clip-text text-transparent">
-                  Reviews
-                </span>
-              </span>
-              <p className="max-w-[620px] font-display text-[32px] text-[#1c1c1c] tracking-[-0.4px] leading-[1.35]">
-                &ldquo;{review.quote}&rdquo;
-              </p>
-              <p className="font-display text-xl text-warm-600">{review.author}</p>
-            </div>
+            {reviews.map((review, i) => (
+              <div
+                key={review.author}
+                ref={(el) => {
+                  cardRefs.current[i] = el;
+                }}
+                aria-hidden={i !== front}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                className={cn(
+                  "absolute inset-0 flex cursor-grab touch-none select-none items-center justify-center rounded-card px-10 py-16 shadow-card will-change-transform active:cursor-grabbing lg:px-24",
+                  review.bg,
+                )}
+              >
+                <ReviewBlock quote={review.quote} author={review.author} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </section>
+
+          <div className="mt-8 flex items-center justify-center gap-5">
+            <Button variant="secondary" size="icon" aria-label="Previous review" onClick={() => advance(-1)}>
+              <ArrowRightIcon className="rotate-180" />
+            </Button>
+            <div className="flex items-center gap-2">
+              {reviews.map((review, i) => (
+                <button
+                  key={review.author}
+                  type="button"
+                  aria-label={`Show review ${i + 1} of ${reviews.length}`}
+                  aria-current={i === front}
+                  onClick={() => goTo(i)}
+                  className="group flex h-6 items-center px-1"
+                >
+                  <span
+                    className={cn(
+                      "block h-1.5 rounded-full transition-all duration-500 ease-out-soft",
+                      i === front ? "w-6 bg-warm-900" : "w-1.5 bg-warm-300 group-hover:bg-warm-600",
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+            <Button variant="secondary" size="icon" aria-label="Next review" onClick={() => advance(1)}>
+              <ArrowRightIcon />
+            </Button>
+          </div>
+        </Reveal>
+      </Container>
+    </Section>
   );
 }

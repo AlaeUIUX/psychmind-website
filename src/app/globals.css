@@ -15,6 +15,8 @@
 
   /* Brand */
   --color-brand-primary: #c01048;
+  --color-brand-primary-hover: #a30d3d;
+  --color-brand-soft: #fdf1f4;
 
   /* Warm gray scale (Figma: Colors/Background/*) */
   --color-warm-25: #fdfdfc;
@@ -28,12 +30,25 @@
   --color-warm-900: #1c1917;
   --color-warm-950: #171412;
 
-  /* Text roles */
+  /* Text roles. One color per job:
+     primary   – headings, titles, emphasis
+     secondary – hero ledes, UI labels
+     tertiary  – supporting copy (section subtitles, descriptions, body)
+     placeholder – meta lines, inactive states, input placeholders */
   --color-text-primary: #1c1917;
   --color-text-secondary: #44403c;
   --color-text-tertiary: #57534e;
   --color-text-placeholder: #79716b;
   --color-text-on-brand: #ffffff;
+
+  /* Decorative accents from the Figma file (washi tape, review cards, paper). */
+  --color-tape-rose: #ffd9dc;
+  --color-tape-lilac: #e0d9ff;
+  --color-review-lemon: #ffffe9;
+  --color-review-mint: #e9fff3;
+  --color-review-lilac: #f5f5fb;
+  --color-blush-25: #fdf9f9;
+  --color-paper-rule: rgb(59 130 246 / 0.16);
 
   /* shadcn/ui primitive tokens, mapped onto the palette above so imported
      components (e.g. the login page) render in PsychMind's own language
@@ -70,10 +85,29 @@
   --spacing-10xl: 128px;
   --spacing-11xl: 160px;
 
-  /* Radii */
+  /* Radii. Each size has one job; nested surfaces step down a size so
+     inner corners stay concentric with their parent.
+     tag   – chips, tags, small badges
+     field – inputs, inner images, nested panels
+     card  – cards and content panels
+     panel – large feature panels (the hero search bar) */
   --radius-md: 8px;
+  --radius-tag: 8px;
+  --radius-field: 12px;
+  --radius-card: 20px;
   --radius-4xl: 24px;
+  --radius-panel: 36px;
   --radius-pill: 9999px;
+
+  /* Elevation: a tight contact shadow + a soft ambient one, tinted with
+     warm ink instead of pure black so it reads as paper, not plastic. */
+  --shadow-control: 0 1px 2px rgb(28 25 23 / 0.05);
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 16px 32px -18px rgb(28 25 23 / 0.2);
+  --shadow-raised: 0 2px 6px rgb(28 25 23 / 0.05), 0 28px 56px -24px rgb(28 25 23 / 0.3);
+
+  /* Motion: two curves, used everywhere. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 
   /* Type scale (Figma: Font size / Line height) */
   --text-xs: 12px;
@@ -94,15 +128,352 @@
   --text-display-md--line-height: 44px;
   --text-display-lg: 60px;
   --text-display-lg--line-height: 60px;
+
+  --animate-float: float 7s ease-in-out infinite alternate;
+  /* Product-preview motion (components/shared/product-preview.tsx). Delays
+     are set per element with inline animation-delay. */
+  --animate-rise-in: rise-in 650ms var(--ease-out-soft) both;
+  --animate-pop-in: pop-in 520ms var(--ease-spring) both;
+  --animate-fade-in: fade-in 400ms ease-out both;
+  --animate-caret: caret 1s steps(1) infinite;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-/* Hides the scrollbar on horizontally-scrollable rows (e.g. the stats strip)
-   while keeping the element scrollable via touch/drag/trackpad. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Fills an element left → right over --progress-duration (tab / step timers). */
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The founders' tape strip: drifts left then back while hovered. */
+@keyframes tape-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Circular timer ring around the active step number (stroke-dasharray = --ring). */
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: var(--ring);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Padlock shackle dropping shut (privacy preview). */
+@keyframes lock-shut {
+  from {
+    transform: translateY(-3px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* A strip of tape pressed onto the page. */
+@keyframes tape-stick {
+  from {
+    opacity: 0;
+    scale: 1.15;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes float {
+  from {
+    translate: 0 -5px;
+  }
+  to {
+    translate: 0 5px;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Typography roles
+   Every piece of text on the site uses exactly one of these. Size, leading,
+   tracking and weight travel together, and each role steps down on small
+   screens so hierarchy survives on phones. Color is applied separately with
+   the text-* role colors above.
+   ------------------------------------------------------------------------ */
+
+/* Page H1 — one per page. */
+@utility type-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 40px;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 48px;
+    line-height: 52px;
+  }
+  @media (width >= 48rem) {
+    font-size: 60px;
+    line-height: 64px;
+  }
+}
+
+/* Section H2. */
+@utility type-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 36px;
+    line-height: 44px;
+  }
+}
+
+/* Serif card / panel heading. */
+@utility type-h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 32px;
+    line-height: 40px;
+  }
+}
+
+/* Long-form H2 (articles, legal) and small serif headings. */
+@utility type-h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 30px;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+
+/* Sans card title (blog cards). */
+@utility type-title-lg {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+  @media (width >= 40rem) {
+    font-size: 22px;
+    line-height: 30px;
+  }
+}
+
+/* Sans feature / step title. */
+@utility type-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 26px;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+  @media (width >= 40rem) {
+    font-size: 20px;
+    line-height: 28px;
+  }
+}
+
+/* Body roles set size and leading only; weight and family inherit, so they
+   combine safely with font-medium etc. */
+
+/* Hero lede and section subtitle. */
+@utility type-lead {
+  font-size: 18px;
+  line-height: 28px;
+  text-wrap: pretty;
+  @media (width >= 40rem) {
+    font-size: 22px;
+    line-height: 32px;
+  }
+}
+
+@utility type-body-lg {
+  font-size: 18px;
+  line-height: 28px;
+  text-wrap: pretty;
+}
+
+@utility type-body {
+  font-size: 16px;
+  line-height: 24px;
+  text-wrap: pretty;
+}
+
+@utility type-small {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility type-caption {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* Micro label: specialties, credentials, prices. */
+@utility type-overline {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Large testimonial quote. */
+@utility type-quote {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 32px;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 28px;
+    line-height: 38px;
+  }
+  @media (width >= 48rem) {
+    font-size: 32px;
+    line-height: 44px;
+  }
+}
+
+/* Small serif quote / pull quote. */
+@utility type-quote-sm {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* Editorial statement (the founders' note). */
+@utility type-statement {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 36px;
+  letter-spacing: -0.025em;
+  text-wrap: pretty;
+  @media (width >= 40rem) {
+    font-size: 36px;
+    line-height: 56px;
+  }
+}
+
+/* Large serif number. */
+@utility type-stat {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 40px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  @media (width >= 48rem) {
+    font-size: 44px;
+    line-height: 52px;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Surfaces
+   ------------------------------------------------------------------------ */
+
+/* The soft gradient card (blog cards, featured post). */
+@utility surface-soft {
+  background-image: linear-gradient(135deg, #f6f6f5 0%, #f8f8f7 50%, #fcfcfb 100%);
+  border: 1px solid rgb(0 0 0 / 0.06);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: #fbdce5;
+    color: var(--color-warm-900);
+  }
+
+  /* One focus ring for every interactive element on the site. `outline`
+     follows border-radius, so pills get pill-shaped rings. */
+  :where(a, button, [role="tab"], [role="button"], summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 3px;
+  }
+}
+
+/* Hides the scrollbar on horizontally-scrollable rows while keeping the
+   element scrollable via touch/drag/trackpad. */
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -111,20 +482,146 @@ body {
   display: none;
 }
 
-/* The recurring "lined paper" background (smart-search card, mission quote box,
-   footer CTA). Drawn in CSS instead of stretching an exported bitmap, so the grid
-   stays correctly scaled no matter how big or small the box is. */
+/* The recurring "lined paper" background (smart-search card, mission quote box).
+   Drawn in CSS instead of stretching an exported bitmap, so the grid stays
+   correctly scaled no matter how big or small the box is. */
 .paper-bg {
   background-color: var(--color-warm-25);
   background-image:
     linear-gradient(to bottom, var(--color-brand-primary) 0, var(--color-brand-primary) 1px, transparent 1px),
     repeating-linear-gradient(
       to right,
-      rgba(59, 130, 246, 0.16) 0,
-      rgba(59, 130, 246, 0.16) 1px,
+      var(--color-paper-rule) 0,
+      var(--color-paper-rule) 1px,
       transparent 1px,
       transparent 40px
     );
   background-repeat: no-repeat, repeat;
   background-size: 100% 100%, 100% 100%;
+}
+
+/* ------------------------------------------------------------------------
+   Reveal motion (see components/reveal.tsx)
+   Scroll reveals only hide content when scripting is enabled (the script is
+   what shows it again), so the page is never blank for no-JS visitors or
+   crawlers. Browsers without `scripting` media support simply don't animate.
+   - [data-reveal]         fades + lifts in when scrolled into view (once).
+   - [data-reveal-stagger] does the same for each direct child, 80ms apart.
+   - [data-reveal-load]    plays on first paint (above-the-fold heroes) with
+                           pure CSS, so it never waits on hydration.
+   ------------------------------------------------------------------------ */
+/* Animates `transform` (not `translate`) with a backwards fill: once the
+   animation ends nothing lingers, so elements keep their own Tailwind
+   translate/transition utilities (hover lifts, centering) untouched. */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal]:not([data-revealed]),
+  [data-reveal-stagger]:not([data-revealed]) > * {
+    opacity: 0;
+  }
+  [data-reveal][data-revealed],
+  [data-reveal-stagger][data-revealed] > * {
+    animation: reveal-in 900ms var(--ease-out-soft) backwards;
+    animation-delay: calc(var(--reveal-delay, 0ms) + var(--i, 0) * 80ms);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal-load] > * {
+    animation: reveal-in 1000ms var(--ease-out-soft) backwards;
+    animation-delay: calc(var(--reveal-delay, 0ms) + var(--i, 0) * 90ms);
+  }
+}
+
+[data-reveal-stagger] > :nth-child(2),
+[data-reveal-load] > :nth-child(2) {
+  --i: 1;
+}
+[data-reveal-stagger] > :nth-child(3),
+[data-reveal-load] > :nth-child(3) {
+  --i: 2;
+}
+[data-reveal-stagger] > :nth-child(4),
+[data-reveal-load] > :nth-child(4) {
+  --i: 3;
+}
+[data-reveal-stagger] > :nth-child(5),
+[data-reveal-load] > :nth-child(5) {
+  --i: 4;
+}
+[data-reveal-stagger] > :nth-child(6),
+[data-reveal-load] > :nth-child(6) {
+  --i: 5;
+}
+[data-reveal-stagger] > :nth-child(7),
+[data-reveal-load] > :nth-child(7) {
+  --i: 6;
+}
+[data-reveal-stagger] > :nth-child(n + 8),
+[data-reveal-load] > :nth-child(n + 8) {
+  --i: 7;
+}
+
+/* One global reduced-motion rule instead of per-component checks. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Founders' note (components/home/mission-teaser.tsx) ---------------------
+   The tape strip drifts left and back while the note is hovered, and just
+   drifts slowly on touch screens, which have no hover. */
+.tape-marquee {
+  animation: tape-drift 26s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+[data-note]:hover .tape-marquee {
+  animation-play-state: running;
+}
+@media (hover: none) {
+  .tape-marquee {
+    animation-duration: 40s;
+    animation-play-state: running;
+  }
+}
+
+/* Corner tapes press on just after the note itself has landed. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal] > .tape {
+    opacity: 0;
+  }
+  [data-reveal][data-revealed] > .tape {
+    animation: tape-stick 500ms var(--ease-out-soft) 550ms both;
+  }
+}
+
+/* Preview chip being picked: outlined → filled ink. */
+@keyframes chip-select {
+  from {
+    background-color: #ffffff;
+    border-color: var(--color-warm-300);
+    color: var(--color-text-secondary);
+  }
+  to {
+    background-color: var(--color-warm-900);
+    border-color: var(--color-warm-900);
+    color: #ffffff;
+  }
 }

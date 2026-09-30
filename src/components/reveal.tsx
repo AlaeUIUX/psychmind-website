@@ -1,59 +1,80 @@
 "use client";
 
-import { animate } from "animejs";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 
-const OFFSET = 28;
-const IN_DURATION = 650;
-const OUT_DURATION = 450;
-const EASE = "outQuad";
+type RevealTag = "div" | "section" | "header" | "ul" | "ol" | "li" | "article" | "p" | "span";
 
 type RevealProps = {
   children: ReactNode;
   className?: string;
-  /** Fraction of the element that must be visible to trigger the reveal. */
-  threshold?: number;
+  style?: CSSProperties;
+  as?: RevealTag;
+  /**
+   * `scroll` (default) — fades + lifts in once it scrolls into view.
+   * `load` — plays immediately on first paint; use for above-the-fold heroes
+   * so they never wait on hydration.
+   */
+  trigger?: "scroll" | "load";
+  /** Animate each direct child in sequence instead of the element as a whole. */
+  stagger?: boolean;
+  /** Extra delay before the (first) item animates, in ms. */
+  delay?: number;
+  id?: string;
 };
 
-// Fades + lifts a section in once it crosses into view, and reverses the
-// same animation if it leaves the viewport in either direction — so
-// scrolling back up makes already-seen sections settle back out instead of
-// snapping away. Each instance owns one IntersectionObserver; a handful of
-// these per page is negligible.
-export function Reveal({ children, className, threshold = 0.15 }: RevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const visible = useRef(false);
+// The motion itself lives in globals.css ("Reveal motion"); this component
+// only flags elements and, for scroll reveals, sets `data-revealed` the first
+// time they enter the viewport. It animates once and stays put — sections
+// don't fade back out when you scroll past them.
+export function Reveal({
+  children,
+  className,
+  style,
+  as = "div",
+  trigger = "scroll",
+  stagger = false,
+  delay = 0,
+  id,
+}: RevealProps) {
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.style.opacity = "1";
-      el.style.transform = "none";
-      return;
-    }
+    if (!el || trigger === "load") return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !visible.current) {
-          visible.current = true;
-          animate(el, { opacity: 1, translateY: 0, duration: IN_DURATION, ease: EASE });
-        } else if (!entry.isIntersecting && visible.current) {
-          visible.current = false;
-          animate(el, { opacity: 0, translateY: OFFSET, duration: OUT_DURATION, ease: EASE });
-        }
+        if (!entry.isIntersecting) return;
+        el.setAttribute("data-revealed", "");
+        observer.disconnect();
       },
-      { threshold, rootMargin: "0px 0px -8% 0px" },
+      // threshold 0 so even very tall elements trigger; the negative bottom
+      // margin waits until the element is a little way into the viewport.
+      { threshold: 0, rootMargin: "0px 0px -12% 0px" },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [threshold]);
+  }, [trigger]);
+
+  const flags =
+    trigger === "load"
+      ? { "data-reveal-load": "" }
+      : stagger
+        ? { "data-reveal-stagger": "" }
+        : { "data-reveal": "" };
+
+  const Tag = as as ElementType;
 
   return (
-    <div ref={ref} className={className} style={{ opacity: 0, transform: `translateY(${OFFSET}px)` }}>
+    <Tag
+      ref={ref}
+      id={id}
+      className={className}
+      style={delay ? ({ "--reveal-delay": `${delay}ms`, ...style } as CSSProperties) : style}
+      {...flags}
+    >
       {children}
-    </div>
+    </Tag>
   );
 }

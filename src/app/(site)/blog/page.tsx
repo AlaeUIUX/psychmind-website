@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/blog/hero";
 import { FeaturedPost } from "@/components/blog/featured-post";
 import { PostGrid } from "@/components/blog/post-grid";
+import { Container, Section } from "@/components/ui/section";
 import { getAllPosts } from "@/lib/blog";
-import { Reveal } from "@/components/reveal";
 
 export const metadata: Metadata = {
   title: "Resource center — PsychMind",
@@ -16,18 +16,14 @@ export default function BlogPage() {
   const rest = posts.filter((post) => post.slug !== featured?.slug);
 
   return (
-    <section className="w-full flex flex-col items-center gap-10 pb-20 sm:pb-32 md:pb-40">
-      <Reveal>
-        <Hero />
-      </Reveal>
-      {featured && (
-        <Reveal>
-          <FeaturedPost post={featured} />
-        </Reveal>
-      )}
-      <Reveal>
-        <PostGrid posts={rest} />
-      </Reveal>
-    </section>
+    <>
+      <Hero />
+      <Section spacing="none" className="pb-16 sm:pb-24">
+        <Container className="flex flex-col gap-4 sm:gap-6">
+          {featured && <FeaturedPost post={featured} />}
+          <PostGrid posts={rest} />
+        </Container>
+      </Section>
+    </>
   );
 }

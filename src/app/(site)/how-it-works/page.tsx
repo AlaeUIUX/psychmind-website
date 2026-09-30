@@ -4,7 +4,6 @@ import { ProcessSteps } from "@/components/how-it-works/process-steps";
 import { ProfileShowcase } from "@/components/how-it-works/profile-showcase";
 import { ReviewQuote } from "@/components/how-it-works/review-quote";
 import { FaqSection } from "@/components/how-it-works/faq-section";
-import { Reveal } from "@/components/reveal";
 
 export const metadata: Metadata = {
   title: "How it works — PsychMind",
@@ -15,21 +14,11 @@ export const metadata: Metadata = {
 export default function HowItWorksPage() {
   return (
     <>
-      <Reveal>
-        <Hero />
-      </Reveal>
-      <Reveal>
-        <ProcessSteps />
-      </Reveal>
-      <Reveal>
-        <ProfileShowcase />
-      </Reveal>
-      <Reveal>
-        <ReviewQuote />
-      </Reveal>
-      <Reveal>
-        <FaqSection />
-      </Reveal>
+      <Hero />
+      <ProcessSteps />
+      <ProfileShowcase />
+      <ReviewQuote />
+      <FaqSection />
     </>
   );
 }

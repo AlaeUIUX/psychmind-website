@@ -3,44 +3,70 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
 
+// The one button for the whole site. Rules:
+// - One shape (pill), one weight (500), one hover rule per variant, and a
+//   slight press-down on every button.
+// - Sizes step down on small screens, so CTAs never balloon on phones:
+//   lg is 48px tall on mobile and 56px from `sm` up.
+// - Icons are inline SVGs sized by the button (`[&_svg]`), so icon and label
+//   always scale together. The circle-arrow CTA icon turns to point forward
+//   on hover (see CircleArrowIcon).
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  [
+    "group/button relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-pill font-medium select-none",
+    "transition-[background-color,border-color,color,box-shadow,scale] duration-200 ease-out-soft active:scale-[0.97]",
+    "disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:transition-[rotate,translate] [&_svg]:duration-300 [&_svg]:ease-out-soft",
+  ],
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        /** Ink — the default call to action. */
+        primary: "bg-warm-900 text-white hover:bg-warm-800 [&_svg]:text-warm-300",
+        /** Crimson — reserved for the single most important action in a view. */
+        brand: "bg-brand-primary text-white hover:bg-brand-primary-hover [&_svg]:text-white/80",
+        /** Quiet bordered button on light surfaces. */
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "border border-warm-200 bg-white text-warm-800 shadow-control hover:border-warm-300 hover:bg-warm-50 [&_svg]:text-warm-600",
+        ghost: "text-text-primary hover:bg-warm-100",
+
+        // shadcn aliases (used by the login page)
+        default: "bg-brand-primary text-white hover:bg-brand-primary-hover",
+        outline:
+          "border border-warm-200 bg-white text-warm-800 shadow-control hover:border-warm-300 hover:bg-warm-50",
+        destructive: "bg-destructive text-white hover:bg-destructive/90",
+        link: "rounded-none text-brand-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        sm: "h-9 px-3.5 text-sm [&_svg]:size-4",
+        md: "h-11 px-5 text-md [&_svg]:size-[18px]",
+        lg: "h-12 px-5 text-md [&_svg]:size-5 sm:h-14 sm:gap-2.5 sm:px-7 sm:text-lg sm:[&_svg]:size-[22px]",
+        icon: "size-11 [&_svg]:size-[18px]",
+        "icon-sm": "size-9 [&_svg]:size-4",
+
+        // shadcn alias
+        default: "h-10 px-4 text-sm [&_svg]:size-4",
+      },
+      fullWidth: {
+        true: "w-full",
+        /** Full width on phones only. */
+        mobile: "w-full sm:w-auto",
+        false: "",
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: "primary",
+      size: "md",
+      fullWidth: false,
     },
   }
 )
 
 function Button({
   className,
-  variant = "default",
-  size = "default",
+  variant,
+  size,
+  fullWidth,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
@@ -54,7 +80,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, fullWidth, className }))}
       {...props}
     />
   )

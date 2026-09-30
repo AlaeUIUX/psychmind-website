@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/contact/hero";
 import { ContactForm } from "@/components/contact/contact-form";
-import { Reveal } from "@/components/reveal";
 
 export const metadata: Metadata = {
   title: "Contact — PsychMind",
@@ -12,12 +11,8 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <Reveal>
-        <Hero />
-      </Reveal>
-      <Reveal>
-        <ContactForm />
-      </Reveal>
+      <Hero />
+      <ContactForm />
     </>
   );
 }

@@ -25,7 +25,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="flex items-center justify-between md:hidden">
         <Link href="/" className="flex items-center gap-2.5">
-          <img src="/images/home/logo.svg" alt="PsychMind" width={28} height={28} />
+          <img src="/images/home/logo.svg" alt="" width={28} height={28} />
           <span className="font-display text-warm-900 text-lg">PsychMind</span>
         </Link>
         <button
@@ -49,7 +49,7 @@ export function LoginForm({
                 <span className="text-sm font-medium text-muted-foreground">
                   Welcome back
                 </span>
-                <h1 className="font-display text-display-xs text-warm-900">
+                <h1 className="type-h4 text-text-primary">
                   Log in to PsychMind
                 </h1>
                 <p className="text-balance text-sm text-muted-foreground">
@@ -83,13 +83,15 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <Button type="submit">Continue</Button>
+                <Button type="submit" variant="brand" fullWidth>
+                  Continue
+                </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
               <Field>
-                <Button variant="outline" type="button" className="w-full">
+                <Button variant="secondary" type="button" fullWidth>
                   <img src="/images/login/google-icon.svg" alt="" width={16} height={16} />
                   Continue with Google
                 </Button>
