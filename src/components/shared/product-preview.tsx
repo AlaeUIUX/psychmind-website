@@ -3,6 +3,8 @@
 import { cn } from "cn";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { SearchIcon, SendIcon } from "@/components/ui/icons";
+import { SessionModeSwitch } from "./session-mode-switch";
+import { providerPhoto } from "@/lib/photos";
 
 // Miniature, non-interactive versions of the real product screens from the
 // Figma file (Search results 150:3859, Booking flow 194:14789) used to
@@ -42,13 +44,21 @@ function useTypewriter(text: string, startMs: number, perChar = 55) {
   return text.slice(0, count);
 }
 
-/** Cycles 0 → count-1 every `every` ms (loops). */
-function useCycle(count: number, every: number) {
+/** Steps 0 → count-1 every `every` ms; loops, or stops on the last step. */
+function useCycle(count: number, every: number, loop = true) {
   const [i, setI] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setI((v) => (v + 1) % count), every);
+    const t = setInterval(
+      () =>
+        setI((v) => {
+          if (v + 1 < count) return v + 1;
+          if (!loop) clearInterval(t);
+          return loop ? 0 : v;
+        }),
+      every,
+    );
     return () => clearInterval(t);
-  }, [count, every]);
+  }, [count, every, loop]);
   return i;
 }
 
@@ -56,7 +66,7 @@ export const providers = [
   {
     name: "Sara Oliisi",
     title: "Counselor, LMHC, M.S., B.S.",
-    photo: "/images/providers/sara-oliisi-portrait.jpg",
+    photo: providerPhoto("sara", 200, 1),
     about: "I often work with adults who feel stuck, overwhelmed, or disconnected from the life they want to be living.",
     tags: ["Trauma", "Anxiety", "Mindfulness"],
     price: "120",
@@ -64,7 +74,7 @@ export const providers = [
   {
     name: "Shatiria Johnson",
     title: "Psychiatrist, M.D.",
-    photo: "/images/providers/shatiria-johnson.png",
+    photo: providerPhoto("shatiria", 200, 1),
     about: "Specializing in mood and anxiety disorders, I provide comprehensive psychiatric assessments combined with therapy.",
     tags: ["Trauma", "Anxiety", "Psychodynamic"],
     price: "350",
@@ -72,7 +82,7 @@ export const providers = [
   {
     name: "Monica Rios",
     title: "Licensed Professional Counselor, LPC",
-    photo: "/images/providers/monica-rios.png",
+    photo: providerPhoto("monica", 200, 1),
     about: "I support teens and adults through life transitions, mood disorders, and self-esteem challenges.",
     tags: ["Trauma", "Self-esteem", "Holistic Wellness"],
     price: "450",
@@ -145,17 +155,10 @@ export function SearchBarPreview({ query = "Trauma", typeAt = 350 }: { query?: s
   const typed = useTypewriter(query, typeAt);
   const done = typed.length === query.length;
   return (
-    <div className="flex w-full items-center gap-2 rounded-[22px] border border-warm-300 bg-warm-200 p-1.5 shadow-control @sm:gap-2.5 @sm:p-2">
-      <div className="hidden shrink-0 flex-col gap-2 rounded-2xl bg-warm-100 px-3.5 py-2.5 @md:flex">
-        <div className="flex items-center gap-2.5 text-xs font-medium">
-          <span className="text-text-placeholder">In-person</span>
-          <span className="text-text-primary">Online</span>
-        </div>
-        <div className="relative h-3.5 w-16 rounded-full bg-warm-25 ring-1 ring-warm-300/60">
-          <span className="absolute top-0 right-0 size-3.5 rounded-full bg-brand-primary" />
-        </div>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-2xl bg-warm-100 px-3.5 py-2.5">
+    <div className="flex w-full items-center gap-1.5 rounded-[24px] bg-white p-1.5 ring-1 ring-warm-200 shadow-[0_1px_2px_rgb(28_25_23/0.04),0_12px_28px_-16px_rgb(28_25_23/0.22)] @sm:gap-2 @sm:p-2">
+      <SessionModeSwitch size="sm" decorative className="ml-1 hidden @md:grid" />
+      <span aria-hidden className="hidden h-8 w-px bg-warm-200 @md:block" />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-1.5">
         <p className="text-xs font-medium text-text-primary @sm:text-sm">What&apos;s on your mind?</p>
         <p className="truncate text-xs text-text-placeholder @sm:text-sm">
           I need help with <span className="font-medium text-text-primary">{typed}</span>
@@ -164,7 +167,7 @@ export function SearchBarPreview({ query = "Trauma", typeAt = 350 }: { query?: s
       </div>
       <span
         className={cn(
-          "mr-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white transition-[scale,box-shadow] duration-300 @sm:size-11",
+          "flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white transition-[scale,box-shadow] duration-300 @sm:size-11",
           done && "scale-[1.06] shadow-[0_0_0_6px_rgb(192_16_72/0.12)]",
         )}
       >
@@ -224,7 +227,18 @@ function ResultCard({ p, delayMs }: { p: (typeof providers)[number]; delayMs: nu
 const filters = ["Female", "Trauma", "PTSD", "English"];
 
 /** Smart search: query types in → filters pop in → results count → cards rise in. */
-export function SearchPreview({ showSearch = true, showResults = true, query = "Trauma" }: { showSearch?: boolean; showResults?: boolean; query?: string }) {
+export function SearchPreview({
+  showSearch = true,
+  showResults = true,
+  query = "Trauma",
+  limit = providers.length,
+}: {
+  showSearch?: boolean;
+  showResults?: boolean;
+  query?: string;
+  /** How many result cards to show. */
+  limit?: number;
+}) {
   // With the search bar hidden, results start straight away.
   const base = showSearch ? 350 + query.length * 55 + 150 : 0;
   return (
@@ -244,9 +258,24 @@ export function SearchPreview({ showSearch = true, showResults = true, query = "
             <span className="font-semibold text-text-primary">132</span> providers found
           </p>
           <div className="flex flex-col gap-2 @sm:gap-2.5">
-            {providers.map((p, i) => (
+            {providers.slice(0, limit).map((p, i) => (
               <ResultCard key={p.name} p={p} delayMs={base + 380 + i * 110} />
             ))}
+            {limit < providers.length && (
+              <div
+                style={at(base + 380 + limit * 110)}
+                className="flex animate-rise-in items-center gap-3 rounded-2xl border border-dashed border-warm-300 bg-white/70 px-3 py-2.5"
+              >
+                <span className="flex -space-x-2">
+                  {providers.slice(limit).map((p) => (
+                    <Photo key={p.name} src={p.photo} className="size-7 rounded-full ring-2 ring-white" />
+                  ))}
+                </span>
+                <span className="text-xs text-text-secondary @sm:text-sm">
+                  and <span className="font-semibold text-text-primary">{132 - limit}</span> more providers match
+                </span>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -276,7 +305,7 @@ export function SearchPreview({ showSearch = true, showResults = true, query = "
 
 /* ------------------------------------------------------- 2. verified */
 
-const checks = [
+export const checks = [
   { label: "License", value: "LMHC · #MA-2941" },
   { label: "Education", value: "M.S. Clinical Counseling" },
   { label: "Identity", value: "Government ID" },
@@ -460,8 +489,8 @@ const requestScreens = [
 ];
 
 /** Request flow from the Figma booking screens, auto-playing step to step. */
-export function RequestPreview({ every = 2600 }: { every?: number }) {
-  const step = useCycle(requestScreens.length, every);
+export function RequestPreview({ every = 2600, loop = true }: { every?: number; loop?: boolean }) {
+  const step = useCycle(requestScreens.length, every, loop);
   return (
     <Shell>
       <div className="grid animate-rise-in overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-card @lg:grid-cols-[1fr_38%]">

@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/reveal";
+import { CreatorsIllustration } from "./creators-illustration";
 import { Container, Section } from "@/components/ui/section";
 import { SectionBadge } from "@/components/ui/section-badge";
 
@@ -26,17 +27,7 @@ export function MissionTeaser() {
       <Container className="flex flex-col items-start gap-8 sm:gap-10">
         <Reveal stagger className="flex flex-col items-start gap-8 sm:gap-10">
           <SectionBadge icon="/images/home/meet-creators-icon.svg">Meet the creators</SectionBadge>
-          {/* Figma applies no object-fit override here (defaults to stretch-to-fill on
-              the square source), so the illustration is intentionally non-uniformly
-              scaled to this exact 436:347 box rather than letterboxed or cropped. */}
-          <span className="block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/home/mission-illustration.png"
-              alt=""
-              className="h-[175px] w-[220px] animate-float sm:h-[347px] sm:w-[436px]"
-            />
-          </span>
+          <CreatorsIllustration />
         </Reveal>
 
         {/* The note is "taped" to the page: one strip across the top-right

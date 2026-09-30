@@ -15,6 +15,7 @@ export function MissionArticle() {
   return (
     <article>
       <PageHero
+        tone="blush"
         eyebrow="Our mission"
         title="The home for your mind's wellbeing"
         illustration={{

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BlogCard } from "@/components/blog/blog-card";
+import { EditorialNote } from "@/components/blog/editorial-note";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { CircleArrowIcon } from "@/components/ui/icons";
@@ -72,6 +73,7 @@ export function ResourcePreview() {
             />
           ))}
         </Reveal>
+        <EditorialNote />
       </Container>
     </Section>
   );

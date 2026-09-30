@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/blog/hero";
 import { FeaturedPost } from "@/components/blog/featured-post";
 import { PostGrid } from "@/components/blog/post-grid";
+import { EditorialNote } from "@/components/blog/editorial-note";
 import { Container, Section } from "@/components/ui/section";
 import { getAllPosts } from "@/lib/blog";
 
@@ -22,6 +23,7 @@ export default function BlogPage() {
         <Container className="flex flex-col gap-4 sm:gap-6">
           {featured && <FeaturedPost post={featured} />}
           <PostGrid posts={rest} />
+          <EditorialNote className="mt-6 sm:mt-10" />
         </Container>
       </Section>
     </>

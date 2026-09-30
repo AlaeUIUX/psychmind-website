@@ -17,16 +17,37 @@ const navLinks = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [onDark, setOnDark] = useState(false);
   const pathname = usePathname();
 
   // Transparent at the top of the page; frosted with a hairline once content
-  // scrolls underneath it.
+  // scrolls underneath it — and inverted while it sits over a dark band
+  // (any element marked `data-header-dark`).
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      setScrolled(window.scrollY > 8);
+      const probe = 32;
+      setOnDark(
+        Array.from(document.querySelectorAll("[data-header-dark]")).some((el) => {
+          const r = el.getBoundingClientRect();
+          return r.top <= probe && r.bottom >= probe;
+        }),
+      );
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [pathname]);
+
+  const dark = onDark && !open;
 
   useEffect(() => {
     if (!open) return;
@@ -40,17 +61,27 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full border-b transition-[background-color,border-color,backdrop-filter] duration-300",
+        "sticky top-0 z-50 w-full border-b transition-[background-color,border-color,backdrop-filter] duration-500",
         GUTTER,
-        scrolled || open
-          ? "border-warm-200/80 bg-warm-25/85 backdrop-blur-md backdrop-saturate-150"
-          : "border-transparent bg-transparent",
+        dark
+          ? "border-white/10 bg-warm-950/60 backdrop-blur-md"
+          : scrolled || open
+            ? "border-warm-200/80 bg-warm-25/85 backdrop-blur-md backdrop-saturate-150"
+            : "border-transparent bg-transparent",
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-[1052px] items-center justify-between sm:h-[72px]">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <img src="/images/home/logo.svg" alt="" width={32} height={32} />
-          <span className="font-display text-xl text-warm-900">PsychMind</span>
+          <img
+            src="/images/home/logo.svg"
+            alt=""
+            width={32}
+            height={32}
+            className={cn("transition-[filter] duration-500", dark && "invert")}
+          />
+          <span className={cn("font-display text-xl transition-colors duration-500", dark ? "text-warm-25" : "text-warm-900")}>
+            PsychMind
+          </span>
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-1 sm:flex">
@@ -61,9 +92,13 @@ export function SiteHeader() {
               aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
                 "rounded-pill px-3 py-2 text-sm font-medium transition-colors duration-200",
-                isActive(link.href)
-                  ? "bg-warm-100 text-text-primary"
-                  : "text-text-secondary hover:bg-warm-100/70 hover:text-text-primary",
+                dark
+                  ? isActive(link.href)
+                    ? "bg-white/10 text-white"
+                    : "text-warm-300 hover:bg-white/10 hover:text-white"
+                  : isActive(link.href)
+                    ? "bg-warm-100 text-text-primary"
+                    : "text-text-secondary hover:bg-warm-100/70 hover:text-text-primary",
               )}
             >
               {link.label}
@@ -72,10 +107,10 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 sm:flex">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className={cn(dark && "text-white hover:bg-white/10")}>
             <Link href="/login">Log in</Link>
           </Button>
-          <Button asChild size="sm">
+          <Button asChild variant={dark ? "inverse" : "primary"} size="sm">
             <Link href="/signup">Create account</Link>
           </Button>
         </div>
@@ -86,7 +121,10 @@ export function SiteHeader() {
           aria-expanded={open}
           aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
-          className="-mr-2 flex size-11 items-center justify-center rounded-pill transition-colors hover:bg-warm-100 sm:hidden"
+          className={cn(
+            "-mr-2 flex size-11 items-center justify-center rounded-pill transition-colors sm:hidden",
+            dark ? "hover:bg-white/10 [&_span_span]:bg-white" : "hover:bg-warm-100",
+          )}
         >
           <span className="relative block h-3 w-4">
             <span

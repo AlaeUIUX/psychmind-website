@@ -1,9 +1,11 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/reveal";
+import { ProfileNotes } from "./profile-notes";
 import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
+import { providerPhoto } from "@/lib/photos";
 
 const specialtyGroups = [
   { label: "Anxiety & mood", tags: ["Individuals", "Couples", "Adults 18+"] },
@@ -60,7 +62,7 @@ function Body({ children }: { children: ReactNode }) {
 
 export function ProfileShowcase() {
   return (
-    <Section>
+    <Section className="overflow-x-clip">
       <Container className="flex flex-col gap-10 sm:gap-12">
         <SectionHeader
           badge={{ icon: "/images/how-it-works/profiles-badge-icon.svg", label: "Profiles" }}
@@ -69,6 +71,7 @@ export function ProfileShowcase() {
         />
 
         {/* Sample provider profile — an illustrative mockup, not a live/interactive profile */}
+        <ProfileNotes>
         <Reveal className="relative w-full overflow-hidden rounded-card bg-warm-50 shadow-card ring-1 ring-warm-200">
           <div className="relative h-24">
             <Image src="/images/how-it-works/profile-banner.png" alt="" fill className="object-cover" />
@@ -76,7 +79,7 @@ export function ProfileShowcase() {
 
           <div className="relative -mt-14 flex items-end justify-between px-6">
             <div className="relative size-28 shrink-0 overflow-hidden rounded-4xl border-4 border-white bg-white shadow-card">
-              <Image src="/images/providers/sara-oliisi-portrait.jpg" alt="" fill className="object-cover" />
+              <Image src={providerPhoto("sara", 320, 1)} alt="" fill sizes="112px" className="object-cover" />
             </div>
             <span
               aria-hidden
@@ -196,7 +199,7 @@ export function ProfileShowcase() {
             <div className="flex h-fit w-full shrink-0 flex-col gap-6 rounded-field border border-warm-200 bg-warm-100 p-6 lg:w-[360px]">
               <div className="flex items-center gap-2.5">
                 <div className="relative size-16 shrink-0 overflow-hidden rounded-field border border-black/[0.08] bg-white">
-                  <Image src="/images/providers/sara-oliisi-portrait.jpg" alt="" fill className="object-cover" />
+                  <Image src={providerPhoto("sara", 320, 1)} alt="" fill sizes="112px" className="object-cover" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label>Sara Oliisi</Label>
@@ -253,6 +256,7 @@ export function ProfileShowcase() {
           {/* Fade indicating this is a truncated preview of a real profile */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-b from-transparent to-warm-50" />
         </Reveal>
+        </ProfileNotes>
 
         <Reveal stagger className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           {highlights.map((item) => (

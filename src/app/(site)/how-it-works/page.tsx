@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/how-it-works/hero";
 import { ProcessSteps } from "@/components/how-it-works/process-steps";
 import { ProfileShowcase } from "@/components/how-it-works/profile-showcase";
+import { SafetyBand } from "@/components/how-it-works/safety-band";
 import { ReviewQuote } from "@/components/how-it-works/review-quote";
 import { FaqSection } from "@/components/how-it-works/faq-section";
 
@@ -17,6 +18,7 @@ export default function HowItWorksPage() {
       <Hero />
       <ProcessSteps />
       <ProfileShowcase />
+      <SafetyBand />
       <ReviewQuote />
       <FaqSection />
     </>

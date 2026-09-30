@@ -29,6 +29,10 @@ const buttonVariants = cva(
         secondary:
           "border border-warm-200 bg-white text-warm-800 shadow-control hover:border-warm-300 hover:bg-warm-50 [&_svg]:text-warm-600",
         ghost: "text-text-primary hover:bg-warm-100",
+        /** White button for dark or crimson surfaces. */
+        inverse: "bg-white text-warm-900 hover:bg-warm-100 [&_svg]:text-warm-700",
+        /** Hairline button for dark or crimson surfaces. */
+        "outline-light": "border border-white/30 text-white hover:border-white/60 hover:bg-white/10 [&_svg]:text-white/80",
 
         // shadcn aliases (used by the login page)
         default: "bg-brand-primary text-white hover:bg-brand-primary-hover",

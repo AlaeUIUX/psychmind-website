@@ -12,13 +12,30 @@ type BlogCardProps = {
   meta: string;
 };
 
-/** Category · author row used on cards and article headers. */
+/** Category · author row used on cards and article headers. Articles written
+ *  by a clinician (a "Dr." byline) are marked as provider-written. */
 export function PostMeta({ category, author }: { category: string; author: string }) {
+  const byProvider = author.startsWith("Dr.");
   return (
-    <div className="flex items-center gap-2.5 type-small text-text-tertiary">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 type-small text-text-tertiary">
       <span>{category}</span>
       <span aria-hidden className="size-[3px] rounded-full bg-warm-600/40" />
-      <span>{author}</span>
+      <span className="flex items-center gap-1.5">
+        <span
+          aria-hidden
+          className="flex size-5 items-center justify-center rounded-full bg-warm-200 font-display text-[11px] text-warm-800"
+        >
+          {author.replace(/^Dr\.\s*/, "").charAt(0)}
+        </span>
+        {author}
+      </span>
+      {byProvider && (
+        <span className="inline-flex items-center gap-1 rounded-md border border-warm-300 bg-white px-1.5 py-px text-[11px] font-medium text-text-secondary">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-2.5" />
+          Provider
+        </span>
+      )}
     </div>
   );
 }

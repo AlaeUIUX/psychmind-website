@@ -102,3 +102,23 @@ export function PlusIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Screen — online / video sessions. */
+export function MonitorIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...base(props)}>
+      <rect x="2.5" y="3.5" width="15" height="10" rx="2" />
+      <path d="M7 17h6M10 13.5V17" />
+    </svg>
+  );
+}
+
+/** Map pin — in-person sessions. */
+export function MapPinIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...base(props)}>
+      <path d="M10 17.5s5.5-4.7 5.5-9.2a5.5 5.5 0 1 0-11 0c0 4.5 5.5 9.2 5.5 9.2Z" />
+      <circle cx="10" cy="8.3" r="2" />
+    </svg>
+  );
+}
