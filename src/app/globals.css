@@ -490,6 +490,20 @@
   background-size: 100% 100%, 100% 100%;
 }
 
+/* The footer notepad: pale-blue rules on a fixed 32px pitch with a pink
+   margin line, so footer text can sit on the lines like handwriting. The
+   rules are anchored to the bottom edge; content above is laid out in 32px
+   rows (see site-footer.tsx) so every baseline lands on a rule. */
+.paper-ruled {
+  --rule: 32px;
+  --margin: clamp(14px, 3.5%, 32px);
+  background-color: #fefefe;
+  background-image:
+    linear-gradient(to right, transparent calc(var(--margin) - 1px), #f695b6 calc(var(--margin) - 1px), #f695b6 calc(var(--margin) + 1px), transparent calc(var(--margin) + 1px)),
+    repeating-linear-gradient(to top, #dceaf5 0, #dceaf5 1.5px, transparent 1.5px, transparent var(--rule));
+  background-position: 0 0, 0 100%;
+}
+
 /* ------------------------------------------------------------------------
    Reveal motion (see components/reveal.tsx)
    Scroll reveals only hide content when scripting is enabled (the script is

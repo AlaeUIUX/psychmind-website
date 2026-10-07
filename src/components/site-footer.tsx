@@ -26,14 +26,18 @@ const socials = [
   { href: "#", label: "LinkedIn", src: "/images/home/social-linkedin.svg" },
 ];
 
+// The notepad rules are 32px apart (.paper-ruled). Every line of footer text
+// gets a 32px line box, nudged down so its baseline rests on the rule.
+const ON_RULE = "leading-8 translate-y-[8px]";
+
 function FooterLinks({ links }: { links: typeof productLinks }) {
   return (
-    <ul className="flex min-w-0 flex-1 flex-col gap-1 sm:w-[184px] sm:flex-none">
+    <ul className="flex min-w-0 flex-1 flex-col sm:w-[184px] sm:flex-none">
       {links.map((link) => (
-        <li key={link.label}>
+        <li key={link.label} className="h-8">
           <Link
             href={link.href}
-            className="inline-flex h-9 items-center type-body text-text-secondary transition-colors hover:text-text-primary"
+            className={`inline-block text-[15px] font-medium tracking-[-0.005em] text-text-secondary transition-colors hover:text-text-primary ${ON_RULE}`}
           >
             {link.label}
           </Link>
@@ -46,10 +50,10 @@ function FooterLinks({ links }: { links: typeof productLinks }) {
 export function SiteFooter() {
   // Figma layers two separate shapes here, not one: a wide, short gray card
   // sized to just the CTA row (peeking out left/right), behind a narrower but
-  // much taller sheet of real lined paper that runs uninterrupted through the
-  // CTA, links, and copyright rows. The shared .paper-bg gradient pattern is
-  // correct for the smaller frames it's used on (smart search, mission quote)
-  // but doesn't match this texture/scale, so this uses the real exported photo.
+  // much taller sheet of lined paper that runs uninterrupted through the CTA,
+  // links, and copyright rows. The rules (.paper-ruled) sit on a fixed 32px
+  // pitch anchored to the sheet's bottom edge, and everything inside is laid
+  // out in whole 32px rows, so each line of text rests on a rule.
   return (
     <footer className={`flex w-full flex-col items-center py-16 sm:py-24 md:py-32 ${GUTTER}`}>
       <div className="relative flex w-full max-w-[1056px] flex-col items-center">
@@ -61,25 +65,27 @@ export function SiteFooter() {
             a fixed offset, rather than nesting it inside the paper). */}
         <div
           aria-hidden
-          className="absolute -top-[120px] -bottom-[24px] left-1/2 w-full max-w-[900px] -translate-x-1/2 rounded-card bg-warm-25 bg-[url('/images/home/footer-paper-bg.png')] [background-size:100%_auto] bg-left-top bg-repeat-y shadow-card"
+          className="paper-ruled absolute -top-[120px] -bottom-[32px] left-1/2 w-full max-w-[900px] -translate-x-1/2 rounded-card shadow-card"
         />
 
-        <div className="relative z-10 flex w-full max-w-[900px] flex-col items-center gap-12 pb-12 sm:pb-14">
-          <div className="relative w-full px-6 py-10 sm:px-16 sm:py-14 md:min-h-[420px] lg:min-h-[480px]">
+        <div className="relative z-10 flex w-full max-w-[900px] flex-col items-center gap-16 pb-8">
+          <div className="relative w-full px-6 pt-16 pb-8 sm:px-16 md:min-h-[416px] lg:min-h-[480px]">
             <Reveal
               stagger
-              className="relative z-10 mx-auto flex max-w-[360px] flex-col items-center gap-3 text-center md:mx-0 md:items-start md:text-left"
+              className="relative z-10 mx-auto flex max-w-[380px] flex-col items-center text-center md:mx-0 md:items-start md:text-left"
             >
-              <h2 className="type-h2 font-display-alt! text-text-primary">Ready to find help?</h2>
-              <p className="type-lead text-text-secondary">
+              <h2 className="type-h2 font-display-alt! leading-8! text-text-primary">Ready to find help?</h2>
+              <p className="type-lead leading-8! translate-y-[5px] text-text-secondary">
                 It takes less than two minutes. No referral needed
               </p>
-              <Button asChild size="lg" className="mt-4">
-                <Link href="/providers">
-                  Browse all
-                  <CircleArrowIcon />
-                </Link>
-              </Button>
+              <div className="mt-8 flex h-16 items-center">
+                <Button asChild size="lg">
+                  <Link href="/providers">
+                    Browse all
+                    <CircleArrowIcon />
+                  </Link>
+                </Button>
+              </div>
             </Reveal>
             {/* Exported directly from the illustration's own Figma layer
                 (146:9033) at its native 700x466 ratio. */}
@@ -97,11 +103,9 @@ export function SiteFooter() {
             </Reveal>
           </div>
 
-          {/* The paper texture's red margin line sits at a fixed ~3% of the paper's
-              width, which itself scales with viewport — a fixed px padding here
-              would clear it at one width and fall short at another. Percentage
-              padding tracks the line proportionally at every size instead. */}
-          <div className="flex w-full max-w-[794px] flex-col gap-10 px-[7%]">
+          {/* Percentage padding keeps the text clear of the pink margin line,
+              which sits at ~3.5% of the sheet's width. */}
+          <div className="flex w-full max-w-[794px] flex-col gap-8 px-[7%]">
             <div className="flex flex-col items-start justify-between gap-10 sm:flex-row">
               <nav aria-label="Footer" className="flex w-full gap-5 sm:w-auto">
                 <FooterLinks links={productLinks} />
@@ -117,14 +121,14 @@ export function SiteFooter() {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse items-start justify-between gap-5 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3">
-                <img src="/images/home/logo.svg" alt="" width={28} height={28} />
-                <span className="type-small text-text-placeholder">
+            <div className="flex flex-col-reverse items-start justify-between sm:h-8 sm:flex-row sm:items-center">
+              <div className="flex h-8 items-center gap-2.5">
+                <img src="/images/home/logo.svg" alt="" width={24} height={24} className="translate-y-[2px]" />
+                <span className={`text-sm text-text-tertiary tabular-nums ${ON_RULE}`}>
                   © {new Date().getFullYear()} PsychMind. All rights reserved.
                 </span>
               </div>
-              <div className="-ml-2 flex items-center gap-1 sm:ml-0 sm:-mr-2">
+              <div className="-ml-2 flex h-16 items-center gap-1 sm:-mr-2 sm:ml-0 sm:h-8">
                 {socials.map((social) => (
                   <a
                     key={social.label}

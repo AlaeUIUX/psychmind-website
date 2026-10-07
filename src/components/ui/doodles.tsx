@@ -78,3 +78,33 @@ export function DoodleSparkle(props: DoodleProps) {
     </svg>
   );
 }
+
+/**
+ * A hand-held magnifying glass — the "search" mark, redrawn as vector so it
+ * stays crisp at any size (the original PNG was only 319px). The glass is a
+ * separate filled shape (`data-glass`) so it can fade in after the outline
+ * draws; `data-glint` marks the shine lines.
+ */
+export function DoodleMagnifier(props: DoodleProps) {
+  return (
+    <svg viewBox="0 0 220 220" {...base(props)}>
+      <ellipse data-glass cx="130" cy="78" rx="34" ry="42" transform="rotate(20 130 78)" fill="#EAF1F6" />
+      <path
+        data-glint
+        d="M112 58C115 49 121 43 129 40"
+        {...stroke}
+        stroke="white"
+        strokeWidth={5}
+        opacity={0.9}
+      />
+      <ellipse data-draw cx="130" cy="78" rx="40" ry="48" transform="rotate(20 130 78)" {...stroke} />
+      <ellipse data-draw cx="130" cy="78" rx="34" ry="42" transform="rotate(20 130 78)" {...stroke} strokeWidth={1.2} />
+      <path data-draw d="M105.7 123.6L102.7 131.9L115.9 136.7L118.9 128.4Z" {...stroke} />
+      <path data-draw d="M104.6 126.7L117.6 131.4M103.6 129.4L116.8 134.2" {...stroke} strokeWidth={1} />
+      <path data-draw d="M103.4 135L81.4 192C80 197.5 87 202 91.5 197.5L114.6 139" {...stroke} />
+      <path data-draw d="M64 40C64.5 47 66 49 72 50C66 51.5 64.5 53.5 64 60C63.5 53.5 62 51.5 56 50C62 49 63.5 47 64 40Z" {...stroke} strokeWidth={1.3} />
+      <circle data-draw cx="76" cy="84" r="3" {...stroke} strokeWidth={1.2} />
+      <path data-draw d="M178 98L186 94M182 114L191 116M170 128L174 137" {...stroke} strokeWidth={1.3} />
+    </svg>
+  );
+}

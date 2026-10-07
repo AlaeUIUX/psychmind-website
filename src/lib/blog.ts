@@ -14,6 +14,8 @@ export type PostFrontmatter = {
   date: string;
   readTime: string;
   heroImage?: string;
+  /** Use a built-in vector doodle as the lead art instead of `heroImage`. */
+  art?: "magnifier";
   thumbnail?: string;
   featured?: boolean;
 };

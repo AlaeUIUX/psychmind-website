@@ -5,8 +5,7 @@ category: "Company"
 author: "PsychMind Team"
 date: "January 2025"
 readTime: "10 min read"
-heroImage: "/images/blog/featured-illustration.png"
-thumbnail: "/images/blog/featured-illustration.png"
+art: "magnifier"
 featured: true
 ---
 
