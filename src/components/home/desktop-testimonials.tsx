@@ -1,6 +1,6 @@
 "use client";
 
-import { animate } from "animejs";
+import { animate, cubicBezier } from "animejs";
 import { cn } from "cn";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Reveal } from "@/components/reveal";
@@ -34,7 +34,7 @@ const ROLE_STYLE: RoleStyle[] = [
 const EXIT_UNDER: RoleStyle = { x: -20, y: 46, z: -180, rotate: -4, scale: 0.86, zIndex: 5 };
 
 // Same curve as --ease-out-soft in globals.css.
-const EASE = "cubicBezier(0.22, 1, 0.36, 1)";
+const EASE = cubicBezier(0.22, 1, 0.36, 1);
 const DURATION = 560;
 const AUTO_MS = 6500;
 

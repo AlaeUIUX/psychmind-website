@@ -1,6 +1,6 @@
 "use client";
 
-import { animate } from "animejs";
+import { animate, cubicBezier } from "animejs";
 import { cn } from "cn";
 import { useRef, useState } from "react";
 import { Reveal } from "@/components/reveal";
@@ -11,7 +11,7 @@ import { Section } from "@/components/ui/section";
 import { reviews } from "./reviews-data";
 
 // Same curve as --ease-out-soft in globals.css.
-const EASE = "cubicBezier(0.22, 1, 0.36, 1)";
+const EASE = cubicBezier(0.22, 1, 0.36, 1);
 
 // Mobile-only: this card (and the flow around it) doesn't exist in the desktop
 // design (node 108:376) — it's specific to the mobile layout (node 276:774).

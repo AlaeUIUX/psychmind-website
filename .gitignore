@@ -43,3 +43,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Test output
+/test-results/
+/playwright-report/
+/blob-report/

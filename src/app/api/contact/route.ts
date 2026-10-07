@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "goingwilson@gmail.com";
 const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "PsychMind <onboarding@resend.dev>";
@@ -22,9 +23,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const limit = await rateLimit("contact", clientIp(request.headers), 5, "1 h");
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many messages. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  // Honeypot: a field real visitors never see. Bots that fill it get a
+  // success response and nothing is sent.
+  if (typeof body.company === "string" && body.company.trim() !== "") {
+    return NextResponse.json({ ok: true });
   }
 
   const firstName = typeof body.firstName === "string" ? body.firstName.trim() : "";
