@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
   --background: #ffffff;
@@ -57,7 +58,9 @@
   --color-card-foreground: var(--color-text-primary);
   --color-popover: #ffffff;
   --color-popover-foreground: var(--color-text-primary);
-  --color-primary: var(--color-brand-primary);
+  /* Ink, like the default Button: checked boxes, switches, progress. Crimson
+     stays reserved for the one most important action and the focus halo. */
+  --color-primary: var(--color-warm-900);
   --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-warm-100);
   --color-secondary-foreground: var(--color-text-primary);
@@ -70,20 +73,9 @@
   --color-input: var(--color-warm-200);
   --color-ring: var(--color-brand-primary);
 
-  /* Spacing scale (Figma: spacing-*) */
-  --spacing-xs: 4px;
-  --spacing-md: 8px;
-  --spacing-lg: 12px;
-  --spacing-xl: 16px;
-  --spacing-2xl: 20px;
-  --spacing-3xl: 24px;
-  --spacing-4xl: 32px;
-  --spacing-5xl: 40px;
-  --spacing-6xl: 48px;
-  --spacing-7xl: 64px;
-  --spacing-8xl: 80px;
-  --spacing-10xl: 128px;
-  --spacing-11xl: 160px;
+  /* No named spacing tokens (spacing-xs/md/lg/xl…): in Tailwind v4 they
+     shadow the named sizes shadcn relies on, e.g. `max-w-lg` became 12px.
+     Use the numeric scale (p-4, gap-6…), which matches Figma's 4px grid.  */
 
   /* Radii. Each size has one job; nested surfaces step down a size so
      inner corners stay concentric with their parent.
@@ -502,6 +494,17 @@
     linear-gradient(to right, transparent calc(var(--margin) - 1px), #f695b6 calc(var(--margin) - 1px), #f695b6 calc(var(--margin) + 1px), transparent calc(var(--margin) + 1px)),
     repeating-linear-gradient(to top, #dceaf5 0, #dceaf5 1.5px, transparent 1.5px, transparent var(--rule));
   background-position: 0 0, 0 100%;
+}
+
+/* shadcn convention: a bare `border` uses the warm border token instead of
+   Tailwind v4's currentColor default. Every marketing border already names
+   its colour, so this only affects app components. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
 }
 
 /* ------------------------------------------------------------------------

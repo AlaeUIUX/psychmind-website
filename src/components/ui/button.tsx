@@ -16,6 +16,8 @@ const buttonVariants = cva(
     "group/button relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-pill font-medium select-none",
     "transition-[background-color,border-color,color,box-shadow,scale] duration-200 ease-out-soft active:scale-[0.97]",
     "disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive",
+    // Keyboard focus: the same soft crimson halo as inputs, never a hard outline.
+    "outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:transition-[rotate,translate] [&_svg]:duration-300 [&_svg]:ease-out-soft",
   ],
   {

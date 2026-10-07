@@ -12,7 +12,9 @@ npm run dev          # next dev (Turbopack)
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint
 npm test             # vitest unit tests (tests/unit)
-npm run test:e2e     # playwright smoke tests, desktop + 375px (tests/e2e), starts next dev on :3100
+npm run test:e2e     # playwright, desktop + 375px (tests/e2e); starts next dev on :3100
+                     # if a dev server is already running here, Next refuses a second one:
+                     # E2E_BASE_URL=http://localhost:3000 npm run test:e2e
 npm run build
 ```
 
@@ -64,7 +66,16 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
   - Sizes: `sm`, `md`, `lg`, `icon`, `icon-sm`.
 - **Motion:** in the app, use CSS transitions, `Reveal` and skeletons. GSAP is only for celebratory moments. Lenis is off on app routes. Always respect reduced motion.
 - **Every screen ships every state:** loading, empty, error (field, action and page), success, unauthorized, not found. Test at 375px.
-- New primitives must appear on `/dev/ui`.
+- **App building blocks** live in `src/components/app/`:
+  - `AppShell`: header with nav, avatar menu, mobile sheet and slim footer.
+  - `PageHeader`: breadcrumb, title, description.
+  - `StatusBanner`: account states with an optional countdown.
+  - `EmptyState` and `ErrorState`.
+  - `StatTile`, `StepProgress`, `ChoiceChips` (ToggleGroup `chip` variant), `UploadDropzone`.
+  - `CrisisStrip`: compact 988.
+- **Status colours** use Tailwind's sky (info), emerald (success), amber (warning) and red (danger), always paired with an icon or text. `Badge` has matching variants: `neutral`, `info`, `success`, `warning`, `danger`, `brand`.
+- **Never add named spacing tokens** (`--spacing-lg` etc.) to `@theme`. They shadow Tailwind's named sizes, so shadcn's `max-w-lg` once rendered dialogs 12px wide.
+- New primitives must appear on `/dev/ui` (the kitchen sink; hidden in production).
 
 ## Content
 
