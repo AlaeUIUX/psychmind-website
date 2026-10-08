@@ -122,7 +122,7 @@ export function PracticeForm({ state, mode, onPreview, backHref, nextHref }: Sec
         )}
       />
 
-      <fieldset className="flex flex-col gap-4">
+      <fieldset className="flex flex-col gap-4" data-field="education">
         <legend className="mb-1 flex w-full items-baseline justify-between text-sm font-medium text-text-primary">
           Education
           <span className="type-small font-normal text-text-placeholder">Optional</span>

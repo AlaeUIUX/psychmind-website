@@ -2,6 +2,7 @@ import { cn } from "cn";
 import { HeartIcon, MapPinIcon, MonitorIcon, ShieldIcon, UserRoundIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
+import type { PreviewRegion } from "@/lib/provider/steps";
 import type { ProfileView as ProfileData } from "@/lib/provider/types";
 import {
   BANNER_STYLES,
@@ -16,14 +17,34 @@ import {
 // provider onboards or edits, and (later) as the public profile page. Layout
 // and styling follow the "Profiles" showcase on How it works (Figma D2).
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+/** A part of the profile the editor can point at ("you're editing this"). */
+function Region({ name, highlight, className, children }: { name: PreviewRegion; highlight?: PreviewRegion | null; className?: string; children: ReactNode }) {
+  const on = highlight === name;
+  return (
+    <div
+      data-region={name}
+      data-active={on || undefined}
+      className={cn(
+        "relative rounded-lg transition-[box-shadow,background-color] duration-500 ease-out-soft",
+        on && "bg-brand-soft/60 shadow-[0_0_0_6px_var(--color-brand-soft),0_0_0_7px_rgb(192_16_72/0.35)]",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Section({ title, region, highlight, children }: { title: string; region: PreviewRegion; highlight?: PreviewRegion | null; children: ReactNode }) {
   return (
     <>
       <hr className="border-warm-200" />
+      <Region name={region} highlight={highlight}>
       <section className="flex flex-col gap-3">
         <h3 className="type-small font-medium text-text-primary">{title}</h3>
         {children}
       </section>
+      </Region>
     </>
   );
 }
@@ -80,10 +101,12 @@ type ProfileViewProps = {
   mode?: "preview" | "public";
   /** Action buttons for the sidebar (Request a session…). Previews pass inert stand-ins. */
   actions?: ReactNode;
+  /** Ring the part of the profile currently being edited. */
+  highlight?: PreviewRegion | null;
   className?: string;
 };
 
-export function ProviderProfileView({ profile: p, mode = "public", actions, className }: ProfileViewProps) {
+export function ProviderProfileView({ profile: p, mode = "public", actions, highlight, className }: ProfileViewProps) {
   const preview = mode === "preview";
   const name = displayName(p) || (preview ? "Full name" : "");
   const formats = Array.from(new Set((p.locations ?? []).flatMap((l) => l.formats)));
@@ -135,9 +158,12 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
     <article
       className={cn("@container relative w-full overflow-hidden rounded-card bg-warm-50 shadow-card ring-1 ring-warm-200", className)}
     >
-      <ProfileBanner style={p.bannerStyle} className="h-24" />
+      <Region name="banner" highlight={highlight} className="rounded-none">
+        <ProfileBanner style={p.bannerStyle} className="h-24" />
+      </Region>
 
       <div className="relative -mt-14 flex items-end justify-between px-6">
+        <Region name="photo" highlight={highlight} className="rounded-4xl">
         <div className="relative flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-4xl border-4 border-white bg-warm-100 shadow-card">
           {p.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -146,6 +172,7 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
             <UserRoundIcon aria-hidden className="size-10 text-warm-300" />
           )}
         </div>
+        </Region>
         {preview && (
           <span className="mb-4 inline-flex h-8 items-center rounded-pill border border-warm-300 bg-white px-3 type-caption font-medium text-warm-800 shadow-control">
             Preview
@@ -155,10 +182,19 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
 
       <div className="relative flex flex-col gap-8 px-6 pt-4 pb-6 @3xl:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-6">
-          <div className="flex flex-col gap-3">
+          <Region name="identity" highlight={highlight} className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <h2 className={cn("type-title", name ? "text-text-primary" : "text-text-placeholder")}>{name}</h2>
-              {(p.verified || preview) && <VerifiedBadge />}
+              {p.verified ? (
+                <VerifiedBadge />
+              ) : (
+                preview && (
+                  <Tag className="shrink-0 border-amber-200 bg-amber-50 text-amber-800">
+                    {/* TODO(client): copy */}
+                    Pending verification
+                  </Tag>
+                )
+              )}
             </div>
             <p className="flex flex-wrap items-center gap-x-2 type-body text-text-secondary">
               {p.titleCredentials ? (
@@ -168,7 +204,7 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
               )}
               {p.pronouns && <span className="text-text-tertiary">{p.pronouns}</span>}
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <Region name="location" highlight={highlight} className="flex flex-wrap gap-1.5">
               {formatText && <Tag>{formatText}</Tag>}
               {primary && (
                 <Tag>
@@ -179,22 +215,22 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
               )}
               {!formatText && !primary && preview && <GhostTag />}
               {p.acceptingNewClients === false && <Tag className="text-text-placeholder">Not accepting new clients</Tag>}
-            </div>
-          </div>
+            </Region>
+          </Region>
 
-          <Section title="Who I work with">
+          <Section title="Who I work with" region="who" highlight={highlight}>
             <Paragraphs text={p.whoYouWorkWith} placeholder="Who you work with will appear here." />
             <div className="flex flex-wrap gap-1.5">
               {whoChips.length ? whoChips.map((c) => <Tag key={c}>{c}</Tag>) : preview && <><GhostTag /><GhostTag /><GhostTag /></>}
             </div>
           </Section>
 
-          <Section title={firstName ? `About ${firstName}` : "About"}>
+          <Section title={firstName ? `About ${firstName}` : "About"} region="about" highlight={highlight}>
             <Paragraphs text={p.about} placeholder="Your story will appear here." />
           </Section>
 
           {(groups.length > 0 || preview) && (
-            <Section title="Specialties">
+            <Section title="Specialties" region="specialties" highlight={highlight}>
               {groups.length ? (
                 <div className="flex flex-col gap-3">
                   {groups.map((g) => (
@@ -219,7 +255,7 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
             </Section>
           )}
 
-          <Section title="Credentials & qualifications">
+          <Section title="Credentials & qualifications" region="credentials" highlight={highlight}>
             <dl className="flex flex-col gap-4">
               {credentials.map((c) => (
                 <div key={c.label} className="flex items-start justify-between gap-6">
@@ -260,9 +296,10 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
             </div>
           </div>
 
-          {(p.feeIndividual != null || p.feeCouples != null || p.slidingScale) && (
+          {(p.feeIndividual != null || p.feeCouples != null || p.slidingScale || preview) && (
             <>
               <hr className="border-warm-200" />
+              <Region name="fees" highlight={highlight}>
               <dl className="flex flex-col gap-2.5">
                 {p.feeIndividual != null && (
                   <div className="flex items-center justify-between">
@@ -277,7 +314,14 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, clas
                   </div>
                 )}
                 {p.slidingScale && <p className="type-caption text-text-tertiary">Sliding scale available</p>}
+                {p.feeIndividual == null && p.feeCouples == null && !p.slidingScale && (
+                  <div className="flex items-center justify-between">
+                    <dt className="type-overline text-text-tertiary">Session fees</dt>
+                    <dd aria-hidden className="h-3 w-16 rounded-pill bg-warm-200" />
+                  </div>
+                )}
               </dl>
+              </Region>
             </>
           )}
 

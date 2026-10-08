@@ -4,6 +4,8 @@
 :root {
   --background: #ffffff;
   --foreground: #1c1917;
+  /* Buttons are pills on the marketing site; the portal (.app-ui) squares them up. */
+  --radius-button: 9999px;
 }
 
 @theme inline {
@@ -404,6 +406,167 @@
     font-size: 36px;
     line-height: 56px;
   }
+}
+
+/* ------------------------------------------------------------------------
+   Portal UI (app.psychmind.org). Geist throughout, product-sized: 14px body,
+   13px labels, tight-tracked semibold titles — the marketing site's serif
+   display type stays on the marketing site. Apply `.app-ui` on portal roots.
+   ------------------------------------------------------------------------ */
+.app-ui {
+  --radius-button: 8px;
+  --radius-field: 8px;
+  --radius-card: 14px;
+  --radius-tag: 6px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Portal density: shadcn controls default to the marketing site's roomier
+   sizes; inside the portal they're product-sized. Unlayered on purpose so it
+   wins over component defaults in one place. */
+/* 16px on phones: iOS Safari zooms into any field smaller than that. */
+.app-ui [data-slot="input"],
+.app-ui [data-slot="select-trigger"] {
+  height: 2.5rem;
+  font-size: 16px;
+}
+.app-ui [data-slot="textarea"] {
+  font-size: 16px;
+  line-height: 24px;
+}
+@media (width >= 40rem) {
+  .app-ui [data-slot="input"],
+  .app-ui [data-slot="select-trigger"] {
+    font-size: 14px;
+  }
+  .app-ui [data-slot="textarea"] {
+    font-size: 14px;
+    line-height: 21px;
+  }
+}
+.app-ui [data-slot="label"],
+.app-ui [data-slot="field-label"] {
+  font-size: 13px;
+}
+.app-ui [data-slot="toggle-group-item"] {
+  height: 2rem;
+  font-size: 13px;
+}
+
+@utility type-ui-display {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 34px;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 34px;
+    line-height: 40px;
+  }
+}
+
+/* Auth and onboarding page titles. */
+@utility type-ui-headline {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 30px;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 26px;
+    line-height: 32px;
+  }
+}
+
+@utility type-ui-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.024em;
+  text-wrap: balance;
+}
+
+@utility type-ui-heading {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: -0.012em;
+}
+
+@utility type-ui-body {
+  font-size: 14px;
+  line-height: 21px;
+  text-wrap: pretty;
+}
+
+@utility type-ui-small {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+@utility type-ui-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+@utility type-ui-caption {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Codes and numbers: NPI, license numbers, prices, step counts. */
+@utility type-ui-mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Portal entrance: content rises a few px out of a soft blur. Stagger with
+   style={{ "--i": n }} (60ms per step). Disabled for reduced motion. */
+@keyframes ui-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(3px);
+  }
+}
+@utility animate-ui-enter {
+  animation: ui-enter 380ms var(--ease-out-soft) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* Auth portal ambience (components/auth/portal-panel.tsx): two glows drift
+   slowly; rings expand and fade on an 8s "breath". */
+@keyframes portal-drift-a {
+  50% { transform: translate(-8%, 10%) scale(1.08); }
+}
+@keyframes portal-drift-b {
+  50% { transform: translate(10%, -6%) scale(0.94); }
+}
+@keyframes portal-breathe {
+  0% { transform: scale(0.35); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+.portal-glow-a { animation: portal-drift-a 18s ease-in-out infinite; }
+.portal-glow-b { animation: portal-drift-b 22s ease-in-out infinite; }
+.portal-ring { animation: portal-breathe 7.8s cubic-bezier(0.37, 0, 0.63, 1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .portal-glow-a, .portal-glow-b, .portal-ring { animation: none; }
+  .portal-ring { opacity: 0.6; transform: scale(0.8); }
 }
 
 /* Large serif number. */

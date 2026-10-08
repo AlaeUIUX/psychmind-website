@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { OnboardingStep } from "@/components/provider/onboarding-step";
+import { StepView } from "@/components/onboarding/step-view";
 import { sectionStatuses } from "@/lib/provider/completeness";
 import { STEP_KEYS, nextStep, prevStep, stepIndex, type StepKey } from "@/lib/provider/steps";
 import { requireRole } from "@/server/auth/session";
@@ -15,6 +15,7 @@ export default async function OnboardingStepPage({ params }: { params: Promise<{
   const state = await loadProviderState(user.id);
 
   // The wizard is for building a profile; once submitted, the dashboard takes over.
+  if (state.status === "submitted") redirect("/provider/onboarding/submitted");
   if (state.status !== "draft" && state.status !== "changes_requested") redirect("/provider");
   // Don't let people skip ahead of where they've got to.
   if (stepIndex(step) > stepIndex(state.onboardingStep)) redirect(`/provider/onboarding/${state.onboardingStep}`);
@@ -23,7 +24,7 @@ export default async function OnboardingStepPage({ params }: { params: Promise<{
   const prev = prevStep(key);
   const next = nextStep(key);
   return (
-    <OnboardingStep
+    <StepView
       key={key}
       stepKey={key}
       state={state}

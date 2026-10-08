@@ -6,7 +6,8 @@ import { useForm, type DefaultValues, type FieldValues, type Path } from "react-
 import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { StepActions } from "@/components/provider/step-frame";
+import { StepActions } from "@/components/onboarding/step-actions";
+import { useOptionalOnboarding } from "@/components/onboarding/onboarding-context";
 import { zodResolver } from "@/lib/forms/zod-resolver";
 import type { ActionResult, ProviderState } from "@/lib/provider/state";
 import type { ProfileView } from "@/lib/provider/types";
@@ -44,6 +45,7 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
   onPreview?: (patch: Partial<ProfileView>) => void;
 }) {
   const router = useRouter();
+  const onboarding = useOptionalOnboarding();
   const [pending, startTransition] = useTransition();
   const form = useForm<z.input<S>, unknown, z.output<S>>({
     resolver: zodResolver(schema),
@@ -59,6 +61,7 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
 
   const applyResult = (result: ActionResult) => {
     if (result.ok) {
+      onboarding?.markSaved();
       if (mode === "wizard" && (result.redirectTo || nextHref)) {
         router.push(result.redirectTo ?? nextHref!);
       } else {

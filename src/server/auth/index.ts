@@ -11,6 +11,7 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { providerProfile } from "@/db/schema";
 import { BASE_PLAN, stripeConfigured } from "@/lib/billing";
+import { appHost } from "@/lib/hosts";
 import { sendEmail } from "@/server/email";
 import { resetPasswordEmail, verifyEmail } from "@/server/emails";
 import { onSubscriptionChange } from "@/server/billing/sync";
@@ -34,6 +35,11 @@ const adminEmails = new Set(
     .filter(Boolean),
 );
 export const isAdminEmail = (email: string) => adminEmails.has(email.toLowerCase());
+
+function devAppOrigin() {
+  if (process.env.NODE_ENV !== "development") return undefined;
+  return `http://${appHost() ?? "localhost"}:${process.env.PORT ?? 3000}`;
+}
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
@@ -64,13 +70,11 @@ function stripePlugins() {
 
 export const auth = betterAuth({
   appName: "PsychMind",
-  // Production: BETTER_AUTH_URL. Locally the dev server can run on any port
-  // (PORT), and email links must be absolute.
-  baseURL:
-    process.env.BETTER_AUTH_URL ||
-    (process.env.NODE_ENV === "development" ? `http://localhost:${process.env.PORT ?? 3000}` : undefined),
+  // Production: BETTER_AUTH_URL (https://app.psychmind.org). Locally: the app
+  // host on whatever port the dev server got (PORT). Email links are absolute.
+  baseURL: process.env.BETTER_AUTH_URL || devAppOrigin(),
   // Locally the dev server may run on any port; production uses BETTER_AUTH_URL.
-  trustedOrigins: process.env.NODE_ENV === "development" ? ["http://localhost:*", "http://127.0.0.1:*"] : [],
+  trustedOrigins: process.env.NODE_ENV === "development" ? ["http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*"] : [],
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: {
     enabled: true,

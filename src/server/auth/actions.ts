@@ -9,6 +9,7 @@ import { db, dbReady } from "@/db";
 import { user } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { auth } from "./index";
+import { setPendingEmail } from "./pending-email";
 import { homeFor } from "./session";
 
 // Email/password auth as server actions. Roles are assigned here, server-side,
@@ -25,11 +26,9 @@ const signUpSchema = z
     lastName: z.string().trim().min(1, "Last name is required.").max(60),
     email,
     password,
-    confirmPassword: z.string(),
     businessName: z.string().trim().max(100).optional(),
     displayAsBusiness: z.enum(["on"]).optional(),
-  })
-  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Passwords don't match." });
+  });
 
 function issues(error: z.ZodError) {
   const out: Record<string, string> = {};
@@ -110,7 +109,8 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
   } catch (err) {
     return { error: authMessage(err), values };
   }
-  redirect(`/verify-email?email=${encodeURIComponent(v.email)}&sent=1`);
+  await setPendingEmail(v.email);
+  redirect("/verify-email");
 }
 
 export async function signUpPatient(_prev: AuthState, form: FormData) {
@@ -136,7 +136,10 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
     role = (result.user as { role?: string }).role;
   } catch (err) {
     const message = authMessage(err);
-    if (message === "EMAIL_NOT_VERIFIED") redirect(`/verify-email?email=${encodeURIComponent(parsed.data.email)}`);
+    if (message === "EMAIL_NOT_VERIFIED") {
+      await setPendingEmail(parsed.data.email);
+      redirect("/verify-email");
+    }
     return { error: message, values };
   }
   redirect(safeNext(form.get("next")) ?? homeFor(role));
@@ -157,13 +160,13 @@ export async function requestPasswordReset(_prev: AuthState, form: FormData): Pr
     const message = authMessage(err);
     if (message.startsWith("Too many")) return { error: message, values: { email: parsed.data.email } };
   }
-  redirect(`/forgot-password/sent?email=${encodeURIComponent(parsed.data.email)}`);
+  await setPendingEmail(parsed.data.email);
+  redirect("/forgot-password/sent");
 }
 
 export async function resetPassword(_prev: AuthState, form: FormData): Promise<AuthState> {
   const parsed = z
-    .object({ token: z.string().min(1, "This link is invalid."), password, confirmPassword: z.string() })
-    .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Passwords don't match." })
+    .object({ token: z.string().min(1, "This link is invalid."), password })
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return { fieldErrors: issues(parsed.error) };
   if (await limited("reset-confirm", "token", 10, "10 m")) return { error: TOO_MANY };

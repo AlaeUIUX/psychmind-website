@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { AuthShell } from "@/components/auth/auth-shell";
+import { getPendingEmail } from "@/server/auth/pending-email";
+import { getSession } from "@/server/auth/session";
 import { VerifyEmailPanel } from "@/components/auth/password-forms";
 
 export const metadata: Metadata = { title: "Confirm your email — PsychMind" };
 
-export default async function VerifyEmailPage({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
-  const { email } = await searchParams;
+export default async function VerifyEmailPage() {
+  const email = (await getPendingEmail()) || (await getSession())?.user.email || "";
   return (
-    <AuthShell showBack={false}>
-      <VerifyEmailPanel email={email ?? ""} />
-    </AuthShell>
+    <>
+      <VerifyEmailPanel email={email} />
+    </>
   );
 }

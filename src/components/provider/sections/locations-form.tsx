@@ -40,7 +40,7 @@ const blank = (primary: boolean): Location => ({
 /** Figma P5 right panel. */
 export function LicenseComplianceCard() {
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-sky-200 bg-sky-50 p-6 text-sky-950">
+    <div className="flex flex-col gap-2 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-950">
       <p className="flex items-center gap-2 type-small font-semibold">
         <InfoIcon aria-hidden className="size-4" />
         License compliance
@@ -130,9 +130,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      <div className="lg:hidden">
-        <LicenseComplianceCard />
-      </div>
+      <LicenseComplianceCard />
 
       {atLimit && (
         <div className="flex flex-col gap-3 rounded-card bg-warm-800 p-5 text-white">

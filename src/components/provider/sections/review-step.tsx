@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { StepActions } from "@/components/provider/step-frame";
+import { StepActions } from "@/components/onboarding/step-actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { SectionStatus } from "@/lib/provider/completeness";
 import { submitForVerification } from "@/server/provider/actions";
@@ -27,7 +27,7 @@ export function ReviewStep({ sections, backHref }: { sections: SectionStatus[]; 
     start(async () => {
       const result = await submitForVerification({ attest: true }).catch(() => null);
       if (result?.ok) {
-        router.push(result.redirectTo ?? "/provider?submitted=1");
+        router.push(result.redirectTo ?? "/provider/onboarding/submitted");
       } else {
         toast.error(result?.error ?? "We couldn't submit your profile. Please try again.");
       }

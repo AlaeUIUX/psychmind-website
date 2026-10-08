@@ -2,74 +2,50 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { signIn, type AuthState } from "@/server/auth/actions";
-import { AuthHeading } from "./auth-shell";
-import { FieldMessage, FormError, GoogleSignIn, SubmitButton } from "./auth-bits";
+import { GoogleSignIn, LastUsed, rememberMethod, useLastUsed } from "./auth-bits";
+import { AuthField, AuthTitle, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton } from "./fields";
 
-// Figma A3 "Log in to PsychMind".
+// Log in. Google first (one tap for most people), then email. Figma A3 copy.
 export function LoginForm({ next, googleEnabled, notice }: { next?: string; googleEnabled: boolean; notice?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(signIn, null);
   const fe = state?.fieldErrors ?? {};
+  const emailLast = useLastUsed() === "email";
 
   return (
-    <form action={action} noValidate>
-      <input type="hidden" name="next" value={next ?? ""} />
-      <FieldGroup>
-        <AuthHeading
-          eyebrow="Welcome back"
-          title="Log in to PsychMind"
-          description="Good to see you again. Pick up right where you left off."
-        />
-        {notice && (
-          <p role="status" className="rounded-field border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-            {notice}
-          </p>
-        )}
-        <FormError message={state?.error} />
-        <Field data-invalid={fe.email ? true : undefined}>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="m@example.com"
-            defaultValue={state?.values?.email}
-            aria-invalid={!!fe.email}
-            aria-describedby={fe.email ? "email-error" : undefined}
-            required
-          />
-          <FieldMessage id="email-error" message={fe.email} />
-        </Field>
-        <Field data-invalid={fe.password ? true : undefined}>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Link href="/forgot-password" className="ml-auto text-sm text-muted-foreground underline-offset-2 hover:underline">
+    <div className="flex flex-col gap-7">
+      <AuthTitle title="Log in to PsychMind" description="Good to see you again. Pick up right where you left off." />
+      <FormAlert message={notice} tone="success" />
+      <GoogleSignIn enabled={googleEnabled} />
+      <OrDivider />
+      <form action={action} onSubmit={() => rememberMethod("email")} noValidate className="flex flex-col gap-4">
+        <input type="hidden" name="next" value={next ?? ""} />
+        <FormAlert message={state?.error} />
+        <AuthField id="email" label="Email" error={fe.email}>
+          <EmailInput error={fe.email} defaultValue={state?.values?.email} autoFocus />
+        </AuthField>
+        <AuthField
+          id="password"
+          label="Password"
+          error={fe.password}
+          aside={
+            <Link href="/forgot-password" className="type-ui-caption text-warm-500 underline-offset-4 hover:text-warm-900 hover:underline">
               Forgot your password?
             </Link>
-          </div>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Enter your password"
-            aria-invalid={!!fe.password}
-            aria-describedby={fe.password ? "password-error" : undefined}
-            required
-          />
-          <FieldMessage id="password-error" message={fe.password} />
-        </Field>
-        <Field>
-          <SubmitButton>Continue</SubmitButton>
-        </Field>
-        <GoogleSignIn enabled={googleEnabled} label="Continue with Google" />
-        <FieldDescription className="text-center">
-          Don&apos;t have an account? <Link href="/signup">Create account</Link>
-        </FieldDescription>
-      </FieldGroup>
-    </form>
+          }
+        >
+          <PasswordInput error={fe.password} placeholder="Enter your password" />
+        </AuthField>
+        <div className="relative pt-1">
+          <SubmitButton pendingLabel="Logging in…">Continue</SubmitButton>
+          {emailLast && <LastUsed />}
+        </div>
+        <p className="type-ui-caption text-warm-500">
+          By clicking continue, you agree to our{" "}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-warm-900">Terms of Service</Link> and{" "}
+          <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-warm-900">Privacy Policy</Link>.
+        </p>
+      </form>
+    </div>
   );
 }

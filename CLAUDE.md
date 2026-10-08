@@ -46,6 +46,18 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 
 **Every env var** is documented in `.env.local.example`.
 
+## Hosts
+
+- **The portal** is `app.psychmind.org`; marketing stays on `www`.
+- `src/proxy.ts` and `src/lib/hosts.ts` route each request to the right host.
+- **Locally**, open the portal at `http://app.localhost:<port>`.
+- **Portal UI** uses the `.app-ui` scope from `globals.css`:
+  - Geist `type-ui-*` roles and product-sized controls;
+  - squarer radii via `--radius-button`, `--radius-field` and `--radius-card`;
+  - `animate-ui-enter` for content as it enters.
+- **Auth pages** share a persistent animated panel (`components/auth/portal-panel.tsx`).
+- **Onboarding** has its own shell (`components/onboarding`): step rail, live preview with highlighting, save status.
+
 ## Route groups
 
 | Group | Purpose |

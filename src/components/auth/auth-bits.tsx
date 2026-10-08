@@ -1,51 +1,51 @@
 "use client";
 
-import { useState } from "react";
-import { useFormStatus } from "react-dom";
+import { LoaderCircleIcon } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
-import { FieldError, FieldSeparator } from "@/components/ui/field";
 import { authClient } from "@/lib/auth/client";
+import { FormAlert } from "./fields";
 
-/** Primary submit for auth forms, with a pending state. */
-export function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="brand" fullWidth disabled={pending} aria-busy={pending || undefined}>
-      {pending && <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-      {children}
-    </Button>
+/** Remembers only *how* someone signed in (never the address) for a "Last used" hint. */
+export const LAST_USED_KEY = "psychmind:last-auth";
+export function rememberMethod(method: "google" | "email") {
+  try {
+    localStorage.setItem(LAST_USED_KEY, method);
+  } catch {}
+}
+const noopSubscribe = () => () => {};
+/** The remembered sign-in method, read without a render-time effect. */
+export function useLastUsed() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => {
+      try {
+        return localStorage.getItem(LAST_USED_KEY);
+      } catch {
+        return null;
+      }
+    },
+    () => null,
   );
 }
 
-/** Form-level error (wrong password, rate limited…), announced to screen readers. */
-export function FormError({ message }: { message?: string }) {
-  if (!message) return null;
+export function LastUsed() {
   return (
-    <div role="alert" className="rounded-field border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-      {message}
-    </div>
+    <span className="absolute -top-2 right-3 rounded-md bg-warm-900 px-1.5 py-0.5 text-[10.5px] leading-none font-medium text-white">
+      Last used
+    </span>
   );
 }
 
-export function FieldMessage({ id, message }: { id: string; message?: string }) {
-  return message ? <FieldError id={id}>{message}</FieldError> : null;
-}
-
-/** "Or continue with" + Google (Figma: icon-only button on sign-up, labelled on login). */
-export function GoogleSignIn({
-  enabled,
-  intent,
-  label,
-}: {
-  enabled: boolean;
-  /** "provider" when the person picked "I am a provider" first. */
-  intent?: "provider";
-  label?: string;
-}) {
+/** "Continue with Google". Disabled (with a hint in dev) until Google keys are set. */
+export function GoogleSignIn({ enabled, intent }: { enabled: boolean; intent?: "provider" }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const lastUsed = useLastUsed() === "google";
+
   const go = async () => {
+    rememberMethod("google");
     setPending(true);
     setError(null);
     const { error } = await authClient.signIn.social({
@@ -60,27 +60,29 @@ export function GoogleSignIn({
   };
 
   return (
-    <>
-      <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>
+    <div className="flex flex-col gap-2">
       <Button
         variant="secondary"
         type="button"
         fullWidth
         onClick={go}
         disabled={!enabled || pending}
-        aria-label={label ? undefined : "Continue with Google"}
         title={enabled ? undefined : "Google sign-in isn't set up yet"}
+        className="h-10 text-[14px] shadow-none"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/login/google-icon.svg" alt="" width={16} height={16} />
-        {label}
+        {pending ? (
+          <LoaderCircleIcon className="size-4 animate-spin" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/images/login/google-icon.svg" alt="" width={16} height={16} />
+        )}
+        Continue with Google
+        {lastUsed && <LastUsed />}
       </Button>
       {!enabled && process.env.NODE_ENV !== "production" && (
-        <p className="text-center type-caption text-text-placeholder">
-          Dev: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable Google sign-in.
-        </p>
+        <p className="text-center type-ui-caption text-warm-400">Dev: add GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET to enable.</p>
       )}
-      {error && <FormError message={error} />}
-    </>
+      <FormAlert message={error ?? undefined} />
+    </div>
   );
 }

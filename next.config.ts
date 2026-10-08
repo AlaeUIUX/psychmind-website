@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   // PGlite (local dev database) ships WASM + data files that must be loaded
   // from node_modules at runtime rather than bundled.
   serverExternalPackages: ["@electric-sql/pglite"],
+  // The portal runs on app.localhost in dev (lib/hosts.ts).
+  allowedDevOrigins: ["app.localhost", "*.localhost"],
   images: {
     // Sample-provider photos are served from Unsplash's CDN (see src/lib/photos.ts).
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],

@@ -7,9 +7,9 @@ import { clientsSchema, type ClientsInput } from "@/lib/provider/schema";
 import { AGE_GROUPS, SESSION_PARTICIPANTS } from "@/lib/taxonomy";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
-function ChipField({ label, hint, error, children }: { label: string; hint: string; error?: string; children: React.ReactNode }) {
+function ChipField({ label, hint, error, field, children }: { label: string; hint: string; error?: string; field?: string; children: React.ReactNode }) {
   return (
-    <fieldset className="flex flex-col gap-3">
+    <fieldset className="flex flex-col gap-3" data-field={field}>
       <legend className="mb-1 text-sm font-medium text-text-primary">
         {label} <span aria-hidden className="text-destructive">*</span>
       </legend>
@@ -50,7 +50,7 @@ export function ClientsForm({ state, mode, onPreview, backHref, nextHref }: Sect
         control={form.control}
         name="sessionParticipants"
         render={({ field }) => (
-          <ChipField label="Session participants" hint="Choose all that apply" error={e.sessionParticipants?.message}>
+          <ChipField label="Session participants" hint="Choose all that apply" error={e.sessionParticipants?.message} field="sessionParticipants">
             <ChoiceChips
               label="Session participants"
               options={[...SESSION_PARTICIPANTS]}
@@ -64,7 +64,7 @@ export function ClientsForm({ state, mode, onPreview, backHref, nextHref }: Sect
         control={form.control}
         name="ageGroups"
         render={({ field }) => (
-          <ChipField label="Age groups served" hint="Choose all that apply" error={e.ageGroups?.message}>
+          <ChipField label="Age groups served" hint="Choose all that apply" error={e.ageGroups?.message} field="ageGroups">
             <ChoiceChips label="Age groups served" options={[...AGE_GROUPS]} value={field.value ?? []} onValueChange={(v) => field.onChange(v)} />
           </ChipField>
         )}

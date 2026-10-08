@@ -42,12 +42,12 @@ export function PictureForm({ state, mode, onPreview, backHref, nextHref }: Sect
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" data-field="photo">
         <p className="text-sm font-medium text-text-primary">
           Picture <span aria-hidden className="text-destructive">*</span>
         </p>
         <div className="flex items-center gap-4">
-          <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-field border border-warm-200 bg-warm-100">
+          <div className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-warm-100 shadow-md ring-1 ring-warm-200">
             {photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={fileUrl(photo.id)} alt="Your profile picture" className="size-full object-cover" />

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AuthShell } from "@/components/auth/auth-shell";
 import { SignUpForm } from "@/components/auth/signup-form";
 import { authFeatures } from "@/server/auth/features";
 
@@ -14,8 +13,8 @@ export default async function SignUpRolePage({ params }: { params: Promise<{ rol
   const { role } = await params;
   if (role !== "patient" && role !== "provider") notFound();
   return (
-    <AuthShell>
+    <>
       <SignUpForm role={role} googleEnabled={authFeatures.google} />
-    </AuthShell>
+    </>
   );
 }

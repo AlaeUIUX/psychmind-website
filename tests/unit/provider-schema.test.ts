@@ -76,10 +76,12 @@ describe("provider profile schemas", () => {
 
   it("validates the NPI as 10 digits and requires a document per license", () => {
     const license = { state: "TX", licenseNumber: "LPC-1", issuingBody: "Texas BHEC", documentId: "doc" };
-    expect(credentialsSchema.safeParse({ npiNumber: "1234567890", yearsExperience: "", licenses: [license] }).success).toBe(true);
+    expect(credentialsSchema.safeParse({ npiNumber: "1234567893", yearsExperience: "", licenses: [license] }).success).toBe(true);
     expect(credentialsSchema.safeParse({ npiNumber: "12345", yearsExperience: "", licenses: [license] }).success).toBe(false);
+    // Right length, wrong check digit (NPI uses a Luhn check).
+    expect(credentialsSchema.safeParse({ npiNumber: "1234567890", yearsExperience: "", licenses: [license] }).success).toBe(false);
     expect(
-      credentialsSchema.safeParse({ npiNumber: "1234567890", yearsExperience: "", licenses: [{ ...license, documentId: "" }] }).success,
+      credentialsSchema.safeParse({ npiNumber: "1234567893", yearsExperience: "", licenses: [{ ...license, documentId: "" }] }).success,
     ).toBe(false);
   });
 });

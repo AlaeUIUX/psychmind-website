@@ -13,7 +13,7 @@ import { Slot } from "radix-ui"
 //   on hover (see CircleArrowIcon).
 const buttonVariants = cva(
   [
-    "group/button relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-pill font-medium select-none",
+    "group/button relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-(--radius-button) font-medium select-none",
     "transition-[background-color,border-color,color,box-shadow,scale] duration-200 ease-out-soft active:scale-[0.97]",
     "disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive",
     // Keyboard focus: the same soft crimson halo as inputs, never a hard outline.

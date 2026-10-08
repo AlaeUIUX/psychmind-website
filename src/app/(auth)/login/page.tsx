@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 import { authFeatures } from "@/server/auth/features";
 import { getSession, homeFor } from "@/server/auth/session";
@@ -18,8 +17,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (session?.user.emailVerified) redirect(homeFor(session.user.role));
   const notice = params.reset ? notices.reset : params.verified ? notices.verified : undefined;
   return (
-    <AuthShell>
+    <>
       <LoginForm next={params.next} googleEnabled={authFeatures.google} notice={notice} />
-    </AuthShell>
+    </>
   );
 }

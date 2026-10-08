@@ -128,11 +128,28 @@ export const licenseSchema = z.object({
   documentId: z.string().min(1, "Upload your license document."),
 });
 
+/** NPI check digit: Luhn over "80840" + the first 9 digits (CMS spec). */
+export function isValidNpi(npi: string) {
+  if (!/^\d{10}$/.test(npi)) return false;
+  const digits = ("80840" + npi.slice(0, 9)).split("").map(Number);
+  let sum = 0;
+  for (let i = digits.length - 1, double = true; i >= 0; i--, double = !double) {
+    let d = digits[i];
+    if (double) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+  }
+  return (10 - (sum % 10)) % 10 === Number(npi[9]);
+}
+
 export const credentialsSchema = z.object({
   npiNumber: z
     .string()
     .trim()
-    .regex(/^\d{10}$/, "An NPI number is 10 digits."),
+    .regex(/^\d{10}$/, "An NPI number is 10 digits.")
+    .refine(isValidNpi, "That NPI number doesn't look right. Check it against your NPPES record."),
   yearsExperience: z
     .union([z.literal(""), z.coerce.number().int().min(0).max(70)])
     .transform((v) => (v === "" ? null : v)),

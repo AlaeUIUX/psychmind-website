@@ -145,7 +145,7 @@ export function ExpertiseForm({ state, mode, onPreview, backHref, nextHref }: Se
         control={control}
         name="specialties"
         render={({ field }) => (
-          <ChipField label="Specialties" hint="Choose all that apply" error={e.specialties?.message}>
+          <ChipField label="Specialties" hint="Choose all that apply" error={e.specialties?.message} field="specialties">
             <AddCustom
               placeholder="Add more"
               button="Add specialty"
@@ -169,7 +169,7 @@ export function ExpertiseForm({ state, mode, onPreview, backHref, nextHref }: Se
         control={control}
         name="primarySpecialty"
         render={({ field }) => (
-          <fieldset className="flex flex-col gap-2">
+          <fieldset className="flex flex-col gap-2" data-field="primarySpecialty">
             <legend className="mb-1 text-sm font-medium text-text-primary">
               Main specialty <span aria-hidden className="text-destructive">*</span>
             </legend>
@@ -201,7 +201,7 @@ export function ExpertiseForm({ state, mode, onPreview, backHref, nextHref }: Se
         control={control}
         name="approaches"
         render={({ field }) => (
-          <ChipField label="Therapy approaches" hint="Choose all that apply" error={e.approaches?.message}>
+          <ChipField label="Therapy approaches" hint="Choose all that apply" error={e.approaches?.message} field="approaches">
             <AddCustom
               placeholder="Add more"
               button="Add approach"
@@ -222,7 +222,7 @@ export function ExpertiseForm({ state, mode, onPreview, backHref, nextHref }: Se
         control={control}
         name="languages"
         render={({ field }) => (
-          <fieldset className="flex flex-col gap-2">
+          <fieldset className="flex flex-col gap-2" data-field="languages">
             <legend className="mb-1 text-sm font-medium text-text-primary">
               Languages <span aria-hidden className="text-destructive">*</span>
             </legend>

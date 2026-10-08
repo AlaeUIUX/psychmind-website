@@ -31,8 +31,7 @@ async function signUp(page: Page, role: "patient" | "provider", email: string, f
   await page.getByLabel("Last name").fill(last);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
-  await page.getByLabel("Confirm Password").fill(TEST_PASSWORD);
-  await page.getByRole("button", { name: "Create Account" }).click();
+  await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
   await followEmailLink(page, email);
 }
@@ -47,7 +46,7 @@ async function adminPage(browser: Browser) {
   const page = await context.newPage();
   await page.goto("/login");
   await page.getByLabel("Email").fill(ADMIN_EMAIL);
-  await page.getByLabel("Password").fill(TEST_PASSWORD);
+  await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   // First run: the admin account doesn't exist yet — create it.
   const failed = page.getByText("don't match");
@@ -79,8 +78,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.getByLabel("Pronouns").fill("she/her");
     // Live preview updates as you type.
     await expect(page.locator("aside").getByText("Counselor, LMHC, M.S.").first()).toBeVisible();
-    await saveAndContinue(page, "Your identity"); // step 2 shares the title
-    await expect(page).toHaveURL(/onboarding\/picture/);
+    await saveAndContinue(page, "Add a photo");
   });
 
   await test.step("2 picture upload", async () => {
@@ -92,7 +90,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
   await test.step("3 story", async () => {
     await page.getByLabel(/Who you work with/).fill("I work with adults navigating anxiety and big life changes.");
     await page.getByLabel(/About you/).fill("My approach is collaborative and paced to your comfort.");
-    await saveAndContinue(page, "Your expertise");
+    await saveAndContinue(page, "Who you work with");
   });
 
   await test.step("4 who you work with", async () => {
@@ -138,7 +136,9 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
   await test.step("9 review and submit", async () => {
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "Submit for verification" }).click();
-    await expect(page.getByText("Your profile is being reviewed")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Submitted\. We.re reviewing your profile/ })).toBeVisible({ timeout: 15_000 });
+    // The address is masked on screen and never put in the URL.
+    expect(page.url()).not.toContain("@");
   });
 
   await test.step("admin approves", async () => {
@@ -176,7 +176,7 @@ test("signed-out visitors are sent to log in, then back", async ({ page }) => {
 test("wrong password shows an inline error", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("nobody@psychmind.test");
-  await page.getByLabel("Password").fill("not-the-password");
+  await page.getByLabel("Password", { exact: true }).fill("not-the-password");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByText("That email and password don't match. Please try again.")).toBeVisible();
 });

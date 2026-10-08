@@ -231,5 +231,5 @@ export async function submitForVerification(input: unknown): Promise<ActionResul
 
   revalidatePath("/provider", "layout");
   revalidatePath("/admin", "layout");
-  return { ok: true, redirectTo: "/provider?submitted=1" };
+  return { ok: true, redirectTo: "/provider/onboarding/submitted" };
 }
