@@ -337,7 +337,7 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
             {actions ?? (
               <>
                 {/* The provider's banner colour is their call-to-action colour. */}
-                <span aria-hidden className="flex h-10 items-center justify-center rounded-field type-small font-medium shadow-control" style={bannerCta(p.bannerStyle)}>
+                <span aria-hidden className="flex h-10 items-center justify-center rounded-field type-small font-semibold shadow-control" style={bannerCta(p.bannerStyle)}>
                   Request a session
                 </span>
                 <span aria-hidden className="flex h-10 items-center justify-center gap-1.5 rounded-field border border-warm-300 bg-white type-small font-medium text-warm-800 shadow-control">

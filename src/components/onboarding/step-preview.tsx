@@ -352,7 +352,7 @@ function Segment({ step, p, highlight }: { step: StepKey; p: ProfileView; highli
           <span className="block h-2 w-5/6 rounded bg-warm-100" />
           {/* The banner colour is also the profile's call to action. */}
           <Spot name="banner" highlight={highlight} className="mt-3.5">
-            <span className="flex h-9 items-center justify-center rounded-lg text-[13px] font-medium transition-colors duration-300" style={bannerCta(p.bannerStyle)}>
+            <span className="flex h-9 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors duration-300" style={bannerCta(p.bannerStyle)}>
               Request a session
             </span>
           </Spot>

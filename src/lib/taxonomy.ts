@@ -112,20 +112,22 @@ export const US_STATES = [
 ].map(([value, label]) => ({ value, label })) satisfies Option[];
 
 /** Figma P1 has 12 brush-texture banner swatches; until those are exported we
- *  tint the existing banner texture. Order matches the Figma grid. */
+ *  tint the existing banner texture. Order matches the Figma grid. `cta` is
+ *  the matching Tailwind (shadcn) 500 shade, used for the profile's "Request
+ *  a session" button. */
 export const BANNER_STYLES = [
-  { value: "banner_01", label: "Deep blue", color: "#1e3a8a" },
-  { value: "banner_02", label: "Dark green", color: "#14532d" },
-  { value: "banner_03", label: "Light grey", color: "#d6d3d1" },
-  { value: "banner_04", label: "Teal", color: "#0f766e" },
-  { value: "banner_05", label: "Navy", color: "#0f172a" },
-  { value: "banner_06", label: "Slate", color: "#475569" },
-  { value: "banner_07", label: "Emerald", color: "#047857" },
-  { value: "banner_08", label: "Bright blue", color: "#2563eb" },
-  { value: "banner_09", label: "Pink", color: "#db2777" },
-  { value: "banner_10", label: "Violet", color: "#7c3aed" },
-  { value: "banner_11", label: "Mustard", color: "#ca8a04" },
-  { value: "banner_12", label: "Orange", color: "#ea580c" },
+  { value: "banner_01", label: "Deep blue", color: "#1e3a8a", cta: "#3b82f6" }, // blue-500
+  { value: "banner_02", label: "Dark green", color: "#14532d", cta: "#22c55e" }, // green-500
+  { value: "banner_03", label: "Light grey", color: "#d6d3d1", cta: "#78716c" }, // stone-500
+  { value: "banner_04", label: "Teal", color: "#0f766e", cta: "#14b8a6" }, // teal-500
+  { value: "banner_05", label: "Navy", color: "#0f172a", cta: "#6366f1" }, // indigo-500
+  { value: "banner_06", label: "Slate", color: "#475569", cta: "#64748b" }, // slate-500
+  { value: "banner_07", label: "Emerald", color: "#047857", cta: "#10b981" }, // emerald-500
+  { value: "banner_08", label: "Bright blue", color: "#2563eb", cta: "#0ea5e9" }, // sky-500
+  { value: "banner_09", label: "Pink", color: "#db2777", cta: "#ec4899" }, // pink-500
+  { value: "banner_10", label: "Violet", color: "#7c3aed", cta: "#8b5cf6" }, // violet-500
+  { value: "banner_11", label: "Mustard", color: "#ca8a04", cta: "#f59e0b" }, // amber-500
+  { value: "banner_12", label: "Orange", color: "#ea580c", cta: "#f97316" }, // orange-500
 ] as const;
 
 export type BannerStyle = (typeof BANNER_STYLES)[number]["value"];
@@ -133,9 +135,11 @@ export type BannerStyle = (typeof BANNER_STYLES)[number]["value"];
 /** The standard banner until a provider picks their own: violet (Tailwind violet-600). */
 export const DEFAULT_BANNER: BannerStyle = "banner_10";
 
+const bannerStyle = (style?: string | null) => BANNER_STYLES.find((b) => b.value === style) ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!;
+
 /** The colour behind a banner style (falls back to the default violet). */
 export function bannerColor(style?: string | null) {
-  return (BANNER_STYLES.find((b) => b.value === style) ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!).color;
+  return bannerStyle(style).color;
 }
 
 const luminance = (hex: string) => {
@@ -143,14 +147,13 @@ const luminance = (hex: string) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 
-/** A provider's call-to-action takes their banner colour, with whichever text
- *  colour (white or ink) reads better on it. */
+/** A provider's call-to-action takes the 500 shade of their banner colour.
+ *  White text (the usual look) when it has at least 3:1 contrast — the bar
+ *  for bold UI text — otherwise ink, for the light shades. */
 export function bannerCta(style?: string | null) {
-  const background = bannerColor(style);
-  const l = luminance(background);
-  const onWhite = 1.05 / (l + 0.05);
-  const onInk = (l + 0.05) / (luminance("#1c1917") + 0.05);
-  return { backgroundColor: background, color: onWhite >= onInk ? "#ffffff" : "#1c1917" };
+  const background = bannerStyle(style).cta;
+  const onWhite = 1.05 / (luminance(background) + 0.05);
+  return { backgroundColor: background, color: onWhite >= 3 ? "#ffffff" : "#1c1917" };
 }
 
 /** Base plan includes this many practice locations (Figma P5: "up to 3 locations"). */

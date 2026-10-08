@@ -31,7 +31,7 @@ export default async function ProviderSettingsPage() {
             </div>
           </dl>
           <form action={signOut} className="border-t border-warm-200 pt-5">
-            <Button type="submit" variant="secondary">
+            <Button type="submit" variant="secondary" size="sm" className="h-9 px-3.5 text-[13px]">
               Log out
             </Button>
           </form>

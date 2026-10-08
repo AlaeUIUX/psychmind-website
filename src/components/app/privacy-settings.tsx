@@ -72,13 +72,13 @@ export function PrivacySettings({
               On
             </Badge>
           ) : (
-            <Button asChild variant="secondary">
+            <Button asChild variant="secondary" size="sm" className="h-9 px-3.5 text-[13px]">
               <Link href="/two-factor/setup">Turn on</Link>
             </Button>
           )}
         </Row>
         <Row title="Download your data" description="A copy of everything PsychMind stores about your account, as a file.">
-          <Button asChild variant="secondary">
+          <Button asChild variant="secondary" size="sm" className="h-9 px-3.5 text-[13px]">
             <a href="/api/account/export" download>
               <DownloadIcon />
               Download
@@ -95,7 +95,7 @@ export function PrivacySettings({
         >
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="secondary" className="text-red-700 hover:text-red-800">
+              <Button variant="secondary" size="sm" className="h-9 px-3.5 text-[13px] text-red-700 hover:text-red-800">
                 Delete account
               </Button>
             </AlertDialogTrigger>
