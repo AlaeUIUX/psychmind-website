@@ -29,6 +29,18 @@ The master plan for building the product behind psychmind.org. It combines five 
 
 ## 2. Stack (decided; details in `architecture.md` §3–5)
 
+> **Change, 2026-10-08:** auth moved from Supabase Auth to **Better Auth + Drizzle**, with sessions in our own Postgres.
+>
+> **Why:** no Supabase project or Docker exists yet. This stack runs and is fully testable locally on PGlite (embedded Postgres), and Better Auth has an official Stripe plugin.
+>
+> **What stays the same:**
+> - Supabase remains the planned host for **Postgres** (one `DATABASE_URL`) and for **file storage**.
+> - The schema is plain Postgres, run as Drizzle migrations in `drizzle/`.
+>
+> **The trade-off:** row-level security isn't the second line of defence any more. Every read and write goes through server code that checks the session and role (`src/server/auth/session.ts`), and tests cover it.
+>
+> API notes for Better Auth 1.7 and its Stripe plugin are in `research/better-auth-stripe-cheatsheet.md`.
+
 - **App:** one Next.js 16 app, with route groups `(site)`, `(auth)`, `(patient)` at `/account`, `(provider)` at `/provider`, and `(admin)` at `/admin`.
 - **Backend:** Supabase.
   - Postgres with PostGIS, for location search.

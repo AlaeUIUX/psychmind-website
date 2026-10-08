@@ -150,7 +150,7 @@ export function AppShell({ nav, user, homeHref = "/", banner, onSignOut, childre
               {onSignOut && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={onSignOut}>
+                  <DropdownMenuItem onSelect={() => onSignOut()}>
                     <LogOutIcon />
                     Log out
                   </DropdownMenuItem>

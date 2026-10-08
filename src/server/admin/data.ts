@@ -1,0 +1,71 @@
+import "server-only";
+import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
+import { db, dbReady } from "@/db";
+import { auditLog, providerLocation, providerProfile, user } from "@/db/schema";
+import type { ProviderStatus } from "@/lib/provider/types";
+
+export type ProviderRow = {
+  id: string;
+  name: string;
+  email: string;
+  status: ProviderStatus;
+  needsReview: boolean;
+  submittedAt: Date | null;
+  states: string[];
+};
+
+/** Providers for the admin lists. `queue` = waiting for a decision, oldest first. */
+export async function listProviders(filter: "queue" | "all"): Promise<ProviderRow[]> {
+  await dbReady;
+  const where =
+    filter === "queue"
+      ? or(eq(providerProfile.status, "submitted"), eq(providerProfile.needsReview, true))
+      : undefined;
+  const rows = await db
+    .select({
+      id: providerProfile.id,
+      firstName: providerProfile.firstName,
+      lastName: providerProfile.lastName,
+      email: user.email,
+      status: providerProfile.status,
+      needsReview: providerProfile.needsReview,
+      submittedAt: providerProfile.submittedAt,
+    })
+    .from(providerProfile)
+    .innerJoin(user, eq(user.id, providerProfile.userId))
+    .where(where)
+    .orderBy(filter === "queue" ? asc(providerProfile.submittedAt) : desc(providerProfile.updatedAt));
+
+  const ids = rows.map((r) => r.id);
+  const locations = ids.length
+    ? await db.select({ profileId: providerLocation.profileId, state: providerLocation.state }).from(providerLocation).where(inArray(providerLocation.profileId, ids))
+    : [];
+  return rows.map((r) => ({
+    id: r.id,
+    name: [r.firstName, r.lastName].filter(Boolean).join(" ") || "(no name yet)",
+    email: r.email,
+    status: r.status,
+    needsReview: r.needsReview,
+    submittedAt: r.submittedAt,
+    states: locations.filter((l) => l.profileId === r.id).map((l) => l.state),
+  }));
+}
+
+export async function providerHistory(profileId: string) {
+  return db
+    .select({ action: auditLog.action, meta: auditLog.meta, createdAt: auditLog.createdAt, actor: user.name })
+    .from(auditLog)
+    .leftJoin(user, eq(user.id, auditLog.actorId))
+    .where(and(eq(auditLog.targetType, "provider_profile"), eq(auditLog.targetId, profileId)))
+    .orderBy(desc(auditLog.createdAt))
+    .limit(50);
+}
+
+export async function providerOwnerEmail(profileId: string) {
+  const [row] = await db
+    .select({ email: user.email })
+    .from(providerProfile)
+    .innerJoin(user, eq(user.id, providerProfile.userId))
+    .where(eq(providerProfile.id, profileId));
+  return row?.email ?? null;
+}

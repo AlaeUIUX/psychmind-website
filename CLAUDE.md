@@ -27,12 +27,24 @@ npm run build
 
 Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (marketing only), and Resend.
 
-Planned:
-- Supabase: Postgres with PostGIS, Auth and Storage.
-- Stripe Billing.
-- nuqs for URL state.
-- react-hook-form + Zod.
-- Upstash for rate limits; `src/lib/rate-limit.ts` falls back to in-memory when its env vars aren't set.
+**App:**
+- **Auth:** Better Auth 1.7 (`src/server/auth`).
+  - Email/password with required verification, password reset, and Google when its keys are set.
+  - `role` is `patient`, `provider` or `admin`. Admins come from `ADMIN_EMAILS`.
+  - API notes: `docs/build-plan/research/better-auth-stripe-cheatsheet.md`.
+- **Database:** Drizzle ORM on Postgres. The schema is in `src/db/schema`; migrations are in `drizzle/`.
+  - `npm run db:generate` creates a migration; `npm run db:migrate` applies it to `DATABASE_URL`.
+  - Without `DATABASE_URL`, local dev uses **PGlite** in memory, snapshotted to `.data/pglite.tar.gz`. Delete that file to reset.
+- **Billing:** the Better Auth Stripe plugin, loaded only when `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_BASE` are set.
+  - Listing and grace rules: `src/lib/billing.ts`.
+- **Email:** `src/server/email.ts` sends through Resend, or writes to the local outbox at `/dev/mail` when `EMAIL_TRANSPORT=outbox` or when there's no key.
+- **Uploads:** `/api/uploads` and `/api/files/[id]` check ownership and sniff file bytes. Locally, bytes live in `.data/uploads`; production needs Supabase Storage.
+- **Forms:** react-hook-form with Zod 4. Use our `zodResolver` in `src/lib/forms`, not `@hookform/resolvers`. Provider sections are shared by the wizard and the editor.
+- **Rate limits:** `rateLimit()` uses Upstash, falling back to in-memory. Better Auth does **not** rate-limit server-side `auth.api` calls, so wrap actions yourself.
+
+**Planned:** nuqs for URL state, and Supabase for Postgres and Storage.
+
+**Every env var** is documented in `.env.local.example`.
 
 ## Route groups
 

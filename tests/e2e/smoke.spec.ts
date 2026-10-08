@@ -26,11 +26,12 @@ test("security headers are set", async ({ request }) => {
   expect(response.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 });
 
-test("the CMS lives at /cms and /admin is free for the dashboard", async ({ request }) => {
+test("the CMS lives at /cms and /admin is the (protected) admin area", async ({ page, request }) => {
   const cms = await request.get("/cms");
   expect(cms.status()).toBe(200);
   expect(await cms.text()).toContain("/cms/config.yml");
-  expect((await request.get("/admin")).status()).toBe(404);
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/login\?next=%2Fadmin/);
 });
 
 test("OAuth callback rejects a request without a matching state", async ({ request }) => {

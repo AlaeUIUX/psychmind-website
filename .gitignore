@@ -48,3 +48,6 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /blob-report/
+
+# Local database, uploads and email outbox (dev only)
+/.data/
