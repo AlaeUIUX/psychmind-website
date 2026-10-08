@@ -14,9 +14,11 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { ProfileBanner } from "@/components/provider/profile-view";
 import { DoodleHookArrow } from "@/components/ui/doodles";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { providerPhoto } from "@/lib/photos";
+import { DEFAULT_BANNER } from "@/lib/taxonomy";
 import { useAuthPanel } from "./auth-context";
 
 // The right half of every auth screen: a quiet sheet of gray paper with live
@@ -250,9 +252,7 @@ function ProviderScene() {
       <DoodleHookArrow className="mt-4 h-12 w-7" />
     </div>
     <FloatCard depth={0.8} className="top-1/2 left-1/2 w-[340px] overflow-hidden" style={{ translate: "-50% -58%" }}>
-      <div className="relative h-20 bg-violet-600">
-        <div className="absolute inset-0 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover opacity-60 mix-blend-luminosity grayscale" />
-      </div>
+      <ProfileBanner style={DEFAULT_BANNER} className="h-20" />
       <div className="px-5 pb-5">
         <div className="relative -mt-9 flex items-end justify-between">
           <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-zinc-100 text-[20px] font-semibold text-zinc-700 shadow-md">

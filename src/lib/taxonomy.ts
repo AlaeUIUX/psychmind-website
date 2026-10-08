@@ -112,48 +112,38 @@ export const US_STATES = [
 ].map(([value, label]) => ({ value, label })) satisfies Option[];
 
 /** Figma P1 has 12 brush-texture banner swatches; until those are exported we
- *  tint the existing banner texture. Order matches the Figma grid. `cta` is
- *  the matching Tailwind (shadcn) 500 shade, used for the profile's "Request
- *  a session" button. */
+ *  tint the existing banner texture. Order matches the Figma grid. Each is a
+ *  Tailwind (shadcn) shade — 500, or 600 where white text needs it — and the
+ *  same colour is the profile's "Request a session" button, always with
+ *  white text (every shade has at least 3:1 contrast against white). */
 export const BANNER_STYLES = [
-  { value: "banner_01", label: "Deep blue", color: "#1e3a8a", cta: "#3b82f6" }, // blue-500
-  { value: "banner_02", label: "Dark green", color: "#14532d", cta: "#22c55e" }, // green-500
-  { value: "banner_03", label: "Light grey", color: "#d6d3d1", cta: "#78716c" }, // stone-500
-  { value: "banner_04", label: "Teal", color: "#0f766e", cta: "#14b8a6" }, // teal-500
-  { value: "banner_05", label: "Navy", color: "#0f172a", cta: "#6366f1" }, // indigo-500
-  { value: "banner_06", label: "Slate", color: "#475569", cta: "#64748b" }, // slate-500
-  { value: "banner_07", label: "Emerald", color: "#047857", cta: "#10b981" }, // emerald-500
-  { value: "banner_08", label: "Bright blue", color: "#2563eb", cta: "#0ea5e9" }, // sky-500
-  { value: "banner_09", label: "Pink", color: "#db2777", cta: "#ec4899" }, // pink-500
-  { value: "banner_10", label: "Violet", color: "#7c3aed", cta: "#8b5cf6" }, // violet-500
-  { value: "banner_11", label: "Mustard", color: "#ca8a04", cta: "#f59e0b" }, // amber-500
-  { value: "banner_12", label: "Orange", color: "#ea580c", cta: "#f97316" }, // orange-500
+  { value: "banner_01", label: "Blue", color: "#3b82f6" }, // blue-500
+  { value: "banner_02", label: "Green", color: "#16a34a" }, // green-600
+  { value: "banner_03", label: "Grey", color: "#78716c" }, // stone-500
+  { value: "banner_04", label: "Teal", color: "#0d9488" }, // teal-600
+  { value: "banner_05", label: "Indigo", color: "#6366f1" }, // indigo-500
+  { value: "banner_06", label: "Slate", color: "#64748b" }, // slate-500
+  { value: "banner_07", label: "Emerald", color: "#059669" }, // emerald-600
+  { value: "banner_08", label: "Sky blue", color: "#0284c7" }, // sky-600
+  { value: "banner_09", label: "Pink", color: "#ec4899" }, // pink-500
+  { value: "banner_10", label: "Violet", color: "#8b5cf6" }, // violet-500
+  { value: "banner_11", label: "Amber", color: "#d97706" }, // amber-600
+  { value: "banner_12", label: "Orange", color: "#ea580c" }, // orange-600
 ] as const;
 
 export type BannerStyle = (typeof BANNER_STYLES)[number]["value"];
 
-/** The standard banner until a provider picks their own: violet (Tailwind violet-600). */
+/** The standard banner until a provider picks their own: violet (Tailwind violet-500). */
 export const DEFAULT_BANNER: BannerStyle = "banner_10";
 
-const bannerStyle = (style?: string | null) => BANNER_STYLES.find((b) => b.value === style) ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!;
-
-/** The colour behind a banner style (falls back to the default violet). */
+/** The colour of a banner style (falls back to the default violet). */
 export function bannerColor(style?: string | null) {
-  return bannerStyle(style).color;
+  return (BANNER_STYLES.find((b) => b.value === style) ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!).color;
 }
 
-const luminance = (hex: string) => {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-
-/** A provider's call-to-action takes the 500 shade of their banner colour.
- *  White text (the usual look) when it has at least 3:1 contrast — the bar
- *  for bold UI text — otherwise ink, for the light shades. */
+/** A provider's call-to-action is their banner colour, with white text. */
 export function bannerCta(style?: string | null) {
-  const background = bannerStyle(style).cta;
-  const onWhite = 1.05 / (luminance(background) + 0.05);
-  return { backgroundColor: background, color: onWhite >= 3 ? "#ffffff" : "#1c1917" };
+  return { backgroundColor: bannerColor(style), color: "#ffffff" };
 }
 
 /** Base plan includes this many practice locations (Figma P5: "up to 3 locations"). */

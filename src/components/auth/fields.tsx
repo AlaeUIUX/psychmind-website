@@ -210,7 +210,8 @@ export function HoverArrow() {
       aria-hidden
       className="-ml-2 inline-flex w-0 items-center overflow-hidden opacity-0 transition-[margin,width,opacity] duration-300 ease-out-soft group-hover/button:ml-0 group-hover/button:w-4 group-hover/button:opacity-100 group-focus-visible/button:ml-0 group-focus-visible/button:w-4 group-focus-visible/button:opacity-100 motion-reduce:transition-none"
     >
-      <ArrowRightIcon className="size-4 -translate-x-1.5 group-hover/button:translate-x-0 group-focus-visible/button:translate-x-0" />
+      {/* !size-4: buttons size their icons (up to 22px), which would clip in this 16px slot. */}
+      <ArrowRightIcon className="!size-4 -translate-x-1.5 group-hover/button:translate-x-0 group-focus-visible/button:translate-x-0" />
     </span>
   );
 }

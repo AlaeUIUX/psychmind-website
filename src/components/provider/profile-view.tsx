@@ -87,10 +87,12 @@ export function ProfileBanner({ style, className }: { style?: string | null; cla
   const color = bannerColor(style);
   return (
     <div className={cn("relative overflow-hidden", className)} style={{ backgroundColor: color }}>
-      {/* The how-it-works banner texture, tinted by the chosen colour. */}
+      {/* The how-it-works brush texture, centred on mid-grey and soft-lit, so
+          it adds strokes without shifting the colour (the banner matches the
+          "Request a session" button exactly). */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover bg-center opacity-60 mix-blend-luminosity grayscale"
+        className="absolute inset-0 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover bg-center mix-blend-soft-light [filter:grayscale(1)_brightness(0.58)_contrast(2.2)]"
       />
     </div>
   );

@@ -116,7 +116,7 @@ export default async function OnboardingWelcomePage() {
             <ClockIcon aria-hidden className="size-4 text-warm-500" />
             Takes about 20 minutes · Goes live after verification <span className="font-medium text-blue-600">1-2 days</span>
           </p>
-          <Button asChild size="lg" className="h-11 w-full text-[15px] sm:w-auto sm:self-start sm:px-6">
+          <Button asChild className="h-11 w-full px-6 text-[15px] sm:w-auto sm:self-start">
             <Link href={`/provider/onboarding/${started ? state.onboardingStep : "identity"}`}>
               {started ? "Continue where you left off" : "Get started"}
               <HoverArrow />
