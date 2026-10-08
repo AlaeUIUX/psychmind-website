@@ -15,6 +15,13 @@
       "when": 1791422982367,
       "tag": "0001_subscription_billing_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791453895381,
+      "tag": "0002_default_banner_violet",
+      "breakpoints": true
     }
   ]
 }

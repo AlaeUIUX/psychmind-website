@@ -1,0 +1,1 @@
+ALTER TABLE "provider_profile" ALTER COLUMN "banner_style" SET DEFAULT 'banner_10';

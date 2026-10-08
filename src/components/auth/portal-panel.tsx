@@ -248,7 +248,7 @@ function ProviderScene() {
       <DoodleHookArrow className="mt-4 h-12 w-7" />
     </div>
     <FloatCard depth={0.8} className="top-1/2 left-1/2 w-[340px] overflow-hidden" style={{ translate: "-50% -58%" }}>
-      <div className="relative h-20 bg-teal-700">
+      <div className="relative h-20 bg-violet-600">
         <div className="absolute inset-0 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover opacity-60 mix-blend-luminosity grayscale" />
       </div>
       <div className="px-5 pb-5">

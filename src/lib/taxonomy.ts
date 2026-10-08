@@ -130,6 +130,9 @@ export const BANNER_STYLES = [
 
 export type BannerStyle = (typeof BANNER_STYLES)[number]["value"];
 
+/** The standard banner until a provider picks their own: violet (Tailwind violet-600). */
+export const DEFAULT_BANNER: BannerStyle = "banner_10";
+
 /** Base plan includes this many practice locations (Figma P5: "up to 3 locations"). */
 export const BASE_PLAN_LOCATIONS = 3;
 

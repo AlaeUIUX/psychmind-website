@@ -6,6 +6,7 @@ import type { PreviewRegion } from "@/lib/provider/steps";
 import type { ProfileView as ProfileData } from "@/lib/provider/types";
 import {
   BANNER_STYLES,
+  DEFAULT_BANNER,
   SPECIALTY_CATEGORIES,
   ageProfileLabel,
   labelOf,
@@ -83,7 +84,7 @@ export function formatsLabel(formats: string[]) {
 }
 
 export function ProfileBanner({ style, className }: { style?: string | null; className?: string }) {
-  const color = BANNER_STYLES.find((b) => b.value === style)?.color ?? BANNER_STYLES[3].color;
+  const color = BANNER_STYLES.find((b) => b.value === style)?.color ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!.color;
   return (
     <div className={cn("relative overflow-hidden", className)} style={{ backgroundColor: color }}>
       {/* The how-it-works banner texture, tinted by the chosen colour. */}

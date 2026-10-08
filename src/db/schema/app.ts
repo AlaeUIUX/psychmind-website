@@ -50,7 +50,7 @@ export const providerProfile = pgTable(
     displayAsBusiness: boolean("display_as_business").notNull().default(false),
     titleCredentials: text("title_credentials").notNull().default(""),
     pronouns: text("pronouns"),
-    bannerStyle: text("banner_style").notNull().default("banner_04"),
+    bannerStyle: text("banner_style").notNull().default("banner_10"),
     photoId: text("photo_id"),
 
     // Story
