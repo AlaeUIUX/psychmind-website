@@ -47,3 +47,10 @@ test("contact honeypot swallows bot submissions", async ({ request }) => {
   // 200 when the honeypot short-circuits; 500 only if RESEND_API_KEY is missing locally.
   expect([200, 500]).toContain(response.status());
 });
+
+test("setup check lists what's configured and the Google redirect URI", async ({ page }) => {
+  await page.goto("/dev/setup");
+  await expect(page.getByRole("heading", { name: "Setup check" })).toBeVisible();
+  await expect(page.getByTestId("setup-row").filter({ hasText: "Database" })).toContainText("Connected");
+  await expect(page.getByTestId("copy-value").last()).toHaveText(/\/api\/auth\/callback\/google$/);
+});

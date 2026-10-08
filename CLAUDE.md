@@ -33,12 +33,12 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - `role` is `patient`, `provider` or `admin`. Admins come from `ADMIN_EMAILS`.
   - API notes: `docs/build-plan/research/better-auth-stripe-cheatsheet.md`.
 - **Database:** Drizzle ORM on Postgres. The schema is in `src/db/schema`; migrations are in `drizzle/`.
-  - `npm run db:generate` creates a migration; `npm run db:migrate` applies it to `DATABASE_URL`.
+  - `npm run db:generate` creates a migration; `npm run db:migrate` applies it to `DATABASE_URL`. On Vercel, `npm run build` applies them first (skipped without `DATABASE_URL`).
   - Without `DATABASE_URL`, local dev uses **PGlite** in memory, snapshotted to `.data/pglite.tar.gz`. Delete that file to reset.
 - **Billing:** the Better Auth Stripe plugin, loaded only when `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_BASE` are set.
   - Listing and grace rules: `src/lib/billing.ts`.
 - **Email:** `src/server/email.ts` sends through Resend, or writes to the local outbox at `/dev/mail` when `EMAIL_TRANSPORT=outbox` or when there's no key.
-- **Uploads:** `/api/uploads` and `/api/files/[id]` check ownership and sniff file bytes. Locally, bytes live in `.data/uploads`; production needs Supabase Storage.
+- **Uploads:** `/api/uploads` and `/api/files/[id]` check ownership and sniff file bytes. Bytes live in `.data/uploads` locally and in the private `file_blob` table on Vercel (`STORAGE_DRIVER`). Supabase Storage replaces that at scale.
 - **Forms:** react-hook-form with Zod 4. Use our `zodResolver` in `src/lib/forms`, not `@hookform/resolvers`. Provider sections are shared by the wizard and the editor.
 - **Rate limits:** `rateLimit()` uses Upstash, falling back to in-memory. Better Auth does **not** rate-limit server-side `auth.api` calls, so wrap actions yourself.
 
@@ -50,7 +50,9 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 
 - **The portal** is `app.psychmind.org`; marketing stays on `www`.
 - `src/proxy.ts` and `src/lib/hosts.ts` route each request to the right host.
-- **Locally**, open the portal at `http://app.localhost:<port>`.
+- **Locally**, open the portal at `http://app.localhost:<port>`. `APP_HOST=off` serves it from `localhost` instead, which Google sign-in needs.
+- **Vercel previews** serve everything from one host and use the branch URL as the auth origin (`defaultOrigin()`).
+- **`/dev/setup`** shows what a deployment has configured and the exact Google redirect URI. The guide is `docs/live-testing.md`.
 - **Portal UI** uses the `.app-ui` scope from `globals.css`:
   - Geist `type-ui-*` roles and product-sized controls;
   - squarer radii via `--radius-button`, `--radius-field` and `--radius-card`;

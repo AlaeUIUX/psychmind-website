@@ -7,7 +7,7 @@ import { GoogleSignIn, LastUsed, rememberMethod, useLastUsed } from "./auth-bits
 import { AuthField, AuthTitle, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton } from "./fields";
 
 // Log in. Google first (one tap for most people), then email. Figma A3 copy.
-export function LoginForm({ next, googleEnabled, notice }: { next?: string; googleEnabled: boolean; notice?: string }) {
+export function LoginForm({ next, googleEnabled, notice, error }: { next?: string; googleEnabled: boolean; notice?: string; error?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(signIn, null);
   const fe = state?.fieldErrors ?? {};
   const emailLast = useLastUsed() === "email";
@@ -16,6 +16,7 @@ export function LoginForm({ next, googleEnabled, notice }: { next?: string; goog
     <div className="flex flex-col gap-7">
       <AuthTitle title="Log in to PsychMind" description="Good to see you again. Pick up right where you left off." />
       <FormAlert message={notice} tone="success" />
+      <FormAlert message={error} />
       {/* Google sign-in shows once its keys are configured. */}
       {googleEnabled && (
         <>

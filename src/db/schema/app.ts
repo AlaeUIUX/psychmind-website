@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -164,3 +165,16 @@ export const auditLog = pgTable(
   },
   (t) => [index("audit_log_target_idx").on(t.targetType, t.targetId)],
 );
+
+const bytea = customType<{ data: Buffer; driverData: Buffer | Uint8Array }>({
+  dataType: () => "bytea",
+  fromDriver: (value) => (Buffer.isBuffer(value) ? value : Buffer.from(value)),
+});
+
+/** File bytes when there's no disk or bucket (Vercel without Supabase Storage
+ *  yet). Private: only ever read through /api/files/[id]. */
+export const fileBlob = pgTable("file_blob", {
+  key: text("key").primaryKey(),
+  bytes: bytea("bytes").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

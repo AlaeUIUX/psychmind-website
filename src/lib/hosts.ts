@@ -34,8 +34,21 @@ export const isSharedPath = (path: string) => matches(path, SHARED_PREFIXES) || 
 export const isProtectedPath = (path: string) => matches(path, PROTECTED_PREFIXES);
 
 export function appHost(): string | null {
+  // "off" serves everything from one host — e.g. to test Google sign-in
+  // locally, since Google only accepts http://localhost (not app.localhost).
+  if (process.env.APP_HOST === "off") return null;
   if (process.env.APP_HOST) return process.env.APP_HOST;
   return process.env.NODE_ENV === "development" ? "app.localhost" : null;
+}
+
+/** The public origin when BETTER_AUTH_URL isn't set: the dev server locally,
+ *  and on Vercel previews the branch's stable URL
+ *  (<project>-git-<branch>-<team>.vercel.app), so Google sign-in has one
+ *  fixed redirect URI per branch. */
+export function defaultOrigin(): string | undefined {
+  if (process.env.NODE_ENV === "development") return `http://${appHost() ?? "localhost"}:${process.env.PORT ?? 3000}`;
+  if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_BRANCH_URL) return `https://${process.env.VERCEL_BRANCH_URL}`;
+  return undefined;
 }
 
 /** The marketing host for a given app host (app.psychmind.org → www.psychmind.org). */

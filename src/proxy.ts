@@ -11,10 +11,15 @@ export function proxy(request: NextRequest) {
   const url = request.nextUrl;
   const path = url.pathname;
   const app = appHost();
+  // nextUrl.hostname can be the server's own name in dev; trust the Host header.
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? url.host).split(":")[0];
+
+  // Vercel previews: sign-in only works on the branch's stable URL (the one
+  // registered with Google), so portal pages move there from per-deploy URLs.
+  const branchHost = process.env.VERCEL_ENV === "preview" && !process.env.BETTER_AUTH_URL ? process.env.VERCEL_BRANCH_URL : undefined;
+  if (branchHost && isAppPath(path) && host !== branchHost) return redirectToHost(request, branchHost);
 
   if (app && !isSharedPath(path)) {
-    // nextUrl.hostname can be the server's own name in dev; trust the Host header.
-    const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? url.host).split(":")[0];
     const onApp = host === app;
     if (onApp && path === "/") {
       const hasSession = Boolean(getSessionCookie(request, { cookiePrefix: "psychmind" }));

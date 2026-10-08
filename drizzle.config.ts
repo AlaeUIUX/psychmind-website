@@ -1,4 +1,8 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig } from "drizzle-kit";
+
+// Same .env files as Next (.env.local etc.), so DATABASE_URL is picked up.
+loadEnvConfig(process.cwd());
 
 // `npm run db:generate` writes SQL migrations to ./drizzle from src/db/schema.
 // `npm run db:migrate` applies them to DATABASE_URL (Supabase/Neon/…).
