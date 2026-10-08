@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
+import { safeNext } from "@/lib/safe-next";
 import { authFeatures } from "@/server/auth/features";
 import { getSession, homeFor } from "@/server/auth/session";
 
@@ -16,7 +17,7 @@ const notices: Record<string, string> = {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const session = await getSession();
-  if (session?.user.emailVerified) redirect(homeFor(session.user.role));
+  if (session?.user.emailVerified) redirect(safeNext(params.next) ?? homeFor(session.user.role));
   const notice = params.reset ? notices.reset : params.verified ? notices.verified : params.deleted ? notices.deleted : undefined;
   // Better Auth sends people back with ?error=… when Google sign-in fails or is cancelled.
   const error = params.error

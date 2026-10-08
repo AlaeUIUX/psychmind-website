@@ -14,7 +14,7 @@ import { AuthField, AuthTitle, EmailInput, FormAlert, OrDivider, PasswordInput, 
 // show/hide and a strength meter instead of "Confirm Password", the business
 // name tucked behind a switch, and — for providers — the profile card in the
 // portal panel fills in as they type.
-export function SignUpForm({ role, googleEnabled }: { role: "patient" | "provider"; googleEnabled: boolean }) {
+export function SignUpForm({ role, googleEnabled, next }: { role: "patient" | "provider"; googleEnabled: boolean; next?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(role === "provider" ? signUpProvider : signUpPatient, null);
   const fe = state?.fieldErrors ?? {};
   const v = state?.values ?? {};
@@ -45,6 +45,7 @@ export function SignUpForm({ role, googleEnabled }: { role: "patient" | "provide
       )}
 
       <form action={action} noValidate className="flex flex-col gap-4">
+        {next && <input type="hidden" name="next" value={next} />}
         <FormAlert message={state?.error} />
         <div className="grid grid-cols-2 gap-3">
           <AuthField id="firstName" label="First name" error={fe.firstName}>

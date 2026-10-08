@@ -15,6 +15,8 @@ export type ProviderRow = {
   email: string;
   status: ProviderStatus;
   needsReview: boolean;
+  /** One of the sample providers (Admin → Sample providers). */
+  isSample: boolean;
   submittedAt: Date | null;
   states: string[];
 };
@@ -35,6 +37,7 @@ export async function listProviders(filter: "queue" | "all"): Promise<ProviderRo
       email: user.email,
       status: providerProfile.status,
       needsReview: providerProfile.needsReview,
+      isSample: providerProfile.isSample,
       submittedAt: providerProfile.submittedAt,
     })
     .from(providerProfile)
@@ -52,6 +55,7 @@ export async function listProviders(filter: "queue" | "all"): Promise<ProviderRo
     email: r.email,
     status: r.status,
     needsReview: r.needsReview,
+    isSample: r.isSample,
     submittedAt: r.submittedAt,
     states: locations.filter((l) => l.profileId === r.id).map((l) => l.state),
   }));

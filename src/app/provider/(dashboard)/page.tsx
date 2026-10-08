@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { CheckIcon } from "lucide-react";
+import { ArrowUpRightIcon, CheckIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "cn";
@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { providerProfile } from "@/db/schema";
-import { isListed } from "@/lib/billing";
+import { isListed, stripeConfigured } from "@/lib/billing";
+import { profilePath } from "@/lib/provider/links";
 import { toProfileView } from "@/lib/provider/state";
 import { requireRole } from "@/server/auth/session";
 import { loadProviderState } from "@/server/provider/data";
@@ -25,6 +26,8 @@ export default async function ProviderHome() {
   const [row] = await db.select({ pastDueSince: providerProfile.pastDueSince }).from(providerProfile).where(eq(providerProfile.id, state.id));
   const { listing } = await providerOverview(user.id, state, row?.pastDueSince ?? null);
   const live = isListed(listing);
+  // In the directory now (approval alone lists them until billing is connected).
+  const inDirectory = state.status === "approved" && (live || !stripeConfigured());
 
   // TODO(client): checklist copy.
   const steps = [
@@ -100,7 +103,18 @@ export default async function ProviderHome() {
         </section>
 
         <section aria-label="Profile preview" className="flex flex-col gap-3">
-          <p className="type-small text-text-tertiary">This is how patients will see your profile.</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="type-small text-text-tertiary">This is how patients will see your profile.</p>
+            {inDirectory && (
+              <Button asChild variant="ghost" size="sm">
+                <a href={profilePath(state)} target="_blank" rel="noopener">
+                  {/* TODO(client): copy */}
+                  View your public profile
+                  <ArrowUpRightIcon />
+                </a>
+              </Button>
+            )}
+          </div>
           <ProviderProfileView profile={toProfileView(state)} mode="preview" />
         </section>
       </div>

@@ -44,6 +44,12 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - **Two-step login:** the Better Auth `twoFactor` plugin (authenticator app + 10 backup codes). **Required for admins**: `requireRole("admin")` sends them to `/two-factor/setup`, and admins can't sign in with Google. Any user can turn it on in Settings.
 - **Account data:** Settings → "Download your data" (`/api/account/export`, no secrets) and "Delete your account" (password required when the account has one; `server/account/cleanup.ts` cancels billing and deletes files first).
 - **CSP:** set in `proxy.ts` (`lib/csp.ts`). Portal pages get a per-request nonce with `'strict-dynamic'`; marketing pages allow `'self' 'unsafe-inline'` scripts. A new third-party script, image host or form target must be added there.
+- **Directory** (`src/server/directory`, `components/directory`, route group `(directory)`):
+  - `/providers` is the results list with a quick view (desktop: beside the list; phones: a sheet). The selection is in `?p=`.
+  - A full profile opens in a new tab at `/providers/{name-slug}-{publicId}` (`lib/provider/links.ts`). Only the 8-character `public_id` is looked up; a stale name redirects to the current one.
+  - **Listed** = approved and, once Stripe is configured, paying or in the 3-day grace period (`listedCondition()`). The public projection never includes email or NPI, and street addresses only for in-person locations.
+  - **Saving** (`saved_provider`) is for patients. Signed out, the heart asks them to sign up or log in and brings them back with `?save=1`, which saves on arrival. Redirect targets go through `lib/safe-next.ts`.
+  - **Sample providers:** 50 realistic profiles (`sample-data.ts`), added or removed from Admin → All providers. They're flagged `is_sample`, always labelled, never bookable, `noindex`, and use Unsplash photos.
 
 **Planned:** nuqs for URL state, and Supabase for Postgres and Storage.
 
@@ -51,7 +57,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 
 ## Hosts
 
-- **The portal** is `app.psychmind.org`; marketing stays on `www`.
+- **The portal** is `app.psychmind.org`; marketing stays on `www`. The directory (`/providers`) lives on the portal host too, because the session cookie is host-only and saving needs it.
 - `src/proxy.ts` and `src/lib/hosts.ts` route each request to the right host.
 - **Locally**, open the portal at `http://app.localhost:<port>`. `APP_HOST=off` serves it from `localhost` instead, which Google sign-in needs.
 - **Vercel previews** serve everything from one host and use the branch URL as the auth origin (`defaultOrigin()`).
@@ -69,6 +75,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 |---|---|
 | `(site)` | Marketing |
 | `(auth)` | Login and sign-up |
+| `(directory)` | `/providers`: results and public profiles (marketing chrome, account menu when signed in) |
 | `(patient)` | `/account` |
 | `(provider)` | `/provider` |
 | `(admin)` | `/admin` |

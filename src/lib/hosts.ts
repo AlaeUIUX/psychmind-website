@@ -1,7 +1,7 @@
 // Two front doors, one Next.js app:
 // - the marketing site (www.psychmind.org), and
 // - the product portal (app.psychmind.org): sign-up, log in, onboarding,
-//   dashboards, admin.
+//   dashboards, admin, and the provider directory.
 // proxy.ts sends each request to the right host. APP_HOST turns the split
 // on (production: "app.psychmind.org"; locally it defaults to "app.localhost",
 // which browsers resolve to this machine). Without it — e.g. Vercel preview
@@ -19,6 +19,9 @@ const APP_PREFIXES = [
   "/provider",
   "/account",
   "/admin",
+  // The directory: public, but it needs the session (saving a provider,
+  // requesting a session), and the session cookie belongs to this host.
+  "/providers",
 ] as const;
 
 /** Served on both hosts. */

@@ -1,32 +1,18 @@
 "use client";
 
 import { cn } from "cn";
-import { ChevronDownIcon, LogOutIcon, MenuIcon } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AccountMenu, type AppUser } from "@/components/app/account-menu";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { GUTTER } from "@/components/ui/section";
 
 export type AppNavItem = { href: string; label: string; badge?: ReactNode };
 
-export type AppUser = {
-  name: string;
-  email?: string;
-  avatarUrl?: string;
-  /** Links in the account menu, e.g. Settings, Billing. */
-  menu?: { href: string; label: string }[];
-};
+export type { AppUser };
 
 type AppShellProps = {
   nav: AppNavItem[];
@@ -39,15 +25,6 @@ type AppShellProps = {
   onSignOut?: () => void;
   children: ReactNode;
 };
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 // The frame for every signed-in area (provider dashboard, patient account,
 // admin). Figma's dashboard header: logo, centred nav, avatar pill with a
@@ -119,49 +96,7 @@ export function AppShell({ nav, user, homeHref = "/", banner, onSignOut, childre
             {navLinks()}
           </nav>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-pill border border-warm-200 bg-white py-1 pr-2.5 pl-1 shadow-control transition-colors hover:bg-warm-50 focus-visible:ring-4 focus-visible:ring-ring/12 focus-visible:outline-none"
-                aria-label={`Account menu for ${user.name}`}
-              >
-                <Avatar className="size-7">
-                  {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
-                  <AvatarFallback className="bg-warm-200 text-xs font-medium text-warm-800">
-                    {initials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="hidden max-w-[160px] truncate text-sm font-medium text-text-primary sm:inline">
-                  {user.name}
-                </span>
-                <ChevronDownIcon aria-hidden className="size-4 text-warm-600" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60">
-              <DropdownMenuLabel className="flex flex-col gap-0.5">
-                <span className="truncate text-sm font-medium text-text-primary">{user.name}</span>
-                {user.email && <span className="truncate text-xs font-normal text-text-placeholder">{user.email}</span>}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {(user.menu ?? []).map((item) => (
-                <DropdownMenuItem key={item.href} asChild>
-                  <Link href={item.href}>
-                    {item.label}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-              {onSignOut && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => onSignOut()}>
-                    <LogOutIcon />
-                    Log out
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AccountMenu user={user} onSignOut={onSignOut} />
         </div>
       </header>
 

@@ -56,6 +56,7 @@ export function ProviderTable({ rows, empty }: { rows: ProviderRow[]; empty: { t
                 <div className="flex flex-wrap gap-1">
                   <Badge variant={STATUS_BADGE[r.status].variant}>{STATUS_BADGE[r.status].label}</Badge>
                   {r.needsReview && <Badge variant="info">License update</Badge>}
+                  {r.isSample && <Badge variant="neutral">Sample</Badge>}
                 </div>
               </TableCell>
               <TableCell className="text-right tabular-nums">{r.status === "submitted" ? waiting(r.submittedAt) : "—"}</TableCell>

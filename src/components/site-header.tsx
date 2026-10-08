@@ -4,6 +4,7 @@ import { cn } from "cn";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AccountMenu, type AppUser } from "@/components/app/account-menu";
 import { Button } from "@/components/ui/button";
 import { GUTTER } from "@/components/ui/section";
 
@@ -14,7 +15,9 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader() {
+/** `account` (signed-in pages such as the directory) swaps Log in / Create
+ *  account for the avatar menu, as in Figma's logged-in results (S3). */
+export function SiteHeader({ account, onSignOut }: { account?: AppUser; onSignOut?: () => void } = {}) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [onDark, setOnDark] = useState(false);
@@ -106,41 +109,47 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 sm:flex">
-          <Button asChild variant="ghost" size="sm" className={cn(dark && "text-white hover:bg-white/10")}>
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button asChild variant={dark ? "inverse" : "primary"} size="sm">
-            <Link href="/signup">Create account</Link>
-          </Button>
-        </div>
-
-        <button
-          type="button"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          onClick={() => setOpen((v) => !v)}
-          className={cn(
-            "-mr-2 flex size-11 items-center justify-center rounded-pill transition-colors sm:hidden",
-            dark ? "hover:bg-white/10 [&_span_span]:bg-white" : "hover:bg-warm-100",
+        <div className="flex items-center gap-2">
+          {account ? (
+            <AccountMenu user={account} onSignOut={onSignOut} />
+          ) : (
+            <div className="hidden items-center gap-2 sm:flex">
+              <Button asChild variant="ghost" size="sm" className={cn(dark && "text-white hover:bg-white/10")}>
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild variant={dark ? "inverse" : "primary"} size="sm">
+                <Link href="/signup">Create account</Link>
+              </Button>
+            </div>
           )}
-        >
-          <span className="relative block h-3 w-4">
-            <span
-              className={cn(
-                "absolute left-0 h-[1.5px] w-full rounded-full bg-text-primary transition-[top,rotate] duration-300 ease-out-soft",
-                open ? "top-1/2 -translate-y-1/2 rotate-45" : "top-0",
-              )}
-            />
-            <span
-              className={cn(
-                "absolute left-0 h-[1.5px] w-full rounded-full bg-text-primary transition-[top,rotate] duration-300 ease-out-soft",
-                open ? "top-1/2 -translate-y-1/2 -rotate-45" : "top-[calc(100%-1.5px)]",
-              )}
-            />
-          </span>
-        </button>
+
+          <button
+            type="button"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "-mr-2 flex size-11 items-center justify-center rounded-pill transition-colors sm:hidden",
+              dark ? "hover:bg-white/10 [&_span_span]:bg-white" : "hover:bg-warm-100",
+            )}
+          >
+            <span className="relative block h-3 w-4">
+              <span
+                className={cn(
+                  "absolute left-0 h-[1.5px] w-full rounded-full bg-text-primary transition-[top,rotate] duration-300 ease-out-soft",
+                  open ? "top-1/2 -translate-y-1/2 rotate-45" : "top-0",
+                )}
+              />
+              <span
+                className={cn(
+                  "absolute left-0 h-[1.5px] w-full rounded-full bg-text-primary transition-[top,rotate] duration-300 ease-out-soft",
+                  open ? "top-1/2 -translate-y-1/2 -rotate-45" : "top-[calc(100%-1.5px)]",
+                )}
+              />
+            </span>
+          </button>
+        </div>
       </div>
 
       <div
@@ -169,18 +178,20 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="mt-2 grid grid-cols-2 gap-2 border-t border-warm-200 pt-3">
-          <Button asChild variant="secondary" size="md">
-            <Link href="/login" tabIndex={open ? undefined : -1} onClick={() => setOpen(false)}>
-              Log in
-            </Link>
-          </Button>
-          <Button asChild size="md">
-            <Link href="/signup" tabIndex={open ? undefined : -1} onClick={() => setOpen(false)}>
-              Create account
-            </Link>
-          </Button>
-        </div>
+        {!account && (
+          <div className="mt-2 grid grid-cols-2 gap-2 border-t border-warm-200 pt-3">
+            <Button asChild variant="secondary" size="md">
+              <Link href="/login" tabIndex={open ? undefined : -1} onClick={() => setOpen(false)}>
+                Log in
+              </Link>
+            </Button>
+            <Button asChild size="md">
+              <Link href="/signup" tabIndex={open ? undefined : -1} onClick={() => setOpen(false)}>
+                Create account
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );

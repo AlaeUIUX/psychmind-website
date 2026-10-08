@@ -8,6 +8,10 @@ export type UploadMeta = { id: string; fileName: string; size: number; mimeType:
 
 export type ProviderState = {
   id: string;
+  publicId: string;
+  isSample: boolean;
+  /** Sample providers' hotlinked photo (real providers upload theirs). */
+  externalPhotoUrl: string | null;
   status: ProviderStatus;
   onboardingStep: string;
   reviewNote: string | null;
@@ -69,7 +73,9 @@ export function toProfileView(s: ProviderState): ProfileView {
     titleCredentials: s.titleCredentials,
     pronouns: s.pronouns,
     bannerStyle: s.bannerStyle,
-    photoUrl: s.photo ? fileUrl(s.photo.id) : null,
+    publicId: s.publicId,
+    isSample: s.isSample,
+    photoUrl: s.externalPhotoUrl ?? (s.photo ? fileUrl(s.photo.id) : null),
     verified: s.status === "approved",
     whoYouWorkWith: s.whoYouWorkWith,
     about: s.about,
@@ -86,7 +92,7 @@ export function toProfileView(s: ProviderState): ProfileView {
     acceptingNewClients: s.acceptingNewClients,
     education: s.education,
     yearsExperience: s.yearsExperience,
-    licenses: s.licenses.map((l) => ({ state: l.state, licenseNumber: l.licenseNumber, verified: l.status === "verified" })),
+    licenses: s.licenses.map((l) => ({ state: l.state, licenseNumber: l.licenseNumber, issuingBody: l.issuingBody, verified: l.status === "verified" })),
     locations: s.locations,
   };
 }

@@ -43,6 +43,13 @@
       "when": 1791460822912,
       "tag": "0005_rate_limit_counter",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791468806414,
+      "tag": "0006_directory_and_saves",
+      "breakpoints": true
     }
   ]
 }

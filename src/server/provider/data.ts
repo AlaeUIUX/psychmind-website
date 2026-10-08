@@ -52,6 +52,9 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
 
   return {
     id: p.id,
+    publicId: p.publicId,
+    isSample: p.isSample,
+    externalPhotoUrl: p.externalPhotoUrl,
     status: p.status,
     onboardingStep: p.onboardingStep,
     reviewNote: p.reviewNote,

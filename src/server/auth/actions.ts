@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db, dbReady } from "@/db";
 import { user } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { safeNext } from "@/lib/safe-next";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
 import { getSession, hasTwoFactor, homeFor } from "./session";
@@ -34,12 +35,6 @@ function issues(error: z.ZodError) {
   const out: Record<string, string> = {};
   for (const i of error.issues) out[i.path.join(".")] ??= i.message;
   return out;
-}
-
-/** Only allow same-site relative redirects (no open redirects via ?next=). */
-function safeNext(next: FormDataEntryValue | null) {
-  const value = typeof next === "string" ? next : "";
-  return value.startsWith("/") && !value.startsWith("//") ? value : null;
 }
 
 const TOO_MANY = "Too many attempts. Please wait a few minutes and try again.";
@@ -86,7 +81,8 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
         password: v.password,
         firstName: v.firstName,
         lastName: v.lastName,
-        callbackURL: role === "provider" ? "/provider/onboarding" : "/account",
+        // The verification link signs them in and returns them here.
+        callbackURL: role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account"),
       },
       headers: await headers(),
     });

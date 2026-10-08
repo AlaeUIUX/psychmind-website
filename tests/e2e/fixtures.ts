@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Browser, type Page } from "@playwright/test";
 
 // Test-only values for the local app (PGlite database, /dev/mail outbox).
 // Never real accounts: the .test domain can't receive mail.
@@ -52,4 +52,46 @@ export async function signUp(page: Page, role: "patient" | "provider", email: st
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
   await followEmailLink(page, email);
+}
+
+/** Admins must use two-step login: sets it up on first use, then enters codes. */
+async function setUpTwoFactor(page: Page) {
+  await page.getByLabel("Confirm your password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Continue" }).click();
+  const key = (await page.getByTestId("totp-key").textContent())!.replace(/\s/g, "");
+  saveAdminSecret(key);
+  await page.getByLabel("Code from your app").fill(totp(key));
+  await page.getByRole("button", { name: "Turn on two-step login" }).click();
+  await expect(page.getByRole("heading", { name: "Save your backup codes" })).toBeVisible();
+  await expect(page.getByTestId("backup-codes").locator("li")).toHaveCount(10);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("link", { name: "Continue" }).click();
+}
+
+/** A signed-in admin (created and given two-step login on first use). */
+export async function adminPage(browser: Browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(ADMIN_EMAIL);
+  await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // First run: the admin account doesn't exist yet — create it.
+  const failed = page.getByText("don't match");
+  const queue = page.getByRole("heading", { level: 1, name: "Verification queue" });
+  const setup = page.getByRole("heading", { name: "Set up two-step login" });
+  const challenge = page.getByRole("heading", { name: "Two-step verification" });
+  await expect(failed.or(queue).or(setup).or(challenge)).toBeVisible({ timeout: 15_000 });
+  if (await failed.isVisible()) {
+    await signUp(page, "patient", ADMIN_EMAIL, "Brenda", "Admin");
+    await page.goto("/admin");
+  }
+  if (await challenge.isVisible()) {
+    await page.getByLabel("Authentication code").fill(totp(readAdminSecret()!));
+    await page.getByRole("button", { name: "Verify" }).click();
+  }
+  await expect(queue.or(setup)).toBeVisible({ timeout: 15_000 });
+  if (await setup.isVisible()) await setUpTwoFactor(page);
+  await expect(queue).toBeVisible({ timeout: 15_000 });
+  return page;
 }

@@ -5,12 +5,24 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 
 ## Next
 
+- **Session requests** (the owner will send the details). "Request a session"
+  opens a placeholder dialog that offers Save for now. Requests should work
+  as a guest or with an account; Figma B1–B7 has the wizard.
+- **Remove the sample providers before real providers launch** (Admin → All
+  providers → Remove samples). They're labelled and can't be booked, but they
+  shouldn't sit next to real providers for long.
 - **Bring the dashboards up to the new portal design**: provider dashboard,
   admin console and patient account. Use the approved caliber: zinc, blue
   accent, `type-ui-*`, paper surfaces.
 
 ## Later
 
+- **Search engine and filters** (slice 8). `/providers` lists everyone for
+  now; the landing page search isn't wired up yet, on purpose.
+- **Saved providers who leave the directory** should stay on the patient's
+  list, labelled as unavailable (plan, slice 9). Today they drop off.
+- **"Something wrong with this profile?"** links to the contact form. A proper
+  report flow (reason, provider id, admin queue) would be better.
 - **Custom tags report for admins** (owner request, 2026-10-08).
   - Providers can add their own specialties and approaches. These are saved on
     their profile (`provider_profile.specialties` / `approaches`), so nothing

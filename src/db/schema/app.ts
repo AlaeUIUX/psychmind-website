@@ -7,6 +7,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -24,6 +25,12 @@ const id = () =>
   text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID());
+
+/** Short public id for profile links (/providers/sara-okafor-k3f9x2q7): 8
+ *  characters from an alphabet without look-alikes. */
+const PUBLIC_ID_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+export const newPublicId = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => PUBLIC_ID_ALPHABET[b % PUBLIC_ID_ALPHABET.length]).join("");
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -41,6 +48,13 @@ export const providerProfile = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     status: providerStatus("status").notNull().default("draft"),
+    /** Used in the public profile link; never changes. */
+    publicId: text("public_id").notNull().$defaultFn(newPublicId),
+    /** Sample providers (admin → Sample providers) for previewing search and
+     *  profiles. Labelled as samples and never bookable. */
+    isSample: boolean("is_sample").notNull().default(false),
+    /** Sample providers' photos are hotlinked (Unsplash), not uploads. */
+    externalPhotoUrl: text("external_photo_url"),
     /** Furthest onboarding step reached, so the wizard can resume. */
     onboardingStep: text("onboarding_step").notNull().default("identity"),
 
@@ -93,7 +107,11 @@ export const providerProfile = pgTable(
 
     ...timestamps,
   },
-  (t) => [uniqueIndex("provider_profile_user_idx").on(t.userId), index("provider_profile_status_idx").on(t.status)],
+  (t) => [
+    uniqueIndex("provider_profile_user_idx").on(t.userId),
+    uniqueIndex("provider_profile_public_id_idx").on(t.publicId),
+    index("provider_profile_status_idx").on(t.status),
+  ],
 );
 
 /** Practice locations (Figma P5). One per state; exactly one is primary. */
@@ -186,3 +204,18 @@ export const rateLimitCounter = pgTable("rate_limit_counter", {
   count: integer("count").notNull(),
   windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
 });
+
+/** Providers a patient saved (the heart on cards and profiles). */
+export const savedProvider = pgTable(
+  "saved_provider",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => providerProfile.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.profileId] }), index("saved_provider_profile_idx").on(t.profileId)],
+);

@@ -10,7 +10,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
       homeHref="/account"
       nav={[
         { href: "/account", label: "Overview" },
-        { href: "/", label: "Find a provider" },
+        { href: "/providers", label: "Find a provider" },
         { href: "/account/settings", label: "Settings" },
       ]}
       user={{ name: user.name, email: user.email }}

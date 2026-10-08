@@ -1,7 +1,8 @@
 import { cn } from "cn";
-import { HeartIcon, MapPinIcon, MonitorIcon, ShieldIcon, UserRoundIcon } from "lucide-react";
+import { BuildingIcon, HeartIcon, MapPinIcon, MonitorIcon, UserRoundIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
+import { displayName, listJoin } from "@/lib/provider/display";
 import type { PreviewRegion } from "@/lib/provider/steps";
 import type { ProfileView as ProfileData } from "@/lib/provider/types";
 import {
@@ -15,7 +16,7 @@ import {
 } from "@/lib/taxonomy";
 
 // The provider profile, driven by data. Used as the live preview while a
-// provider onboards or edits, and (later) as the public profile page. Layout
+// provider onboards or edits, and as the public profile page. Layout
 // and styling follow the "Profiles" showcase on How it works (Figma D2).
 
 /** A part of the profile the editor can point at ("you're editing this"). */
@@ -69,11 +70,6 @@ function GhostTag() {
   return <span aria-hidden className="inline-block h-7 w-20 rounded-tag border border-dashed border-warm-300" />;
 }
 
-function displayName(p: ProfileData) {
-  if (p.displayAsBusiness && p.businessName) return p.businessName;
-  return [p.firstName, p.lastName].filter(Boolean).join(" ");
-}
-
 export function formatsLabel(formats: string[]) {
   const online = formats.includes("online");
   const inPerson = formats.includes("in_person");
@@ -100,21 +96,32 @@ export function ProfileBanner({ style, className }: { style?: string | null; cla
 
 type ProfileViewProps = {
   profile: ProfileData;
-  /** "preview" adds a badge and placeholder hints for unfilled sections. */
+  /** "preview" (onboarding, dashboard, admin): a card with a Preview badge and
+   *  placeholder hints for unfilled sections. "public": the profile page
+   *  (Figma P1), laid flat on the page's own panel. */
   mode?: "preview" | "public";
   /** Action buttons for the sidebar (Request a session…). Previews pass inert stand-ins. */
   actions?: ReactNode;
   /** Ring the part of the profile currently being edited. */
   highlight?: PreviewRegion | null;
+  /** Public page: replaces the plain "Verified" chip (e.g. with an explainer). */
+  verifiedSlot?: ReactNode;
+  /** Public page: the button on the banner's corner (Figma "Go back to results"). */
+  bannerAction?: ReactNode;
   className?: string;
 };
 
-export function ProviderProfileView({ profile: p, mode = "public", actions, highlight, className }: ProfileViewProps) {
+/** `tail` stays on one line (a license number shouldn't break). */
+type CredentialLine = { text: string; tail?: string; tone?: "strong" | "note"; verified?: boolean };
+
+export function ProviderProfileView({ profile: p, mode = "public", actions, highlight, verifiedSlot, bannerAction, className }: ProfileViewProps) {
   const preview = mode === "preview";
   const name = displayName(p) || (preview ? "Full name" : "");
-  const formats = Array.from(new Set((p.locations ?? []).flatMap((l) => l.formats)));
+  const locations = p.locations ?? [];
+  const formats = Array.from(new Set(locations.flatMap((l) => l.formats)));
   const formatText = formatsLabel(formats);
-  const primary = (p.locations ?? []).find((l) => l.isPrimary) ?? p.locations?.[0];
+  const primary = locations.find((l) => l.isPrimary) ?? locations[0];
+  const licensedIn = Array.from(new Set((p.licenses ?? []).filter((l) => l.verified).map((l) => stateName(l.state))));
   const firstName = p.displayAsBusiness && p.businessName ? p.businessName : p.firstName;
 
   const groups = SPECIALTY_CATEGORIES.map((cat) => ({
@@ -127,47 +134,58 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
     ...(p.ageGroups ?? []).map(ageProfileLabel),
   ];
 
-  const credentials = [
+  const strong = (text: string): CredentialLine[] => (text ? [{ text, tone: "strong" }] : []);
+  const credentials: { label: string; lines: CredentialLine[] }[] = [
     {
       label: "License",
       lines: p.licenses?.length
         ? [
-            p.titleCredentials ?? "",
-            ...p.licenses.map(
-              (l) => `${l.verified ? "Verified by PsychMind · " : ""}${stateName(l.state)} · License #${l.licenseNumber}`,
-            ),
+            ...strong(p.titleCredentials ?? ""),
+            ...p.licenses.flatMap((l): CredentialLine[] => [
+              {
+                text: `${l.verified ? "Verified by PsychMind · " : ""}${stateName(l.state)} · `,
+                tail: `License #${l.licenseNumber}`,
+                verified: l.verified,
+              },
+              ...(l.issuingBody ? [{ text: l.issuingBody, tone: "note" as const }] : []),
+            ]),
           ]
         : [],
     },
     {
       label: "Education",
-      lines: (p.education ?? []).flatMap((e) => [e.degree, [e.school, e.year].filter(Boolean).join(" · ")]),
+      lines: (p.education ?? []).flatMap((e) => [...strong(e.degree), { text: [e.school, e.year].filter(Boolean).join(" · ") }]),
     },
-    { label: "Experience", lines: p.yearsExperience != null ? [`${p.yearsExperience} years in practice`] : [] },
-    { label: "Languages", lines: p.languages?.length ? [p.languages.join(", ")] : [] },
-    {
-      label: "Approaches",
-      lines: p.approaches?.length ? [p.approaches.map((a) => labelOf("approaches", a)).join(" · ")] : [],
-    },
-    {
-      label: "Session types",
-      lines: p.sessionParticipants?.length
-        ? [p.sessionParticipants.map((v) => labelOf("participants", v)).join(" · ")]
-        : [],
-    },
+    { label: "Experience", lines: p.yearsExperience != null ? strong(`${p.yearsExperience} years in practice`) : [] },
+    { label: "Languages", lines: strong(p.languages?.join(", ") ?? "") },
+    { label: "Approaches", lines: strong((p.approaches ?? []).map((a) => labelOf("approaches", a)).join(" · ")) },
+    { label: "Session types", lines: strong((p.sessionParticipants ?? []).map((v) => labelOf("participants", v)).join(" · ")) },
   ].filter((c) => c.lines.length || preview);
 
   return (
     <article
-      className={cn("@container relative w-full overflow-hidden rounded-card bg-warm-50 shadow-card ring-1 ring-warm-200", className)}
+      className={cn(
+        "@container relative w-full",
+        preview && "overflow-clip rounded-card bg-warm-50 shadow-card ring-1 ring-warm-200",
+        className,
+      )}
     >
-      <Region name="banner" highlight={highlight} className="rounded-none">
-        <ProfileBanner style={p.bannerStyle} className="h-24" />
+      <Region name="banner" highlight={highlight} className={preview ? "rounded-none" : "rounded-xl"}>
+        <ProfileBanner style={p.bannerStyle} className={preview ? "h-24" : "h-24 rounded-xl @3xl:h-34"} />
+        {!preview && bannerAction && (
+          // Above the photo row, which overlaps the banner's lower edge.
+          <div className="absolute right-3 bottom-3 z-10 @3xl:right-6 @3xl:-bottom-3">{bannerAction}</div>
+        )}
       </Region>
 
-      <div className="relative -mt-14 flex items-end justify-between px-6">
+      <div className={cn("relative flex items-end justify-between gap-3", preview ? "-mt-14 px-6" : "-mt-12 px-2 @3xl:-mt-22 @3xl:px-6")}>
         <Region name="photo" highlight={highlight} className="rounded-4xl">
-        <div className="relative flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-4xl border-4 border-white bg-warm-100 shadow-card">
+        <div
+          className={cn(
+            "relative flex shrink-0 items-center justify-center overflow-hidden rounded-4xl border-4 border-white bg-warm-100 shadow-card",
+            preview ? "size-28" : "size-28 @3xl:size-40 @3xl:border-6",
+          )}
+        >
           {p.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={p.photoUrl} alt="" className="size-full object-cover" />
@@ -183,13 +201,17 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
         )}
       </div>
 
-      <div className="relative flex flex-col gap-8 px-6 pt-4 pb-6 @3xl:flex-row">
+      <div className={cn("relative flex flex-col gap-8 pt-4 pb-6 @3xl:flex-row", preview ? "px-6" : "px-2 @3xl:px-6 @5xl:gap-12")}>
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <Region name="identity" highlight={highlight} className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
-              <h2 className={cn("type-title", name ? "text-text-primary" : "text-text-placeholder")}>{name}</h2>
+              {preview ? (
+                <h2 className={cn("type-title", name ? "text-text-primary" : "text-text-placeholder")}>{name}</h2>
+              ) : (
+                <h1 className="type-title-lg font-semibold text-text-primary">{name}</h1>
+              )}
               {p.verified ? (
-                <VerifiedBadge />
+                (verifiedSlot ?? <VerifiedBadge />)
               ) : (
                 preview && (
                   <Tag className="shrink-0 border-amber-200 bg-amber-50 text-amber-800">
@@ -200,6 +222,10 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
               )}
             </div>
             <p className="flex flex-wrap items-center gap-x-2 type-body text-text-secondary">
+              {p.verified && p.titleCredentials && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/images/how-it-works/check-icon.svg" alt="" className="size-4" />
+              )}
               {p.titleCredentials ? (
                 <span>{p.titleCredentials}</span>
               ) : (
@@ -258,21 +284,79 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
             </Section>
           )}
 
-          <Section title="Credentials & qualifications" region="credentials" highlight={highlight}>
-            <dl className="flex flex-col gap-4">
-              {credentials.map((c) => (
-                <div key={c.label} className="flex items-start justify-between gap-6">
-                  <dt className="type-overline shrink-0 text-text-tertiary">{c.label}</dt>
-                  <dd className="flex max-w-[341px] flex-col gap-1 text-right">
-                    {c.lines.length ? (
-                      c.lines.filter(Boolean).map((line, i) => (
-                        <p
-                          key={`${line}-${i}`}
-                          className={i === 0 ? "type-small font-medium text-text-primary" : "type-caption text-text-tertiary"}
-                        >
-                          {line}
+          {locations.length > 0 && (
+            <Section title="Practice locations" region="location" highlight={highlight}>
+              <ul className="grid gap-3 @xl:grid-cols-2">
+                {locations.map((l, i) => {
+                  const inPerson = l.formats.includes("in_person");
+                  const Icon = inPerson ? BuildingIcon : MonitorIcon;
+                  const license = p.licenses?.find((x) => x.state === l.state);
+                  return (
+                    <li key={`${l.state}-${l.city}-${i}`} className="flex gap-3 rounded-field border border-warm-200 bg-white p-4 shadow-control">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-warm-100 text-text-secondary">
+                        <Icon aria-hidden className="size-4" />
+                      </span>
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="type-small font-medium text-text-primary">{l.practiceName || `${l.city}, ${stateName(l.state)}`}</p>
+                          {l.isPrimary && locations.length > 1 && (
+                            <span className="shrink-0 rounded-tag bg-warm-100 px-1.5 py-0.5 type-caption font-medium text-text-secondary">Primary</span>
+                          )}
+                        </div>
+                        {inPerson && l.address && <p className="type-caption text-text-secondary">{l.address}</p>}
+                        <p className="type-caption text-text-tertiary">
+                          {l.city}, {l.state}
+                          {l.zip ? ` ${l.zip}` : ""}
+                          {formatsLabel(l.formats) && ` · ${formatsLabel(l.formats)}`}
                         </p>
-                      ))
+                        {license?.verified && (
+                          <p className="mt-1.5 flex items-center gap-1.5 type-caption text-text-secondary">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-3.5" />
+                            {/* TODO(client): copy */}
+                            {stateName(l.state)} license verified
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Section>
+          )}
+
+          <Section title="Credentials & qualifications" region="credentials" highlight={highlight}>
+            {/* Figma P1: label column, values in a fixed column (stacked on phones). */}
+            <dl className="flex flex-col gap-6">
+              {credentials.map((c) => (
+                <div key={c.label} className="flex flex-col gap-2 @md:flex-row @md:items-start @md:justify-between @md:gap-6">
+                  <dt className="type-overline shrink-0 text-text-tertiary">{c.label}</dt>
+                  <dd className="flex w-full flex-col gap-1.5 @md:max-w-[341px]">
+                    {c.lines.some((l) => l.text) ? (
+                      c.lines
+                        .filter((l) => l.text)
+                        .map((line, i) => (
+                          <p
+                            key={`${line.text}-${i}`}
+                            className={cn(
+                              "flex items-start gap-1.5",
+                              line.tone === "strong"
+                                ? "type-small font-medium text-text-primary"
+                                : line.tone === "note"
+                                  ? "type-caption text-text-tertiary"
+                                  : "type-small text-text-secondary",
+                            )}
+                          >
+                            {line.verified && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="mt-0.5 size-4 shrink-0" />
+                            )}
+                            <span>
+                              {line.text}
+                              {line.tail && <span className="whitespace-nowrap">{line.tail}</span>}
+                            </span>
+                          </p>
+                        ))
                     ) : (
                       <span aria-hidden className="h-3 w-28 rounded-pill bg-warm-200" />
                     )}
@@ -283,7 +367,13 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
           </Section>
         </div>
 
-        <aside className="flex h-fit w-full shrink-0 flex-col gap-6 rounded-field border border-warm-200 bg-warm-100 p-6 @3xl:w-[300px]">
+        <aside
+          className={cn(
+            "flex h-fit w-full shrink-0 flex-col gap-6 rounded-field border border-warm-200 bg-warm-100 p-6 @3xl:w-[300px]",
+            // The public page keeps price and actions in view while reading.
+            !preview && "@3xl:sticky @3xl:top-24 @5xl:w-[400px] @5xl:p-8",
+          )}
+        >
           <div className="flex items-center gap-2.5">
             <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-field border border-black/[0.08] bg-white">
               {p.photoUrl ? (
@@ -332,8 +422,15 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
           <div className="flex flex-col gap-3">
             {formatText && (
               <p className="flex items-center gap-2 type-small text-text-secondary">
-                <MonitorIcon aria-hidden className="size-4" />
+                <MonitorIcon aria-hidden className="size-4 shrink-0" />
                 {formatText} available
+              </p>
+            )}
+            {licensedIn.length > 0 && (
+              <p className="flex items-start gap-2 type-small text-text-secondary">
+                <MapPinIcon aria-hidden className="mt-0.5 size-4 shrink-0" />
+                {/* TODO(client): copy */}
+                <span>Licensed in {listJoin(licensedIn)}</span>
               </p>
             )}
             {actions ?? (
@@ -351,10 +448,19 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
           </div>
 
           <hr className="border-warm-200" />
-          <p className="flex items-center gap-2 type-small text-text-secondary">
-            <ShieldIcon aria-hidden className="size-4" />
-            Credentials manually verified
-          </p>
+          {/* Trust lines and icons from Figma. */}
+          <div className="flex flex-col gap-3 type-small text-text-secondary">
+            <p className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/how-it-works/shield-icon.svg" alt="" className="size-4" />
+              Your info is never shared
+            </p>
+            <p className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-4" />
+              Credentials manually verified
+            </p>
+          </div>
         </aside>
       </div>
     </article>
