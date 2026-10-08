@@ -23,7 +23,7 @@ export const BASE_PLAN = {
 } as const;
 
 /** After a failed renewal the profile stays visible this long (business rule). */
-export const GRACE_PERIOD_DAYS = 3;
+const GRACE_PERIOD_DAYS = 3;
 const DAY = 86_400_000;
 
 export type SubscriptionStatus =

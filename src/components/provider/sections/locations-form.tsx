@@ -38,7 +38,7 @@ const blank = (primary: boolean): Location => ({
 });
 
 /** Figma P5 right panel. */
-export function LicenseComplianceCard() {
+function LicenseComplianceCard() {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-950">
       <p className="flex items-center gap-2 type-small font-semibold">

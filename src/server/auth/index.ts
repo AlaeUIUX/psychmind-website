@@ -34,7 +34,7 @@ const adminEmails = new Set(
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
 );
-export const isAdminEmail = (email: string) => adminEmails.has(email.toLowerCase());
+const isAdminEmail = (email: string) => adminEmails.has(email.toLowerCase());
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 

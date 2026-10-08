@@ -22,6 +22,7 @@ import type { ActionResult } from "@/lib/provider/state";
 import { furthest, nextStep, type StepKey } from "@/lib/provider/steps";
 import { requireRole } from "@/server/auth/session";
 import { sendEmail } from "@/server/email";
+import { deleteFile } from "@/server/storage";
 import { adminNewSubmissionEmail, providerSubmittedEmail } from "@/server/emails";
 import { appUrl } from "@/server/url";
 import { ensureProfile, loadProviderState } from "./data";
@@ -88,6 +89,14 @@ export async function saveProviderSection(section: SectionKey, input: unknown): 
 
 type Profile = typeof providerProfile.$inferSelect;
 
+async function removeUpload(id: string, ownerId: string) {
+  const [old] = await db
+    .delete(upload)
+    .where(and(eq(upload.id, id), eq(upload.ownerId, ownerId)))
+    .returning({ storageKey: upload.storageKey });
+  if (old) await deleteFile(old.storageKey);
+}
+
 async function saveSection(section: SectionKey, data: never, profile: Profile, userId: string): Promise<ActionResult> {
   const where = eq(providerProfile.id, profile.id);
   switch (section) {
@@ -111,6 +120,8 @@ async function saveSection(section: SectionKey, data: never, profile: Profile, u
         .where(and(eq(upload.id, v.photoId), eq(upload.ownerId, userId), eq(upload.kind, "photo")));
       if (!file) return { ok: false, fieldErrors: { photoId: "Upload your picture again." } };
       await db.update(providerProfile).set({ photoId: file.id }).where(where);
+      // A replaced photo is no longer shown anywhere: drop its record and bytes.
+      if (profile.photoId && profile.photoId !== file.id) await removeUpload(profile.photoId, userId);
       return { ok: true };
     }
     case "story":

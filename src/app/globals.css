@@ -198,16 +198,6 @@
   }
 }
 
-/* Fills an element left → right over --progress-duration (tab / step timers). */
-@keyframes progress-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
 /* The founders' tape strip: drifts left then back while hovered. */
 @keyframes tape-drift {
   from {

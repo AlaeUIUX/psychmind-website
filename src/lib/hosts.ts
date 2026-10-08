@@ -8,7 +8,7 @@
 // URLs — everything is served from one host.
 
 /** Path prefixes that belong to the portal. */
-export const APP_PREFIXES = [
+const APP_PREFIXES = [
   "/login",
   "/signup",
   "/verify-email",
@@ -21,10 +21,10 @@ export const APP_PREFIXES = [
 ] as const;
 
 /** Served on both hosts. */
-export const SHARED_PREFIXES = ["/api", "/dev", "/_next", "/images", "/fonts", "/cms"] as const;
+const SHARED_PREFIXES = ["/api", "/dev", "/_next", "/images", "/fonts", "/cms"] as const;
 
 /** Signed-in areas: no session cookie → log in. */
-export const PROTECTED_PREFIXES = ["/provider", "/account", "/admin"] as const;
+const PROTECTED_PREFIXES = ["/provider", "/account", "/admin"] as const;
 
 const matches = (path: string, prefixes: readonly string[]) =>
   prefixes.some((p) => path === p || path.startsWith(`${p}/`));

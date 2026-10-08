@@ -16,4 +16,4 @@ gsap.defaults({ ease: "power3.out", duration: 0.9 });
 /** Media query GSAP animations run under; reduced-motion users get static layouts. */
 export const MOTION_OK = "(prefers-reduced-motion: no-preference)";
 
-export { gsap, ScrollTrigger, SplitText, DrawSVGPlugin, useGSAP };
+export { gsap, ScrollTrigger, SplitText, useGSAP };

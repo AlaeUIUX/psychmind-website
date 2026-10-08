@@ -95,8 +95,6 @@ export function DesktopTestimonials() {
       if (phase.current === "idle") advance(1);
     }, AUTO_MS);
     return () => clearInterval(t);
-    // `advance` only touches refs and a state setter, so a stale copy is safe.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inView, hovered]);
 
   function advance(direction: 1 | -1) {

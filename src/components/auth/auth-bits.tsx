@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth/client";
 import { FormAlert } from "./fields";
 
 /** Remembers only *how* someone signed in (never the address) for a "Last used" hint. */
-export const LAST_USED_KEY = "psychmind:last-auth";
+const LAST_USED_KEY = "psychmind:last-auth";
 export function rememberMethod(method: "google" | "email") {
   try {
     localStorage.setItem(LAST_USED_KEY, method);

@@ -69,7 +69,7 @@ function GhostTag() {
   return <span aria-hidden className="inline-block h-7 w-20 rounded-tag border border-dashed border-warm-300" />;
 }
 
-export function displayName(p: ProfileData) {
+function displayName(p: ProfileData) {
   if (p.displayAsBusiness && p.businessName) return p.businessName;
   return [p.firstName, p.lastName].filter(Boolean).join(" ");
 }

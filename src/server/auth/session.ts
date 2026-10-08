@@ -23,7 +23,7 @@ export function homeFor(role: string | null | undefined) {
   return "/account";
 }
 
-export async function requireSession(next?: string) {
+async function requireSession(next?: string) {
   const session = await getSession();
   if (!session) redirect(`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   return session;

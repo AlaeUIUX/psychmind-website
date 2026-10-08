@@ -89,5 +89,3 @@ export const db: Db = new Proxy({} as Db, {
 export const dbReady: PromiseLike<void> = {
   then: (onFulfilled, onRejected) => handle().ready.then(onFulfilled, onRejected),
 };
-
-export { schema };

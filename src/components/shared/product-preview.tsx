@@ -62,7 +62,7 @@ function useCycle(count: number, every: number, loop = true) {
   return i;
 }
 
-export const providers = [
+const providers = [
   {
     name: "Sara Oliisi",
     title: "Counselor, LMHC, M.S., B.S.",
@@ -151,7 +151,7 @@ function Shell({ children, className }: { children: ReactNode; className?: strin
 /* ---------------------------------------------------------- search bar */
 
 /** Search bar: toggle + typed query (+ "who feels right" on wide panels). */
-export function SearchBarPreview({ query = "Trauma", typeAt = 350 }: { query?: string; typeAt?: number }) {
+function SearchBarPreview({ query = "Trauma", typeAt = 350 }: { query?: string; typeAt?: number }) {
   const typed = useTypewriter(query, typeAt);
   const done = typed.length === query.length;
   return (
@@ -311,78 +311,6 @@ export const checks = [
   { label: "Identity", value: "Government ID" },
   { label: "Practice", value: "Miami, FL 33131" },
 ];
-
-/** Verified profile: each credential flips from "checking" to verified, then the badge lands. */
-export function VerifiedPreview() {
-  const [done, setDone] = useState(0);
-  useEffect(() => {
-    if (reducedMotion()) {
-      const t = setTimeout(() => setDone(checks.length), 0);
-      return () => clearTimeout(t);
-    }
-    const timers = checks.map((_, i) => setTimeout(() => setDone(i + 1), 650 + i * 520));
-    return () => timers.forEach(clearTimeout);
-  }, []);
-  const all = done === checks.length;
-
-  return (
-    <Shell>
-      <div className="animate-rise-in overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-control">
-        <div className="h-12 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover bg-center" />
-        <div className="-mt-7 flex items-end justify-between px-3">
-          <Photo src={providers[0].photo} className="size-14 rounded-2xl border-[3px] border-white @sm:size-16" />
-          <span
-            className={cn(
-              "mb-1 inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition-all duration-500 ease-spring",
-              all ? "scale-100 border-warm-300 bg-white text-text-secondary opacity-100 shadow-control" : "scale-75 border-transparent opacity-0",
-            )}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-3" />
-            Verified
-          </span>
-        </div>
-        <div className="flex flex-col gap-0.5 px-3 pt-2 pb-3">
-          <p className="text-sm font-semibold text-text-primary @sm:text-md">{providers[0].name}</p>
-          <Credential>{providers[0].title}</Credential>
-        </div>
-      </div>
-
-      <div className="animate-rise-in rounded-2xl border border-warm-200 bg-white p-3 shadow-control" style={at(120)}>
-        <p className="pb-2 text-xs font-medium text-text-primary @sm:text-sm">Credentials &amp; qualifications</p>
-        <ul className="flex flex-col">
-          {checks.map((c, i) => {
-            const ok = i < done;
-            const checking = i === done;
-            return (
-              <li key={c.label} className="flex items-center justify-between gap-3 border-t border-warm-100 py-2 first:border-t-0">
-                <span className="flex items-center gap-2.5">
-                  <span
-                    className={cn(
-                      "flex size-5 items-center justify-center rounded-full transition-all duration-300",
-                      ok ? "bg-warm-900 text-white" : "border border-dashed border-warm-300",
-                      checking && "animate-spin [animation-duration:1.6s]",
-                    )}
-                  >
-                    {ok && (
-                      <svg viewBox="0 0 12 12" className="size-3 animate-pop-in" fill="none" stroke="currentColor" strokeWidth="1.8">
-                        <path d="M2.5 6.2 5 8.5l4.5-5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </span>
-                  <span className="text-[11px] font-medium tracking-[0.06em] text-text-tertiary uppercase">{c.label}</span>
-                </span>
-                <span className={cn("truncate text-xs transition-colors duration-300", ok ? "text-text-primary" : "text-text-placeholder")}>
-                  {ok ? c.value : checking ? "Checking…" : "Pending"}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </Shell>
-  );
-}
 
 /* -------------------------------------------------------- 3. request */
 

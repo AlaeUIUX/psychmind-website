@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   AGE_GROUPS,
-  APPROACHES,
   BANNER_STYLES,
   BASE_PLAN_LOCATIONS,
   GENDERS,
@@ -95,7 +94,7 @@ export const practiceSchema = z.object({
     .max(4),
 });
 
-export const locationSchema = z.object({
+const locationSchema = z.object({
   id: z.string().optional(),
   state: z.enum(values(US_STATES), { message: "Choose a state." }),
   city: requiredText("City", 80),
@@ -121,7 +120,7 @@ export const locationsSchema = z
     }
   });
 
-export const licenseSchema = z.object({
+const licenseSchema = z.object({
   state: z.enum(values(US_STATES)),
   licenseNumber: requiredText("License number", 40),
   issuingBody: requiredText("Issuing body", 160),
@@ -129,7 +128,7 @@ export const licenseSchema = z.object({
 });
 
 /** NPI check digit: Luhn over "80840" + the first 9 digits (CMS spec). */
-export function isValidNpi(npi: string) {
+function isValidNpi(npi: string) {
   if (!/^\d{10}$/.test(npi)) return false;
   const digits = ("80840" + npi.slice(0, 9)).split("").map(Number);
   let sum = 0;
