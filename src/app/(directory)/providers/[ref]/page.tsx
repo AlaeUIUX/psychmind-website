@@ -52,7 +52,8 @@ export default async function ProviderProfilePage({ params, searchParams }: Prop
   const saved = session && role === "patient" ? await isProviderSaved(session.user.id, p.id) : false;
   const name = displayName(p);
   const first = shortName(p);
-  const results = `/providers?p=${p.publicId}`;
+  // Back to the results, scrolled to this provider.
+  const results = `/providers#provider-${p.publicId}`;
 
   return (
     <Section spacing="none" className="pt-4 pb-14 sm:pt-6 sm:pb-20">

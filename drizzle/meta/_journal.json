@@ -50,6 +50,13 @@
       "when": 1791468806414,
       "tag": "0006_directory_and_saves",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791474624861,
+      "tag": "0007_sample_providers",
+      "breakpoints": true
     }
   ]
 }

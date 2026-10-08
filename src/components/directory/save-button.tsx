@@ -83,6 +83,7 @@ export function SaveButton({
   viewer,
   returnTo,
   variant = "icon",
+  labels = { save: "Save profile", saved: "Saved" },
   autoSave = false,
   className,
 }: {
@@ -94,6 +95,8 @@ export function SaveButton({
   /** Where to come back to after signing up or logging in. */
   returnTo: string;
   variant?: "icon" | "full";
+  /** The full button's text (result cards use Figma's shorter "Save"). */
+  labels?: { save: string; saved: string };
   /** Save on arrival (after an account prompt brought them back). */
   autoSave?: boolean;
   className?: string;
@@ -181,7 +184,7 @@ export function SaveButton({
           fullWidth
         >
           <HeartIcon className={cn(saved && "fill-current text-white")} />
-          {saved ? "Saved" : "Save profile"}
+          {saved ? labels.saved : labels.save}
         </Button>
       )}
       <AccountPrompt

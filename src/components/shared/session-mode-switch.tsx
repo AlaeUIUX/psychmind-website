@@ -13,6 +13,8 @@ const options: { value: SessionMode; label: string; Icon: typeof MonitorIcon }[]
 
 type Props = {
   size?: "sm" | "md";
+  /** Controlled value; `null` shows neither chosen (search: either format). */
+  value?: SessionMode | null;
   defaultValue?: SessionMode;
   onChange?: (mode: SessionMode) => void;
   /** Static picture of the control (used inside product previews). */
@@ -22,14 +24,15 @@ type Props = {
 
 // In-person / Online, as a compact segmented switch: each option carries its
 // own icon, and a white thumb slides under whichever is chosen.
-export function SessionModeSwitch({ size = "md", defaultValue = "online", onChange, decorative, className }: Props) {
-  const [mode, setMode] = useState<SessionMode>(defaultValue);
+export function SessionModeSwitch({ size = "md", value, defaultValue = "online", onChange, decorative, className }: Props) {
+  const [own, setOwn] = useState<SessionMode>(defaultValue);
+  const mode = value === undefined ? own : value;
   const index = options.findIndex((o) => o.value === mode);
   const sm = size === "sm";
 
-  const pick = (value: SessionMode) => {
-    setMode(value);
-    onChange?.(value);
+  const pick = (next: SessionMode) => {
+    setOwn(next);
+    onChange?.(next);
   };
 
   return (
@@ -47,10 +50,11 @@ export function SessionModeSwitch({ size = "md", defaultValue = "online", onChan
       <span
         aria-hidden
         className={cn(
-          "absolute rounded-pill bg-white shadow-[0_1px_2px_rgb(28_25_23/0.08),0_4px_12px_-4px_rgb(28_25_23/0.18)] ring-1 ring-black/[0.04] transition-transform duration-500 ease-spring",
+          "absolute rounded-pill bg-white shadow-[0_1px_2px_rgb(28_25_23/0.08),0_4px_12px_-4px_rgb(28_25_23/0.18)] ring-1 ring-black/[0.04] transition-[transform,opacity] duration-500 ease-spring",
           sm ? "inset-y-0.5 left-0.5 w-[calc(50%-2px)]" : "inset-y-1 left-1 w-[calc(50%-4px)]",
+          index < 0 && "opacity-0",
         )}
-        style={{ transform: `translateX(${index * 100}%)` }}
+        style={{ transform: `translateX(${Math.max(index, 0) * 100}%)` }}
       />
       {options.map(({ value, label, Icon }) => {
         const active = value === mode;

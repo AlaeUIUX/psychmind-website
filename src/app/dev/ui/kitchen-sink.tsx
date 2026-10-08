@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Command,
   CommandEmpty,
@@ -53,6 +54,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -328,6 +330,24 @@ export function KitchenSink() {
           </StatusBanner>
         </div>
         <StepProgress current={3} total={7} label="Your expertise" className="max-w-sm" />
+      </Block>
+
+      <Block title="Range and disclosure" note="Search filters: a two-thumb price range, and a list that reveals more options.">
+        <div className="flex max-w-sm flex-col gap-6">
+          <Slider defaultValue={[120, 350]} min={60} max={500} step={10} aria-label="Price per session" />
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                +3 more
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 flex flex-col gap-2 type-small text-text-secondary">
+              <span>Grief &amp; loss</span>
+              <span>Burnout</span>
+              <span>Cultural identity</span>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
       </Block>
 
       <Block title="Keyboard shortcuts" note="Geist-style key caps. meta is ⌘ on Apple devices, Ctrl elsewhere.">

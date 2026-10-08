@@ -19,9 +19,37 @@ async function saveAndContinue(page: Page, nextHeading: string | RegExp) {
   await expect(page.getByRole("heading", { level: 1, name: nextHeading })).toBeVisible({ timeout: 15_000 });
 }
 
+/** The test provider, until the last step deletes them. */
+let leftover: string | null = null;
+
+// A failed run mustn't leave "Sara Tester…" listed in the local directory.
+test.afterAll(async ({ browser }) => {
+  if (!leftover) return;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(leftover);
+    await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await page.waitForURL(/\/provider/, { timeout: 15_000 });
+    await page.goto("/provider/settings");
+    await page.getByRole("button", { name: "Delete account" }).click();
+    await page.getByLabel("Enter your password to confirm").fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await page.getByText("Your account has been deleted.").waitFor({ timeout: 15_000 });
+    leftover = null;
+  } catch {
+    // Best effort: the run already failed for its own reason.
+  } finally {
+    await context.close();
+  }
+});
+
 test("provider signs up, onboards, gets approved and reaches billing", async ({ page, browser }) => {
   const email = uniqueEmail("provider");
   const last = `Tester${Date.now() % 100000}`;
+  leftover = email;
 
   await test.step("sign up and verify email", async () => {
     await signUp(page, "provider", email, "Sara", last);
@@ -139,6 +167,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.getByLabel("Enter your password to confirm").fill(TEST_PASSWORD);
     await page.getByRole("button", { name: "Delete my account" }).click();
     await expect(page.getByText("Your account has been deleted.")).toBeVisible();
+    leftover = null;
 
     // The file no longer exists, even for an admin.
     expect(await status()).toBe(404);

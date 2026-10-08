@@ -17,8 +17,17 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 
 ## Later
 
-- **Search engine and filters** (slice 8). `/providers` lists everyone for
-  now; the landing page search isn't wired up yet, on purpose.
+- **Search: what's left after the first version** (slice 8). Filters, counts,
+  close matches, the quick look and the phone drawer work.
+  - **Home page search:** wire it to `/providers` with the same fields. The
+    owner asked to hold off on this.
+  - **Real distance:** "near" is same ZIP, city, ZIP area, then state. Real
+    distance needs a ZIP-coordinates table, or a geocoder for "Use my location".
+  - **Insurance filter:** hidden until the insurance decision (D2).
+  - **"Session type" filter** (individuals, couples, families, groups) isn't
+    in Figma's filters. Add it if the client wants it.
+  - **Move the engine into Postgres** once there are thousands of providers.
+    It's pure TypeScript, so it can move as is.
 - **Saved providers who leave the directory** should stay on the patient's
   list, labelled as unavailable (plan, slice 9). Today they drop off.
 - **"Something wrong with this profile?"** links to the contact form. A proper
