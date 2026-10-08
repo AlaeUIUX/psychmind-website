@@ -23,7 +23,7 @@ import { BASE_PLAN } from "@/lib/billing";
 import { locationLimit, locationsSchema, type LocationsInput } from "@/lib/provider/schema";
 import { SESSION_FORMATS, US_STATES, stateName } from "@/lib/taxonomy";
 import { formatsLabel } from "../profile-view";
-import { SectionFooter, type SectionProps, errorAt, useSectionForm } from "./shared";
+import { SectionFooter, type SectionProps, errorAt, hasErrorAt, useSectionForm } from "./shared";
 
 type Location = LocationsInput["locations"][number];
 type Format = Location["formats"][number];
@@ -187,7 +187,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
   const values = watch("locations") ?? [];
   const atLimit = fields.length >= limit;
   // After a failed save, the first location with a problem opens itself.
-  const firstError = fields.findIndex((_, i) => !!errorAt(e, `locations.${i}`));
+  const firstError = fields.findIndex((_, i) => hasErrorAt(e, `locations.${i}`));
   const expandedIndex = open ?? (firstError >= 0 ? firstError : null);
 
   const makePrimary = (index: number) =>
@@ -230,7 +230,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
         {fields.map((f, i) => {
           const v = values[i] ?? f;
           const expanded = expandedIndex === i;
-          const hasError = !!errorAt(e, `locations.${i}`);
+          const hasError = hasErrorAt(e, `locations.${i}`);
           const formats = (v.formats ?? []) as Format[];
           const inPerson = formats.includes("in_person");
           const title = v.state && v.city ? `${v.city}, ${stateName(v.state)}` : v.state ? stateName(v.state) : "New location";

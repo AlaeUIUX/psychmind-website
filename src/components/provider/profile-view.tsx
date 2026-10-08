@@ -5,10 +5,10 @@ import { Tag, VerifiedBadge } from "@/components/ui/tag";
 import type { PreviewRegion } from "@/lib/provider/steps";
 import type { ProfileView as ProfileData } from "@/lib/provider/types";
 import {
-  BANNER_STYLES,
-  DEFAULT_BANNER,
   SPECIALTY_CATEGORIES,
   ageProfileLabel,
+  bannerColor,
+  bannerCta,
   labelOf,
   specialtyCategory,
   stateName,
@@ -84,7 +84,7 @@ export function formatsLabel(formats: string[]) {
 }
 
 export function ProfileBanner({ style, className }: { style?: string | null; className?: string }) {
-  const color = BANNER_STYLES.find((b) => b.value === style)?.color ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!.color;
+  const color = bannerColor(style);
   return (
     <div className={cn("relative overflow-hidden", className)} style={{ backgroundColor: color }}>
       {/* The how-it-works banner texture, tinted by the chosen colour. */}
@@ -336,7 +336,8 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
             )}
             {actions ?? (
               <>
-                <span aria-hidden className="flex h-10 items-center justify-center rounded-field bg-brand-primary type-small font-medium text-white shadow-control">
+                {/* The provider's banner colour is their call-to-action colour. */}
+                <span aria-hidden className="flex h-10 items-center justify-center rounded-field type-small font-medium shadow-control" style={bannerCta(p.bannerStyle)}>
                   Request a session
                 </span>
                 <span aria-hidden className="flex h-10 items-center justify-center gap-1.5 rounded-field border border-warm-300 bg-white type-small font-medium text-warm-800 shadow-control">

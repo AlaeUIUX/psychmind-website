@@ -33,6 +33,7 @@ export default async function ProviderHome() {
     { label: "Activate your listing", done: listing === "live" || listing === "grace" || listing === "paused", href: "/provider/billing" },
     { label: "Appear in search", done: live, href: null },
   ];
+  const current = steps.findIndex((s) => !s.done);
   const statusBadge = live
     ? { variant: "success" as const, label: "Live" }
     : state.status === "submitted"
@@ -62,23 +63,39 @@ export default async function ProviderHome() {
             </h2>
             <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
           </div>
-          <ol className="flex flex-col gap-4">
-            {steps.map((step, i) => (
-              <li key={step.label} className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                    step.done ? "bg-warm-900 text-white" : "border border-warm-300 text-text-tertiary",
+          {/* Same timeline as the "submitted" screen: done steps get a green
+              check (no strikethrough), the current one a pulsing dot. */}
+          <ol className="flex flex-col">
+            {steps.map((step, i) => {
+              const status = step.done ? "done" : i === current ? "current" : "todo";
+              return (
+                <li key={step.label} className="relative flex gap-3.5 pb-5 last:pb-0">
+                  {i < steps.length - 1 && (
+                    <span aria-hidden className={cn("absolute top-7 bottom-0.5 left-[11px] w-px", step.done ? "bg-emerald-200" : "bg-warm-200")} />
                   )}
-                >
-                  {step.done ? <CheckIcon aria-hidden className="size-3.5" /> : i + 1}
-                </span>
-                <span className={cn("type-small", step.done ? "text-text-tertiary line-through decoration-warm-300" : "text-text-primary")}>
-                  {step.label}
-                  <span className="sr-only">{step.done ? " (done)" : ""}</span>
-                </span>
-              </li>
-            ))}
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-full",
+                      status === "done" && "bg-emerald-600 text-white",
+                      status === "current" && "border-2 border-amber-500 bg-white",
+                      status === "todo" && "border-2 border-warm-200 bg-white",
+                    )}
+                  >
+                    {status === "done" && <CheckIcon aria-hidden className="size-3.5" strokeWidth={3} />}
+                    {status === "current" && <span className="size-2 animate-pulse rounded-full bg-amber-500" />}
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
+                    <span className={cn("type-small font-medium", status === "todo" ? "text-text-tertiary" : "text-text-primary")}>{step.label}</span>
+                    {status === "current" && step.href && (
+                      <Link href={step.href} className="w-fit type-caption font-medium text-blue-700 underline-offset-4 hover:underline">
+                        Continue &rarr;
+                      </Link>
+                    )}
+                  </div>
+                  <span className="sr-only">{status === "done" ? "Done" : status === "current" ? "In progress" : "Not started"}</span>
+                </li>
+              );
+            })}
           </ol>
         </section>
 

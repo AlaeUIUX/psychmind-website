@@ -133,6 +133,26 @@ export type BannerStyle = (typeof BANNER_STYLES)[number]["value"];
 /** The standard banner until a provider picks their own: violet (Tailwind violet-600). */
 export const DEFAULT_BANNER: BannerStyle = "banner_10";
 
+/** The colour behind a banner style (falls back to the default violet). */
+export function bannerColor(style?: string | null) {
+  return (BANNER_STYLES.find((b) => b.value === style) ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!).color;
+}
+
+const luminance = (hex: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/** A provider's call-to-action takes their banner colour, with whichever text
+ *  colour (white or ink) reads better on it. */
+export function bannerCta(style?: string | null) {
+  const background = bannerColor(style);
+  const l = luminance(background);
+  const onWhite = 1.05 / (l + 0.05);
+  const onInk = (l + 0.05) / (luminance("#1c1917") + 0.05);
+  return { backgroundColor: background, color: onWhite >= onInk ? "#ffffff" : "#1c1917" };
+}
+
 /** Base plan includes this many practice locations (Figma P5: "up to 3 locations"). */
 export const BASE_PLAN_LOCATIONS = 3;
 

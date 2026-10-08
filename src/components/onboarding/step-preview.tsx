@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DoodleHookArrow } from "@/components/ui/doodles";
 import type { PreviewRegion, StepKey } from "@/lib/provider/steps";
 import type { ProfileView } from "@/lib/provider/types";
-import { ageProfileLabel, labelOf, SPECIALTY_CATEGORIES, specialtyCategory, stateName } from "@/lib/taxonomy";
+import { ageProfileLabel, bannerCta, labelOf, SPECIALTY_CATEGORIES, specialtyCategory, stateName } from "@/lib/taxonomy";
 
 // The onboarding preview, built up step by step like the sign-up panel:
 // instead of the whole profile shrunk to fit, each step shows the part of the
@@ -17,7 +17,7 @@ import { ageProfileLabel, labelOf, SPECIALTY_CATEGORIES, specialtyCategory, stat
 // field being edited is ringed in blue. "Full profile" opens the complete
 // page at full size. New copy here is marked TODO(client).
 
-type Block = "whoText" | "clients" | "about" | "specialties" | "approaches" | "fees" | "education" | "locations" | "licenses";
+type Block = "whoText" | "clients" | "who" | "about" | "specialties" | "approaches" | "fees" | "education" | "locations" | "licenses";
 
 /** What each step's preview shows (identity and picture show the header). */
 const STEP_BLOCKS: Record<Exclude<StepKey, "identity" | "picture">, Block[]> = {
@@ -27,7 +27,7 @@ const STEP_BLOCKS: Record<Exclude<StepKey, "identity" | "picture">, Block[]> = {
   practice: ["fees", "education"],
   locations: ["locations"],
   credentials: ["licenses"],
-  review: ["whoText", "clients", "about", "specialties", "approaches", "fees", "education", "locations", "licenses"],
+  review: ["who", "about", "specialties", "approaches", "fees", "education", "locations", "licenses"],
 };
 
 const slug = (p: ProfileView) =>
@@ -179,6 +179,15 @@ function BlockView({ block, p, highlight }: { block: Block; p: ProfileView; high
         <Spot name="about" highlight={highlight} className="flex flex-col gap-2 p-1">
           <Heading>{first ? `About ${first}` : "About"}</Heading>
           <Text text={p.about} placeholder="Your story will appear here." lines={7} />
+        </Spot>
+      );
+    case "who":
+      // Review: the text and the tags under one heading.
+      return (
+        <Spot name="who" highlight={highlight} className="flex flex-col gap-2.5 p-1">
+          <Heading>Who I work with</Heading>
+          <Text text={p.whoYouWorkWith} placeholder="Who you work with will appear here." lines={4} />
+          <Chips items={[...(p.sessionParticipants ?? []).map((v) => labelOf("participants", v)), ...(p.ageGroups ?? []).map(ageProfileLabel)]} />
         </Spot>
       );
     case "clients":
@@ -338,10 +347,15 @@ function Segment({ step, p, highlight }: { step: StepKey; p: ProfileView; highli
     return (
       <>
         <Header p={p} highlight={highlight} large={step === "picture"} />
-        <div className="space-y-1.5 px-5 pb-5" aria-hidden>
+        <div className="flex flex-col gap-1.5 px-5 pb-5" aria-hidden>
           <span className="block h-2 w-full rounded bg-warm-100" />
           <span className="block h-2 w-5/6 rounded bg-warm-100" />
-          <span className="block h-2 w-2/3 rounded bg-warm-100" />
+          {/* The banner colour is also the profile's call to action. */}
+          <Spot name="banner" highlight={highlight} className="mt-3.5">
+            <span className="flex h-9 items-center justify-center rounded-lg text-[13px] font-medium transition-colors duration-300" style={bannerCta(p.bannerStyle)}>
+              Request a session
+            </span>
+          </Spot>
         </div>
       </>
     );

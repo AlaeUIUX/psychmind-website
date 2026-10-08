@@ -119,6 +119,13 @@ export function SectionFooter({
 }
 
 /** First error message for a (possibly nested) field path. */
+/** Whether anything under `path` has an error (e.g. any field of locations.1). */
+export function hasErrorAt(errors: unknown, path: string): boolean {
+  let node = errors as Record<string, unknown> | undefined;
+  for (const key of path.split(".")) node = node?.[key] as Record<string, unknown> | undefined;
+  return !!node && typeof node === "object" && Object.keys(node).length > 0;
+}
+
 export function errorAt(errors: unknown, path: string): string | undefined {
   let node = errors as Record<string, unknown> | undefined;
   for (const key of path.split(".")) node = node?.[key] as Record<string, unknown> | undefined;
