@@ -130,13 +130,25 @@ export const auth = betterAuth({
     },
     session: {
       create: {
-        // Two-step login only guards password sign-in, so admins can't use
-        // Google: their sign-in must always pass the authenticator check.
         before: async (session, ctx) => {
-          if (!ctx?.path.includes("/callback")) return;
-          const [owner] = await db.select({ role: userTable.role }).from(userTable).where(eq(userTable.id, session.userId));
-          if (owner?.role === "admin") {
+          const [owner] = await db
+            .select({ role: userTable.role, email: userTable.email, emailVerified: userTable.emailVerified })
+            .from(userTable)
+            .where(eq(userTable.id, session.userId));
+          if (!owner) return;
+          const listed = isAdminEmail(owner.email);
+          // Two-step login only guards password sign-in, so admins can't use
+          // Google: their sign-in must always pass the authenticator check.
+          if (ctx?.path.includes("/callback") && (owner.role === "admin" || listed)) {
             throw new APIError("FORBIDDEN", { message: "Admins sign in with their email, password and authenticator code." });
+          }
+          // ADMIN_EMAILS is the source of truth, checked at every sign-in: a
+          // listed (verified) account becomes admin even if it signed up
+          // before being listed, and an admin taken off the list loses it.
+          if (listed && owner.emailVerified && owner.role !== "admin") {
+            await db.update(userTable).set({ role: "admin" }).where(eq(userTable.id, session.userId));
+          } else if (!listed && owner.role === "admin") {
+            await db.update(userTable).set({ role: "patient" }).where(eq(userTable.id, session.userId));
           }
         },
       },
