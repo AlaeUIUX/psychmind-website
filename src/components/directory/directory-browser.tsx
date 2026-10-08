@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRightIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetTitle } from "@/components/ui/sheet";
 import { displayName } from "@/lib/provider/display";
@@ -24,6 +24,11 @@ function Browser({ providers, viewer, initialId }: { providers: DirectoryProvide
   const [visible, setVisible] = useState(Math.max(PAGE, Math.ceil((startIndex + 1) / PAGE) * PAGE));
   const [sheetOpen, setSheetOpen] = useState(false);
   const isSaved = useSavedIds();
+
+  // Arriving with ?p= (e.g. "Go back to results"): bring that card into view.
+  useEffect(() => {
+    if (initialId) document.getElementById(`provider-${initialId}`)?.scrollIntoView({ block: "center" });
+  }, [initialId]);
 
   const index = providers.findIndex((p) => p.publicId === selectedId);
   const selected = providers[index];
