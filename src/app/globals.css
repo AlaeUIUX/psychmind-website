@@ -8,6 +8,26 @@
   --radius-button: 9999px;
   /* Focus halo colour: crimson on the marketing site. */
   --ring-accent: #c01048;
+
+  /* The gray scale and text roles are runtime variables so a scope can swap
+     them: the marketing site uses Tailwind stone (warm), the portal (.app-ui)
+     uses Tailwind zinc. Utilities like bg-warm-100 follow automatically. */
+  --warm-25: #fdfdfc;
+  --warm-50: #fafaf9; /* stone-50 */
+  --warm-100: #f5f5f4; /* stone-100 */
+  --warm-200: #e7e5e4; /* stone-200 */
+  --warm-300: #d7d3d0;
+  --warm-400: #a8a29e; /* stone-400 */
+  --warm-500: #78716c; /* stone-500 */
+  --warm-600: #57534e; /* stone-600 */
+  --warm-700: #44403c; /* stone-700 */
+  --warm-800: #292524; /* stone-800 */
+  --warm-900: #1c1917; /* stone-900 */
+  --warm-950: #171412;
+  --text-primary: #1c1917;
+  --text-secondary: #44403c;
+  --text-tertiary: #57534e;
+  --text-placeholder: #79716b;
 }
 
 @theme inline {
@@ -23,27 +43,29 @@
   --color-brand-primary-hover: #a30d3d;
   --color-brand-soft: #fdf1f4;
 
-  /* Warm gray scale (Figma: Colors/Background/*) */
-  --color-warm-25: #fdfdfc;
-  --color-warm-50: #fafaf9;
-  --color-warm-100: #f5f5f4;
-  --color-warm-200: #e7e5e4;
-  --color-warm-300: #d7d3d0;
-  --color-warm-600: #57534e;
-  --color-warm-700: #44403c;
-  --color-warm-800: #292524;
-  --color-warm-900: #1c1917;
-  --color-warm-950: #171412;
+  /* Gray scale (Figma: Colors/Background/*). Values live in :root / .app-ui. */
+  --color-warm-25: var(--warm-25);
+  --color-warm-50: var(--warm-50);
+  --color-warm-100: var(--warm-100);
+  --color-warm-200: var(--warm-200);
+  --color-warm-300: var(--warm-300);
+  --color-warm-400: var(--warm-400);
+  --color-warm-500: var(--warm-500);
+  --color-warm-600: var(--warm-600);
+  --color-warm-700: var(--warm-700);
+  --color-warm-800: var(--warm-800);
+  --color-warm-900: var(--warm-900);
+  --color-warm-950: var(--warm-950);
 
   /* Text roles. One color per job:
      primary   – headings, titles, emphasis
      secondary – hero ledes, UI labels
      tertiary  – supporting copy (section subtitles, descriptions, body)
      placeholder – meta lines, inactive states, input placeholders */
-  --color-text-primary: #1c1917;
-  --color-text-secondary: #44403c;
-  --color-text-tertiary: #57534e;
-  --color-text-placeholder: #79716b;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-placeholder: var(--text-placeholder);
   --color-text-on-brand: #ffffff;
 
   /* Decorative accents from the Figma file (washi tape, review cards, paper). */
@@ -420,6 +442,23 @@
   /* Interface accent is blue (focus, selection, progress); crimson stays the
      marketing call-to-action colour. */
   --ring-accent: oklch(0.546 0.245 262.881); /* Tailwind blue-600 */
+  /* Tailwind zinc: a cool, neutral gray for the product UI. */
+  --warm-25: #fcfcfd;
+  --warm-50: #fafafa; /* zinc-50 */
+  --warm-100: #f4f4f5; /* zinc-100 */
+  --warm-200: #e4e4e7; /* zinc-200 */
+  --warm-300: #d4d4d8; /* zinc-300 */
+  --warm-400: #a1a1aa; /* zinc-400 */
+  --warm-500: #71717a; /* zinc-500 */
+  --warm-600: #52525b; /* zinc-600 */
+  --warm-700: #3f3f46; /* zinc-700 */
+  --warm-800: #27272a; /* zinc-800 */
+  --warm-900: #18181b; /* zinc-900 */
+  --warm-950: #09090b; /* zinc-950 */
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
+  --text-tertiary: #52525b;
+  --text-placeholder: #71717a;
   --radius-button: 8px;
   --radius-field: 8px;
   --radius-card: 14px;
@@ -580,6 +619,34 @@
   opacity: 0.5;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.45  0 0 0 0 0.45  0 0 0 0.22 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* A loose sheet of paper (auth panel cards sit on these): off-white, faint
+   ruled lines, a fine grain and a soft lift. */
+.paper-sheet {
+  isolation: isolate;
+  background-color: #fbfbfa;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 23px, rgb(0 0 0 / 0.045) 23px 24px);
+  background-position: 0 14px;
+  box-shadow:
+    0 1px 1px rgb(0 0 0 / 0.04),
+    0 10px 24px -14px rgb(0 0 0 / 0.25);
+}
+.paper-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Camera focus pull (auth role preview): a damped spring, generated as a
+   linear() curve — overshoots ~3% and settles, rather than snapping. */
+:root {
+  --ease-focus-spring: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%, 1.001 85.9%, 1);
 }
 
 /* Auth portal ambience (components/auth/portal-panel.tsx): rings expand and

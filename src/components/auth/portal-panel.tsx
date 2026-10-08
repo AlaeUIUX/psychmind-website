@@ -13,17 +13,19 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { DoodleHookArrow } from "@/components/ui/doodles";
+import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { providerPhoto } from "@/lib/photos";
 import { useAuthPanel } from "./auth-context";
 
 // The right half of every auth screen: a quiet sheet of gray paper with live
-// product scenes on it, instead of a stock photo. It stays mounted while people move between auth pages and
+// product scenes on it, instead of a stock photo. It stays mounted while
+// people move between auth pages and
 // cross-fades to a scene that matches the step — product cards on log in, a
 // role preview while choosing, the provider's own profile card filling in as
 // they type, a matching scene for patients, an inbox while they verify.
 // Ambient layer: paper grain, faint rules and a breathing ring (a calm
 // 8-second cycle).
-// TODO(client): scene captions are new copy.
 
 type SceneKey = "login" | "role" | "provider" | "patient" | "inbox" | "key";
 
@@ -36,20 +38,12 @@ function sceneFor(path: string): SceneKey {
   return "login";
 }
 
-const captions: Record<SceneKey, { title: string; body: string }> = {
-  login: { title: "Pick up right where you left off.", body: "Your profile, requests and progress — all in one place." },
-  role: { title: "One home for both sides of care.", body: "People looking for support, and the providers who offer it." },
-  provider: { title: "This is you on PsychMind.", body: "Your profile takes shape as you type. Verified by hand before it goes live." },
-  patient: { title: "Someone who fits is out there.", body: "Search by what you're going through, how you'd like to meet, and more." },
-  inbox: { title: "One last step.", body: "Confirming your email keeps your account — and the people you talk to — safe." },
-  key: { title: "Let's get you back in.", body: "Reset links work once and expire after 30 minutes." },
-};
 
 /** White product card floating on the dark canvas; drifts with the pointer. */
 function FloatCard({ children, depth = 1, className, style }: { children: ReactNode; depth?: number; className?: string; style?: CSSProperties }) {
   return (
     <div
-      className={cn("absolute rounded-xl bg-white text-neutral-900 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-16px_rgb(0_0_0/0.22)] ring-1 ring-black/[0.06]", className)}
+      className={cn("absolute rounded-xl bg-white text-zinc-900 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-16px_rgb(0_0_0/0.22)] ring-1 ring-black/[0.06]", className)}
       style={{
         transform: `translate3d(calc(var(--mx, 0) * ${depth * 10}px), calc(var(--my, 0) * ${depth * 10}px), 0)`,
         transition: "transform 600ms var(--ease-out-soft)",
@@ -73,7 +67,7 @@ function Chip({ children, tone = "light" }: { children: ReactNode; tone?: "light
     <span
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-md px-2 text-[11px] font-medium",
-        tone === "ink" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700",
+        tone === "ink" ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-700",
       )}
     >
       {children}
@@ -91,13 +85,13 @@ function LoginScene() {
           </span>
           <div className="flex min-w-0 flex-col">
             <span className="text-[13px] font-semibold">New session request</span>
-            <span className="truncate text-[12px] text-neutral-600">Individual · Online · this week</span>
+            <span className="truncate text-[12px] text-zinc-600">Individual · Online · this week</span>
           </div>
-          <span className="ml-auto font-mono text-[11px] text-neutral-500">2m</span>
+          <span className="ml-auto font-mono text-[11px] text-zinc-500">2m</span>
         </div>
       </FloatCard>
       <FloatCard depth={0.8} className="top-[34%] right-[8%] w-[250px] p-4">
-        <p className="text-[12px] text-neutral-600">Profile views</p>
+        <p className="text-[12px] text-zinc-600">Profile views</p>
         <p className="mt-1 flex items-baseline gap-2">
           <span className="text-[26px] font-semibold tracking-tight">312</span>
           <span className="text-[12px] font-medium text-emerald-600">↑ 24%</span>
@@ -126,52 +120,101 @@ function LoginScene() {
   );
 }
 
+/** A loose, slightly rotated sheet of ruled paper held by a strip of tape. */
+function PaperSheet({ rotate, tape = "center" }: { rotate: number; tape?: "left" | "center" | "right" }) {
+  return (
+    <span aria-hidden className="absolute -inset-x-5 -top-7 -bottom-5 rounded-[3px]" style={{ rotate: `${rotate}deg` }}>
+      <span className="paper-sheet absolute inset-0 rounded-[3px]" />
+      <span
+        className={cn(
+          "absolute -top-2.5 h-5 w-20 bg-zinc-300/55 shadow-[0_1px_1px_rgb(0_0_0/0.06)] backdrop-blur-[1px]",
+          tape === "left" && "left-6 -rotate-6",
+          tape === "center" && "left-1/2 -translate-x-1/2 rotate-2",
+          tape === "right" && "right-6 rotate-6",
+        )}
+      />
+    </span>
+  );
+}
+
+type Focus = "focus" | "defocus" | "neutral";
+
+/** Camera-style focus pull: the chosen side sharpens and springs forward a
+ *  beat after the other one softens and steps back. */
+function FocusGroup({ focus, depth, className, children }: { focus: Focus; depth: number; className: string; children: ReactNode }) {
+  return (
+    <div
+      className={cn("absolute", focus === "focus" && "z-10", className)}
+      style={{
+        transform: `translate3d(calc(var(--mx, 0) * ${depth * 10}px), calc(var(--my, 0) * ${depth * 10}px), 0)`,
+        transition: "transform 600ms var(--ease-out-soft)",
+      }}
+    >
+      <div
+        className="relative motion-reduce:!transition-none"
+        style={{
+          filter: focus === "defocus" ? "blur(7px) saturate(0.6)" : "blur(0px) saturate(1)",
+          scale: focus === "defocus" ? "0.93" : focus === "focus" ? "1" : "0.98",
+          opacity: focus === "defocus" ? 0.55 : 1,
+          transition:
+            focus === "focus"
+              ? "filter 650ms cubic-bezier(0.22,1,0.36,1) 90ms, scale 950ms var(--ease-focus-spring) 90ms, opacity 400ms ease 90ms"
+              : "filter 550ms cubic-bezier(0.4,0,0.2,1), scale 700ms cubic-bezier(0.4,0,0.2,1), opacity 500ms ease",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function RoleScene() {
   const { role } = useAuthPanel();
+  const focusOf = (side: "patient" | "provider"): Focus => (!role ? "neutral" : role === side ? "focus" : "defocus");
   return (
     <>
-      <FloatCard
-        depth={1.2}
-        className={cn("top-[16%] left-[8%] w-[290px] p-4 transition-[opacity,scale,filter] duration-500", role === "provider" ? "scale-95 opacity-45 blur-[1px]" : "z-10 scale-100 opacity-100")}
-      >
-        <p className="flex items-center gap-2 text-[12px] font-medium text-neutral-600">
-          <SearchIcon className="size-3.5" /> Looking for a provider
-        </p>
-        <div className="mt-3 flex items-center gap-3">
-          <Avatar who="shatiria" size={40} />
-          <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-[13px] font-semibold">Shatiria Johnson</span>
-            <div className="flex gap-1">
-              <Chip>Anxiety</Chip>
-              <Chip>Online</Chip>
+      <FocusGroup focus={focusOf("patient")} depth={1.2} className="top-[24%] left-[9%] w-[290px]">
+        <PaperSheet rotate={-3} tape="left" />
+        <div className="relative rounded-xl bg-white p-4 text-zinc-900 shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-black/[0.06]">
+          <p className="flex items-center gap-2 text-[12px] font-medium text-zinc-600">
+            <SearchIcon className="size-3.5" /> Looking for a provider
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <Avatar who="shatiria" size={40} />
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="text-[13px] font-semibold">Shatiria Johnson</span>
+              <div className="flex gap-1">
+                <Chip>Anxiety</Chip>
+                <Chip>Online</Chip>
+              </div>
             </div>
           </div>
+          <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-zinc-900 text-[12px] font-medium text-white">Request a session</div>
         </div>
-        <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-neutral-900 text-[12px] font-medium text-white">Request a session</div>
-      </FloatCard>
-      <FloatCard
-        depth={0.9}
-        className={cn("top-[44%] right-[7%] w-[290px] p-4 transition-[opacity,scale,filter] duration-500", role === "patient" ? "scale-95 opacity-45 blur-[1px]" : "z-10 scale-100 opacity-100")}
-      >
-        <p className="flex items-center gap-2 text-[12px] font-medium text-neutral-600">
-          <BadgeCheckIcon className="size-3.5" /> Mental health provider
-        </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {[
-            ["Views", "312"],
-            ["Saves", "41"],
-            ["Requests", "24"],
-          ].map(([k, v]) => (
-            <div key={k} className="rounded-lg bg-neutral-50 p-2">
-              <p className="text-[10.5px] text-neutral-500">{k}</p>
-              <p className="text-[16px] font-semibold tracking-tight">{v}</p>
-            </div>
-          ))}
+      </FocusGroup>
+      <FocusGroup focus={focusOf("provider")} depth={0.9} className="top-[55%] right-[8%] w-[290px]">
+        <PaperSheet rotate={2.5} tape="right" />
+        <div className="relative rounded-xl bg-white p-4 text-zinc-900 shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-black/[0.06]">
+          <p className="flex items-center gap-2 text-[12px] font-medium text-zinc-600">
+            <BadgeCheckIcon className="size-3.5" /> Mental health provider
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {[
+              ["Views", "312"],
+              ["Saves", "41"],
+              ["Requests", "24"],
+            ].map(([k, v]) => (
+              <div key={k} className="rounded-lg bg-zinc-50 p-2">
+                <p className="text-[10.5px] text-zinc-500">{k}</p>
+                <p className="text-[16px] font-semibold tracking-tight">{v}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 flex items-center gap-1.5 text-[12px] text-emerald-700">
+            <span className="size-1.5 rounded-full bg-emerald-500" /> Live in search
+          </p>
         </div>
-        <p className="mt-3 flex items-center gap-1.5 text-[12px] text-emerald-700">
-          <span className="size-1.5 rounded-full bg-emerald-500" /> Live in search
-        </p>
-      </FloatCard>
+      </FocusGroup>
     </>
   );
 }
@@ -181,37 +224,60 @@ function ProviderScene() {
   const fullName = [draft.firstName, draft.lastName].filter(Boolean).join(" ");
   const name = draft.displayAsBusiness && draft.businessName ? draft.businessName : fullName;
   const initials = (name || "You").split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const note = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(MOTION_OK, () => {
+        gsap
+          .timeline({ delay: 0.5 })
+          .from(note.current!.querySelector("[data-word]"), { autoAlpha: 0, y: 6, duration: 0.5 })
+          .from(note.current!.querySelectorAll("[data-draw]"), { drawSVG: 0, duration: 0.7, ease: "power2.inOut" }, "-=0.15");
+      });
+      return () => mm.revert();
+    },
+    { scope: note },
+  );
   return (
+    <>
+    {/* A handwritten note, like the founders' name tags on the landing page. TODO(client): copy */}
+    <div ref={note} className="absolute top-[calc(50%-214px)] left-[calc(50%-200px)] flex items-start gap-1 text-zinc-600">
+      <span data-word className="font-display text-[22px] italic">
+        This is you
+      </span>
+      <DoodleHookArrow className="mt-4 h-12 w-7" />
+    </div>
     <FloatCard depth={0.8} className="top-1/2 left-1/2 w-[340px] overflow-hidden" style={{ translate: "-50% -58%" }}>
       <div className="relative h-20 bg-teal-700">
         <div className="absolute inset-0 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover opacity-60 mix-blend-luminosity grayscale" />
       </div>
       <div className="px-5 pb-5">
         <div className="relative -mt-9 flex items-end justify-between">
-          <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-neutral-100 text-[20px] font-semibold text-neutral-700 shadow-md">
+          <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-zinc-100 text-[20px] font-semibold text-zinc-700 shadow-md">
             {initials}
           </span>
           <span className="mb-1 inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
             <SparklesIcon className="size-3" /> Verified after review
           </span>
         </div>
-        <p className={cn("mt-3 text-[18px] font-semibold tracking-tight transition-colors", name ? "text-neutral-900" : "text-neutral-300")}>
+        <p className={cn("mt-3 text-[18px] font-semibold tracking-tight transition-colors", name ? "text-zinc-900" : "text-zinc-300")}>
           {name || "Your name"}
-          {name && <span className="ml-0.5 inline-block h-[18px] w-px translate-y-[3px] animate-caret bg-neutral-900" />}
+          {name && <span className="ml-0.5 inline-block h-[18px] w-px translate-y-[3px] animate-caret bg-zinc-900" />}
         </p>
-        {draft.displayAsBusiness && draft.businessName && fullName && <p className="text-[12px] text-neutral-500">{fullName}</p>}
+        {draft.displayAsBusiness && draft.businessName && fullName && <p className="text-[12px] text-zinc-500">{fullName}</p>}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {["w-20", "w-16", "w-24"].map((w) => (
-            <span key={w} className={cn("h-6 animate-pulse rounded-md bg-neutral-100", w)} />
+            <span key={w} className={cn("h-6 animate-pulse rounded-md bg-zinc-100", w)} />
           ))}
         </div>
         <div className="mt-4 space-y-1.5">
-          <span className="block h-2 w-full rounded bg-neutral-100" />
-          <span className="block h-2 w-5/6 rounded bg-neutral-100" />
-          <span className="block h-2 w-2/3 rounded bg-neutral-100" />
+          <span className="block h-2 w-full rounded bg-zinc-100" />
+          <span className="block h-2 w-5/6 rounded bg-zinc-100" />
+          <span className="block h-2 w-2/3 rounded bg-zinc-100" />
         </div>
       </div>
     </FloatCard>
+    </>
   );
 }
 
@@ -219,8 +285,8 @@ function PatientScene() {
   return (
     <>
       <FloatCard depth={1.3} className="top-[14%] left-[10%] flex items-center gap-2 p-2.5 pr-3">
-        <SearchIcon className="ml-1 size-4 text-neutral-500" />
-        <span className="text-[13px] text-neutral-700">I need help with anxiety</span>
+        <SearchIcon className="ml-1 size-4 text-zinc-500" />
+        <span className="text-[13px] text-zinc-700">I need help with anxiety</span>
         <Chip tone="ink">
           <MonitorIcon className="size-3" /> Online
         </Chip>
@@ -236,9 +302,9 @@ function PatientScene() {
           <Avatar who={who} size={40} />
           <div className="flex min-w-0 flex-col">
             <span className="text-[13px] font-semibold">{name}</span>
-            <span className="text-[12px] text-neutral-600">{tags}</span>
+            <span className="text-[12px] text-zinc-600">{tags}</span>
           </div>
-          <span className="ml-auto flex items-center gap-1 text-[11px] text-neutral-500">
+          <span className="ml-auto flex items-center gap-1 text-[11px] text-zinc-500">
             <MapPinIcon className="size-3" /> TX
           </span>
         </FloatCard>
@@ -250,7 +316,7 @@ function PatientScene() {
 function InboxScene() {
   return (
     <FloatCard depth={0.8} className="top-1/2 left-1/2 w-[360px] overflow-hidden" style={{ translate: "-50% -58%" }}>
-      <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-3 text-[12px] font-medium text-neutral-600">
+      <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3 text-[12px] font-medium text-zinc-600">
         <MailIcon className="size-3.5" /> Inbox
       </div>
       {[
@@ -261,10 +327,10 @@ function InboxScene() {
         <div key={String(subject)} className={cn("flex items-center gap-3 px-4 py-3", fresh && "bg-blue-50/60")}>
           <span className={cn("size-2 shrink-0 rounded-full", fresh ? "bg-blue-600" : "bg-transparent")} />
           <div className="flex min-w-0 flex-col">
-            <span className={cn("text-[13px]", fresh ? "font-semibold text-neutral-900" : "text-neutral-600")}>{from}</span>
-            <span className="truncate text-[12px] text-neutral-500">{subject}</span>
+            <span className={cn("text-[13px]", fresh ? "font-semibold text-zinc-900" : "text-zinc-600")}>{from}</span>
+            <span className="truncate text-[12px] text-zinc-500">{subject}</span>
           </div>
-          <span className="ml-auto font-mono text-[11px] text-neutral-400">{time}</span>
+          <span className="ml-auto font-mono text-[11px] text-zinc-400">{time}</span>
         </div>
       ))}
     </FloatCard>
@@ -274,16 +340,16 @@ function InboxScene() {
 function KeyScene() {
   return (
     <FloatCard depth={0.8} className="top-1/2 left-1/2 flex w-[300px] flex-col items-center gap-3 p-6 text-center" style={{ translate: "-50% -58%" }}>
-      <span className="flex size-12 items-center justify-center rounded-full bg-neutral-900 text-white">
+      <span className="flex size-12 items-center justify-center rounded-full bg-zinc-900 text-white">
         <KeyRoundIcon className="size-5" />
       </span>
       <p className="text-[14px] font-semibold">Set a new password</p>
       <div className="flex w-full gap-1">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className={cn("h-1 flex-1 rounded-full", i < 3 ? "bg-emerald-500" : "bg-neutral-200")} />
+          <span key={i} className={cn("h-1 flex-1 rounded-full", i < 3 ? "bg-emerald-500" : "bg-zinc-200")} />
         ))}
       </div>
-      <p className="text-[12px] text-neutral-500">Strong password</p>
+      <p className="text-[12px] text-zinc-500">Strong password</p>
     </FloatCard>
   );
 }
@@ -326,7 +392,7 @@ export function PortalPanel() {
     <div ref={root} aria-hidden className="paper-gray h-full overflow-hidden rounded-2xl ring-1 ring-black/[0.04] ring-inset">
       <div className="pointer-events-none absolute top-[42%] left-1/2 size-[520px] -translate-1/2">
         {[0, 1, 2].map((i) => (
-          <span key={i} className="portal-ring absolute inset-0 rounded-full border border-neutral-400/30" style={{ animationDelay: `${i * 2.6}s` }} />
+          <span key={i} className="portal-ring absolute inset-0 rounded-full border border-zinc-400/30" style={{ animationDelay: `${i * 2.6}s` }} />
         ))}
       </div>
 
@@ -346,23 +412,6 @@ export function PortalPanel() {
           </div>
         );
       })}
-
-      {/* Caption */}
-      <div className="absolute inset-x-0 bottom-0 p-8 lg:p-10">
-        {(Object.keys(captions) as SceneKey[]).map((key) => (
-          <div
-            key={key}
-            className={cn(
-              "absolute inset-x-8 bottom-8 transition-[opacity,transform] duration-700 ease-out-soft lg:inset-x-10 lg:bottom-10",
-              key === active ? "opacity-100" : "translate-y-2 opacity-0",
-            )}
-          >
-            <p className="max-w-[420px] text-[22px] leading-7 font-semibold tracking-[-0.02em] text-neutral-900">{captions[key].title}</p>
-            <p className="mt-2 max-w-[400px] text-[14px] leading-5 text-neutral-600">{captions[key].body}</p>
-          </div>
-        ))}
-      </div>
-
     </div>
   );
 }

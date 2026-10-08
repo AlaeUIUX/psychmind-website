@@ -98,6 +98,10 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
   - `StatTile`, `StepProgress`, `ChoiceChips` (ToggleGroup `chip` variant), `UploadDropzone`.
   - `CrisisStrip`: compact 988.
 - **Status colours** use Tailwind's sky (info), emerald (success), amber (warning) and red (danger), always paired with an icon or text. `Badge` has matching variants: `neutral`, `info`, `success`, `warning`, `danger`, `brand`.
+- **Gray scale:** the `warm-*` and `text-*` tokens are runtime variables.
+  - Marketing pages use Tailwind **stone**; inside `.app-ui` they are Tailwind **zinc**.
+  - Keep using `warm-*` classes; the scope decides the values.
+  - The portal accent is Tailwind blue-600 (`--ring-accent`); crimson is for marketing calls to action.
 - **Never add named spacing tokens** (`--spacing-lg` etc.) to `@theme`. They shadow Tailwind's named sizes, so shadcn's `max-w-lg` once rendered dialogs 12px wide.
 - New primitives must appear on `/dev/ui` (the kitchen sink; hidden in production).
 
