@@ -589,6 +589,28 @@
   }
 }
 
+/* Camera focus-pull for content that swaps in place (onboarding preview):
+   it sharpens out of a blur and springs to size. Disabled for reduced motion. */
+@keyframes focus-in-fade {
+  from {
+    opacity: 0;
+    filter: blur(8px) saturate(0.6);
+  }
+}
+@keyframes focus-in-scale {
+  from {
+    scale: 0.95;
+  }
+}
+@utility animate-focus-in {
+  animation:
+    focus-in-fade 480ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    focus-in-scale 900ms var(--ease-focus-spring) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 /* Gray paper: the auth panel's surface. True neutral gray (no warm tint),
    a dark paper grain and faint ruled lines — a quiet nod to the landing
    page's notebook paper. */

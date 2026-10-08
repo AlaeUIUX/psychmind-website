@@ -57,6 +57,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Kbd } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Demo content only — option lists here are samples, not the approved taxonomy.
@@ -327,6 +328,16 @@ export function KitchenSink() {
           </StatusBanner>
         </div>
         <StepProgress current={3} total={7} label="Your expertise" className="max-w-sm" />
+      </Block>
+
+      <Block title="Keyboard shortcuts" note="Geist-style key caps. meta is ⌘ on Apple devices, Ctrl elsewhere.">
+        <Row>
+          <Kbd meta>↵</Kbd>
+          <Kbd meta>K</Kbd>
+          <Kbd meta shift>P</Kbd>
+          <Kbd>Esc</Kbd>
+          <Kbd small>/</Kbd>
+        </Row>
       </Block>
 
       <Block title="Toasts">

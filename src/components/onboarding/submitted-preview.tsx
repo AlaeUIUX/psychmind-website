@@ -1,9 +1,9 @@
 "use client";
 
 import type { ProfileView } from "@/lib/provider/types";
-import { PreviewPane } from "./preview-pane";
+import { StepPreview } from "./step-preview";
 
 /** The finished profile, framed, on the "submitted" screen. */
 export function SubmittedPreview({ profile }: { profile: ProfileView }) {
-  return <PreviewPane profile={profile} highlight={null} className="h-full" />;
+  return <StepPreview profile={profile} step="review" highlight={null} className="h-full" />;
 }

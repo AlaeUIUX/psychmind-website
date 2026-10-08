@@ -1,28 +1,131 @@
 import "server-only";
+import { defaultOrigin } from "@/lib/hosts";
 import type { Email } from "./email";
 
-// Email templates. Deliberately plain: a short line, one button, no personal
-// or health details beyond the recipient's first name (privacy rule: emails
-// carry links, not data). TODO(client): approve all email copy.
+// Email templates. One short message and one button, in the landing page's
+// look: serif headline, ink pill button, and the footer's lined notepad sheet
+// (pink margin line, blue rules) with the founders' path illustration.
+// Built from tables with inline styles so Gmail, Outlook and Apple Mail all
+// render it; images are PNGs in /images/email (Gmail doesn't show SVG).
+// Privacy rule: emails carry links, not data. No health details, and no
+// tracking pixels. TODO(client): approve all email copy.
 
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-function layout({ heading, body, cta, footnote }: { heading: string; body: string; cta?: { label: string; url: string }; footnote?: string }) {
+const SERIF = "'Ivar Display', Georgia, 'Times New Roman', serif";
+const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
+const INK = "#1c1917";
+const RULE = "#dceaf5";
+const MARGIN_LINE = "#f695b6";
+
+/** Absolute origins: images and account links come from the app, footer links
+ *  from the marketing site. */
+function origins() {
+  const app = (process.env.BETTER_AUTH_URL || defaultOrigin() || "https://www.psychmind.org").replace(/\/$/, "");
+  const site = (process.env.NEXT_PUBLIC_MARKETING_URL || app).replace(/\/$/, "");
+  return { app, site };
+}
+
+/** One 32px line of the notepad: text resting on a blue rule. */
+const ruledRow = (content: string, style = "") =>
+  `<tr><td height="32" style="height:32px;border-bottom:1.5px solid ${RULE};padding:0 24px 0 20px;font-family:${SANS};font-size:13px;line-height:32px;color:#57534e;vertical-align:bottom;${style}">${content}</td></tr>`;
+
+function notepadFooter() {
+  const { app, site } = origins();
+  const link = (href: string, label: string) =>
+    `<a href="${site}${href}" style="color:#44403c;text-decoration:none;font-weight:500">${label}</a>`;
+  const dot = `<span style="color:#a8a29e">&nbsp;&middot;&nbsp;</span>`;
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;border:1px solid #e7e5e4;border-radius:16px;border-collapse:separate;overflow:hidden">
+  <tr>
+    <td width="26" style="width:26px;border-right:2px solid ${MARGIN_LINE};font-size:0;line-height:0">&nbsp;</td>
+    <td style="padding:24px 0 20px 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td align="center" style="padding:0 24px 4px 20px"><img src="${app}/images/email/footer-illustration.png" width="240" height="160" alt="" style="display:block;width:240px;max-width:100%;height:auto;border:0"></td></tr>
+        ${ruledRow(`<span style="font-family:${SERIF};font-size:20px;color:${INK}">Ready to find help?</span>`)}
+        ${ruledRow("It takes less than two minutes. No referral needed")}
+        ${ruledRow(`${link("/how-it-works", "How it works")}${dot}${link("/blog", "Blog")}${dot}${link("/contact", "Contact")}`)}
+        ${ruledRow(`<strong style="color:${INK};font-weight:600">In crisis?</strong> Call or text 988, any time. In an emergency, call 911.`)}
+        ${ruledRow(`<img src="${app}/images/email/logo.png" width="14" height="14" alt="" style="display:inline-block;vertical-align:-2px;border:0">&nbsp; &copy; ${new Date().getFullYear()} PsychMind. All rights reserved.${dot}${link("/privacy-policy", "Privacy Policy")}`, "color:#78716c")}
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+function layout({
+  heading,
+  body,
+  cta,
+  footnote,
+  preheader,
+}: {
+  heading: string;
+  body: string;
+  cta?: { label: string; url: string };
+  footnote?: string;
+  /** Inbox preview line; defaults to the body. */
+  preheader?: string;
+}) {
+  const { app } = origins();
   const button = cta
-    ? `<p style="margin:28px 0"><a href="${escape(cta.url)}" style="display:inline-block;background:#1c1917;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600">${escape(cta.label)}</a></p>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0"><tr>
+        <td bgcolor="${INK}" style="border-radius:999px">
+          <a href="${escape(cta.url)}" style="display:inline-block;padding:14px 26px;font-family:${SANS};font-size:15px;font-weight:600;line-height:20px;color:#ffffff;text-decoration:none;border-radius:999px">${escape(cta.label)}&nbsp;&nbsp;&rarr;</a>
+        </td></tr></table>
+      <p style="margin:20px 0 0;font-family:${SANS};font-size:12px;line-height:18px;color:#78716c">Button not working? Paste this link into your browser:<br><a href="${escape(cta.url)}" style="color:#57534e;word-break:break-all">${escape(cta.url)}</a></p>`
     : "";
-  const html = `<!doctype html><html><body style="margin:0;background:#fafaf9;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1c1917">
-<div style="max-width:520px;margin:0 auto;padding:40px 24px">
-<p style="font-family:Georgia,serif;font-size:22px;margin:0 0 28px">PsychMind</p>
-<h1 style="font-family:Georgia,serif;font-weight:400;font-size:26px;line-height:1.25;margin:0 0 12px">${escape(heading)}</h1>
-<p style="font-size:16px;line-height:1.6;color:#44403c;margin:0">${body}</p>
-${button}
-${footnote ? `<p style="font-size:13px;line-height:1.5;color:#79716b;margin:0">${escape(footnote)}</p>` : ""}
-<hr style="border:none;border-top:1px solid #e7e5e4;margin:32px 0 16px">
-<p style="font-size:12px;color:#79716b;margin:0">In crisis? Call or text 988 any time, day or night. In an emergency, call 911.</p>
-</div></body></html>`;
-  const text = [heading, "", body.replace(/<[^>]+>/g, ""), cta ? `\n${cta.label}: ${cta.url}` : "", footnote ? `\n${footnote}` : ""].join("\n");
+  const preview = escape(preheader ?? body.replace(/<[^>]+>/g, ""));
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>${escape(heading)}</title>
+<style>
+  @media (max-width: 600px) {
+    .pm-pad { padding-left: 16px !important; padding-right: 16px !important; }
+    .pm-card { padding: 28px 22px !important; }
+    .pm-h1 { font-size: 26px !important; line-height: 32px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f4;-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f5f5f4">${preview}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f4">
+  <tr><td align="center" class="pm-pad" style="padding:40px 24px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
+      <tr><td style="padding:0 4px 24px">
+        <a href="${app}" style="text-decoration:none;color:${INK}"><img src="${app}/images/email/logo.png" width="28" height="28" alt="" style="display:inline-block;vertical-align:middle;border:0">&nbsp;&nbsp;<span style="font-family:${SERIF};font-size:21px;line-height:28px;color:${INK};vertical-align:middle">PsychMind</span></a>
+      </td></tr>
+      <tr><td class="pm-card" style="background:#ffffff;border:1px solid #e7e5e4;border-radius:16px;padding:40px">
+        <h1 class="pm-h1" style="margin:0 0 14px;font-family:${SERIF};font-weight:400;font-size:30px;line-height:38px;letter-spacing:-0.01em;color:${INK}">${escape(heading)}</h1>
+        <p style="margin:0;font-family:${SANS};font-size:16px;line-height:26px;color:#44403c">${body}</p>
+        ${button}
+        ${footnote ? `<p style="margin:28px 0 0;padding-top:20px;border-top:1px solid #f5f5f4;font-family:${SANS};font-size:13px;line-height:20px;color:#78716c">${escape(footnote)}</p>` : ""}
+      </td></tr>
+      <tr><td style="padding:16px 0 0">${notepadFooter()}</td></tr>
+      <tr><td style="padding:20px 4px 0;font-family:${SANS};font-size:11px;line-height:16px;color:#a8a29e;text-align:center">You're receiving this email because of your PsychMind account.</td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+
+  const text = [
+    heading,
+    "",
+    body.replace(/<[^>]+>/g, ""),
+    cta ? `\n${cta.label}: ${cta.url}` : "",
+    footnote ? `\n${footnote}` : "",
+    "\n—",
+    "In crisis? Call or text 988, any time. In an emergency, call 911.",
+    `© ${new Date().getFullYear()} PsychMind. All rights reserved.`,
+  ].join("\n");
   return { html, text };
 }
 

@@ -61,7 +61,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - squarer radii via `--radius-button`, `--radius-field` and `--radius-card`;
   - `animate-ui-enter` for content as it enters.
 - **Auth pages** share a persistent animated panel (`components/auth/portal-panel.tsx`).
-- **Onboarding** has its own shell (`components/onboarding`): step rail, live preview with highlighting, save status.
+- **Onboarding** has its own shell (`components/onboarding`): step rail, save status, and a step-by-step live preview (`step-preview.tsx`). Each step shows its part of the profile at real size, in a browser window that wraps it on the gray paper panel. "Full profile" opens the whole page. Below `xl` the top bar shows the current phase and step instead of all phases.
 
 ## Route groups
 
@@ -102,6 +102,8 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
   - `EmptyState` and `ErrorState`.
   - `StatTile`, `StepProgress`, `ChoiceChips` (ToggleGroup `chip` variant), `UploadDropzone`.
   - `CrisisStrip`: compact 988.
+- **Keyboard shortcuts** use `Kbd` (`components/ui/kbd.tsx`, Geist-style): `<Kbd meta>↵</Kbd>` shows ⌘ on Apple devices and Ctrl elsewhere.
+- **Emails** (`server/emails.ts`) share one layout in the landing page's look: serif headline, ink pill button, notepad footer. Images are PNGs in `public/images/email`, since Gmail doesn't show SVG. No tracking pixels.
 - **Status colours** use Tailwind's sky (info), emerald (success), amber (warning) and red (danger), always paired with an icon or text. `Badge` has matching variants: `neutral`, `info`, `success`, `warning`, `danger`, `brand`.
 - **Gray scale:** the `warm-*` and `text-*` tokens are runtime variables.
   - Marketing pages use Tailwind **stone**; inside `.app-ui` they are Tailwind **zinc**.

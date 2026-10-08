@@ -42,7 +42,7 @@ function AddCustom({ placeholder, button, onAdd }: { placeholder: string; button
           }
         }}
       />
-      <Button type="button" variant="secondary" onClick={add} className="shrink-0">
+      <Button type="button" variant="secondary" onClick={add} className="h-10 shrink-0 px-3.5 text-[14px] shadow-none">
         <PlusIcon />
         {button}
       </Button>

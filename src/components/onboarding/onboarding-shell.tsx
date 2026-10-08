@@ -7,11 +7,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ProviderProfileView } from "@/components/provider/profile-view";
 import { ONBOARDING_STEPS, PHASES, stepIndex, type StepKey } from "@/lib/provider/steps";
 import type { ProfileView } from "@/lib/provider/types";
 import { OnboardingProvider, useOnboarding } from "./onboarding-context";
-import { PreviewPane } from "./preview-pane";
+import { StepPreview } from "./step-preview";
 
 type ShellProps = {
   initial: ProfileView;
@@ -58,7 +57,7 @@ function SaveStatus() {
       ? "Saved just now"
       : `Saved ${Math.round(elapsed / 60_000)} min ago`;
   return (
-    <span className="hidden items-center gap-1.5 type-ui-caption text-warm-500 sm:inline-flex" aria-live="polite">
+    <span className="hidden items-center gap-1.5 type-ui-caption text-warm-500 lg:inline-flex" aria-live="polite">
       <CircleCheckIcon className={cn("size-3.5", savedAt ? "text-emerald-600" : "text-warm-400")} />
       {label}
     </span>
@@ -68,7 +67,7 @@ function SaveStatus() {
 function PhaseProgress({ step }: { step: StepKey | "welcome" | "submitted" }) {
   const index = step === "welcome" ? -1 : step === "submitted" ? ONBOARDING_STEPS.length : stepIndex(step);
   return (
-    <ol className="hidden items-center gap-3 md:flex" aria-label="Setup progress">
+    <ol className="hidden items-center gap-3 xl:flex" aria-label="Setup progress">
       {PHASES.map((phase) => {
         const steps = ONBOARDING_STEPS.filter((s) => s.phase === phase.key);
         const first = stepIndex(steps[0].key);
@@ -94,6 +93,36 @@ function PhaseProgress({ step }: { step: StepKey | "welcome" | "submitted" }) {
         );
       })}
     </ol>
+  );
+}
+
+/** Below xl the three phases don't fit: show the current phase and step,
+ *  with a thin progress line along the bottom of the top bar. */
+function CompactProgress({ step }: { step: StepKey | "welcome" | "submitted" }) {
+  if (step === "welcome" || step === "submitted") return null;
+  const index = stepIndex(step);
+  const total = ONBOARDING_STEPS.length;
+  const phase = PHASES.find((p) => p.key === ONBOARDING_STEPS[index].phase)!;
+  return (
+    <>
+      <p className="hidden min-w-0 items-center gap-2 sm:flex xl:hidden">
+        <span className="truncate type-ui-caption font-medium text-warm-900">{phase.label}</span>
+        <span aria-hidden className="size-0.5 shrink-0 rounded-full bg-warm-400" />
+        <span className="shrink-0 type-ui-mono text-[12px] text-warm-500">
+          Step {index + 1} of {total}
+        </span>
+      </p>
+      <span
+        role="progressbar"
+        aria-label="Setup progress"
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-valuenow={index + 1}
+        className="absolute inset-x-0 -bottom-px h-0.5 bg-warm-200 xl:hidden"
+      >
+        <span className="block h-full bg-blue-600 transition-[width] duration-500 ease-out-soft" style={{ width: `${((index + 1) / total) * 100}%` }} />
+      </span>
+    </>
   );
 }
 
@@ -171,10 +200,11 @@ function Frame({ reached, complete, children }: Omit<ShellProps, "initial">) {
             <img src="/images/home/logo.svg" alt="" width={24} height={24} />
             <span className="font-display text-[18px]">PsychMind</span>
           </Link>
-          <span className="hidden h-4 w-px bg-warm-300 sm:block" />
-          <span className="hidden type-ui-small text-warm-600 sm:block">Provider setup</span>
+          <span className="hidden h-4 w-px bg-warm-300 md:block" />
+          <span className="hidden type-ui-small text-warm-600 md:block">Provider setup</span>
         </div>
         <PhaseProgress step={step} />
+        <CompactProgress step={step} />
         <div className="flex items-center gap-3">
           <SaveStatus />
           {showPreview && (
@@ -189,8 +219,8 @@ function Frame({ reached, complete, children }: Omit<ShellProps, "initial">) {
                 <SheetHeader className="px-4 pt-4">
                   <SheetTitle>Your profile preview</SheetTitle>
                 </SheetHeader>
-                <div className="p-4">
-                  <ProviderProfileView profile={preview} mode="preview" highlight={highlight} />
+                <div className="p-3">
+                  <StepPreview profile={preview} step={step as StepKey} highlight={highlight} className="min-h-[440px]" />
                 </div>
               </SheetContent>
             </Sheet>
@@ -221,7 +251,7 @@ function Frame({ reached, complete, children }: Omit<ShellProps, "initial">) {
         {showPreview && (
           <aside className="hidden xl:block" aria-label="Live preview">
             <div className="sticky top-22 h-[calc(100svh-7.5rem)]">
-              <PreviewPane profile={preview} highlight={highlight} />
+              <StepPreview profile={preview} step={step as StepKey} highlight={highlight} className="h-full" />
             </div>
           </aside>
         )}
