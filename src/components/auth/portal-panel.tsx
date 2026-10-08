@@ -16,12 +16,13 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { providerPhoto } from "@/lib/photos";
 import { useAuthPanel } from "./auth-context";
 
-// The right half of every auth screen: a dark, living "portal" instead of a
-// stock photo. It stays mounted while people move between auth pages and
+// The right half of every auth screen: a quiet sheet of gray paper with live
+// product scenes on it, instead of a stock photo. It stays mounted while people move between auth pages and
 // cross-fades to a scene that matches the step — product cards on log in, a
 // role preview while choosing, the provider's own profile card filling in as
 // they type, a matching scene for patients, an inbox while they verify.
-// Ambient layer: two slow glows and a breathing ring (a calm 8-second cycle).
+// Ambient layer: paper grain, faint rules and a breathing ring (a calm
+// 8-second cycle).
 // TODO(client): scene captions are new copy.
 
 type SceneKey = "login" | "role" | "provider" | "patient" | "inbox" | "key";
@@ -48,7 +49,7 @@ const captions: Record<SceneKey, { title: string; body: string }> = {
 function FloatCard({ children, depth = 1, className, style }: { children: ReactNode; depth?: number; className?: string; style?: CSSProperties }) {
   return (
     <div
-      className={cn("absolute rounded-xl bg-white text-warm-900 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.6)] ring-1 ring-black/5", className)}
+      className={cn("absolute rounded-xl bg-white text-neutral-900 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-16px_rgb(0_0_0/0.22)] ring-1 ring-black/[0.06]", className)}
       style={{
         transform: `translate3d(calc(var(--mx, 0) * ${depth * 10}px), calc(var(--my, 0) * ${depth * 10}px), 0)`,
         transition: "transform 600ms var(--ease-out-soft)",
@@ -72,7 +73,7 @@ function Chip({ children, tone = "light" }: { children: ReactNode; tone?: "light
     <span
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-md px-2 text-[11px] font-medium",
-        tone === "ink" ? "bg-warm-900 text-white" : "bg-warm-100 text-warm-700",
+        tone === "ink" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700",
       )}
     >
       {children}
@@ -85,29 +86,29 @@ function LoginScene() {
     <>
       <FloatCard depth={1.4} className="top-[14%] left-[10%] w-[300px] p-4">
         <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-full bg-brand-soft text-brand-primary">
+          <span className="flex size-9 items-center justify-center rounded-full bg-blue-50 text-blue-600">
             <BellIcon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col">
             <span className="text-[13px] font-semibold">New session request</span>
-            <span className="truncate text-[12px] text-warm-600">Individual · Online · this week</span>
+            <span className="truncate text-[12px] text-neutral-600">Individual · Online · this week</span>
           </div>
-          <span className="ml-auto font-mono text-[11px] text-warm-500">2m</span>
+          <span className="ml-auto font-mono text-[11px] text-neutral-500">2m</span>
         </div>
       </FloatCard>
       <FloatCard depth={0.8} className="top-[34%] right-[8%] w-[250px] p-4">
-        <p className="text-[12px] text-warm-600">Profile views</p>
+        <p className="text-[12px] text-neutral-600">Profile views</p>
         <p className="mt-1 flex items-baseline gap-2">
           <span className="text-[26px] font-semibold tracking-tight">312</span>
           <span className="text-[12px] font-medium text-emerald-600">↑ 24%</span>
         </p>
         <svg viewBox="0 0 200 48" className="mt-2 h-12 w-full" aria-hidden>
-          <path d="M0 40 C 20 38, 30 30, 50 32 S 80 20, 100 24 S 140 10, 160 14 S 190 6, 200 4" fill="none" stroke="#c01048" strokeWidth="2" strokeLinecap="round" />
+          <path d="M0 40 C 20 38, 30 30, 50 32 S 80 20, 100 24 S 140 10, 160 14 S 190 6, 200 4" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" />
           <path d="M0 40 C 20 38, 30 30, 50 32 S 80 20, 100 24 S 140 10, 160 14 S 190 6, 200 4 V48 H0Z" fill="url(#g)" opacity="0.18" />
           <defs>
             <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#c01048" />
-              <stop offset="1" stopColor="#c01048" stopOpacity="0" />
+              <stop offset="0" stopColor="#2563eb" />
+              <stop offset="1" stopColor="#2563eb" stopOpacity="0" />
             </linearGradient>
           </defs>
         </svg>
@@ -131,9 +132,9 @@ function RoleScene() {
     <>
       <FloatCard
         depth={1.2}
-        className={cn("top-[16%] left-[8%] w-[290px] p-4 transition-[opacity,scale,filter] duration-500", role === "patient" ? "z-10 scale-100 opacity-100" : "scale-95 opacity-45 blur-[1px]")}
+        className={cn("top-[16%] left-[8%] w-[290px] p-4 transition-[opacity,scale,filter] duration-500", role === "provider" ? "scale-95 opacity-45 blur-[1px]" : "z-10 scale-100 opacity-100")}
       >
-        <p className="flex items-center gap-2 text-[12px] font-medium text-warm-600">
+        <p className="flex items-center gap-2 text-[12px] font-medium text-neutral-600">
           <SearchIcon className="size-3.5" /> Looking for a provider
         </p>
         <div className="mt-3 flex items-center gap-3">
@@ -146,13 +147,13 @@ function RoleScene() {
             </div>
           </div>
         </div>
-        <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-warm-900 text-[12px] font-medium text-white">Request a session</div>
+        <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-neutral-900 text-[12px] font-medium text-white">Request a session</div>
       </FloatCard>
       <FloatCard
         depth={0.9}
-        className={cn("top-[44%] right-[7%] w-[290px] p-4 transition-[opacity,scale,filter] duration-500", role === "provider" ? "z-10 scale-100 opacity-100" : "scale-95 opacity-45 blur-[1px]")}
+        className={cn("top-[44%] right-[7%] w-[290px] p-4 transition-[opacity,scale,filter] duration-500", role === "patient" ? "scale-95 opacity-45 blur-[1px]" : "z-10 scale-100 opacity-100")}
       >
-        <p className="flex items-center gap-2 text-[12px] font-medium text-warm-600">
+        <p className="flex items-center gap-2 text-[12px] font-medium text-neutral-600">
           <BadgeCheckIcon className="size-3.5" /> Mental health provider
         </p>
         <div className="mt-3 grid grid-cols-3 gap-2">
@@ -161,8 +162,8 @@ function RoleScene() {
             ["Saves", "41"],
             ["Requests", "24"],
           ].map(([k, v]) => (
-            <div key={k} className="rounded-lg bg-warm-50 p-2">
-              <p className="text-[10.5px] text-warm-500">{k}</p>
+            <div key={k} className="rounded-lg bg-neutral-50 p-2">
+              <p className="text-[10.5px] text-neutral-500">{k}</p>
               <p className="text-[16px] font-semibold tracking-tight">{v}</p>
             </div>
           ))}
@@ -187,27 +188,27 @@ function ProviderScene() {
       </div>
       <div className="px-5 pb-5">
         <div className="relative -mt-9 flex items-end justify-between">
-          <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-warm-100 text-[20px] font-semibold text-warm-700 shadow-md">
+          <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-neutral-100 text-[20px] font-semibold text-neutral-700 shadow-md">
             {initials}
           </span>
           <span className="mb-1 inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
             <SparklesIcon className="size-3" /> Verified after review
           </span>
         </div>
-        <p className={cn("mt-3 text-[18px] font-semibold tracking-tight transition-colors", name ? "text-warm-900" : "text-warm-300")}>
+        <p className={cn("mt-3 text-[18px] font-semibold tracking-tight transition-colors", name ? "text-neutral-900" : "text-neutral-300")}>
           {name || "Your name"}
-          {name && <span className="ml-0.5 inline-block h-[18px] w-px translate-y-[3px] animate-caret bg-warm-900" />}
+          {name && <span className="ml-0.5 inline-block h-[18px] w-px translate-y-[3px] animate-caret bg-neutral-900" />}
         </p>
-        {draft.displayAsBusiness && draft.businessName && fullName && <p className="text-[12px] text-warm-500">{fullName}</p>}
+        {draft.displayAsBusiness && draft.businessName && fullName && <p className="text-[12px] text-neutral-500">{fullName}</p>}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {["w-20", "w-16", "w-24"].map((w) => (
-            <span key={w} className={cn("h-6 animate-pulse rounded-md bg-warm-100", w)} />
+            <span key={w} className={cn("h-6 animate-pulse rounded-md bg-neutral-100", w)} />
           ))}
         </div>
         <div className="mt-4 space-y-1.5">
-          <span className="block h-2 w-full rounded bg-warm-100" />
-          <span className="block h-2 w-5/6 rounded bg-warm-100" />
-          <span className="block h-2 w-2/3 rounded bg-warm-100" />
+          <span className="block h-2 w-full rounded bg-neutral-100" />
+          <span className="block h-2 w-5/6 rounded bg-neutral-100" />
+          <span className="block h-2 w-2/3 rounded bg-neutral-100" />
         </div>
       </div>
     </FloatCard>
@@ -218,8 +219,8 @@ function PatientScene() {
   return (
     <>
       <FloatCard depth={1.3} className="top-[14%] left-[10%] flex items-center gap-2 p-2.5 pr-3">
-        <SearchIcon className="ml-1 size-4 text-warm-500" />
-        <span className="text-[13px] text-warm-700">I need help with anxiety</span>
+        <SearchIcon className="ml-1 size-4 text-neutral-500" />
+        <span className="text-[13px] text-neutral-700">I need help with anxiety</span>
         <Chip tone="ink">
           <MonitorIcon className="size-3" /> Online
         </Chip>
@@ -235,9 +236,9 @@ function PatientScene() {
           <Avatar who={who} size={40} />
           <div className="flex min-w-0 flex-col">
             <span className="text-[13px] font-semibold">{name}</span>
-            <span className="text-[12px] text-warm-600">{tags}</span>
+            <span className="text-[12px] text-neutral-600">{tags}</span>
           </div>
-          <span className="ml-auto flex items-center gap-1 text-[11px] text-warm-500">
+          <span className="ml-auto flex items-center gap-1 text-[11px] text-neutral-500">
             <MapPinIcon className="size-3" /> TX
           </span>
         </FloatCard>
@@ -249,7 +250,7 @@ function PatientScene() {
 function InboxScene() {
   return (
     <FloatCard depth={0.8} className="top-1/2 left-1/2 w-[360px] overflow-hidden" style={{ translate: "-50% -58%" }}>
-      <div className="flex items-center gap-2 border-b border-warm-100 px-4 py-3 text-[12px] font-medium text-warm-600">
+      <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-3 text-[12px] font-medium text-neutral-600">
         <MailIcon className="size-3.5" /> Inbox
       </div>
       {[
@@ -257,13 +258,13 @@ function InboxScene() {
         ["Calendar", "Weekly summary", "9:41", false],
         ["Newsletter", "October reads", "Tue", false],
       ].map(([from, subject, time, fresh]) => (
-        <div key={String(subject)} className={cn("flex items-center gap-3 px-4 py-3", fresh && "bg-brand-soft/60")}>
-          <span className={cn("size-2 shrink-0 rounded-full", fresh ? "bg-brand-primary" : "bg-transparent")} />
+        <div key={String(subject)} className={cn("flex items-center gap-3 px-4 py-3", fresh && "bg-blue-50/60")}>
+          <span className={cn("size-2 shrink-0 rounded-full", fresh ? "bg-blue-600" : "bg-transparent")} />
           <div className="flex min-w-0 flex-col">
-            <span className={cn("text-[13px]", fresh ? "font-semibold text-warm-900" : "text-warm-600")}>{from}</span>
-            <span className="truncate text-[12px] text-warm-500">{subject}</span>
+            <span className={cn("text-[13px]", fresh ? "font-semibold text-neutral-900" : "text-neutral-600")}>{from}</span>
+            <span className="truncate text-[12px] text-neutral-500">{subject}</span>
           </div>
-          <span className="ml-auto font-mono text-[11px] text-warm-400">{time}</span>
+          <span className="ml-auto font-mono text-[11px] text-neutral-400">{time}</span>
         </div>
       ))}
     </FloatCard>
@@ -273,16 +274,16 @@ function InboxScene() {
 function KeyScene() {
   return (
     <FloatCard depth={0.8} className="top-1/2 left-1/2 flex w-[300px] flex-col items-center gap-3 p-6 text-center" style={{ translate: "-50% -58%" }}>
-      <span className="flex size-12 items-center justify-center rounded-full bg-warm-900 text-white">
+      <span className="flex size-12 items-center justify-center rounded-full bg-neutral-900 text-white">
         <KeyRoundIcon className="size-5" />
       </span>
       <p className="text-[14px] font-semibold">Set a new password</p>
       <div className="flex w-full gap-1">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className={cn("h-1 flex-1 rounded-full", i < 3 ? "bg-emerald-500" : "bg-warm-200")} />
+          <span key={i} className={cn("h-1 flex-1 rounded-full", i < 3 ? "bg-emerald-500" : "bg-neutral-200")} />
         ))}
       </div>
-      <p className="text-[12px] text-warm-500">Strong password</p>
+      <p className="text-[12px] text-neutral-500">Strong password</p>
     </FloatCard>
   );
 }
@@ -322,13 +323,10 @@ export function PortalPanel() {
   }, []);
 
   return (
-    <div ref={root} aria-hidden className="grain relative isolate h-full overflow-hidden rounded-2xl bg-warm-950">
-      {/* Ambient light */}
-      <div className="portal-glow-a pointer-events-none absolute -top-1/4 -right-1/4 size-[70%] rounded-full bg-brand-primary/35 blur-[120px]" />
-      <div className="portal-glow-b pointer-events-none absolute -bottom-1/3 -left-1/4 size-[60%] rounded-full bg-amber-500/15 blur-[120px]" />
+    <div ref={root} aria-hidden className="paper-gray h-full overflow-hidden rounded-2xl ring-1 ring-black/[0.04] ring-inset">
       <div className="pointer-events-none absolute top-[42%] left-1/2 size-[520px] -translate-1/2">
         {[0, 1, 2].map((i) => (
-          <span key={i} className="portal-ring absolute inset-0 rounded-full border border-white/[0.07]" style={{ animationDelay: `${i * 2.6}s` }} />
+          <span key={i} className="portal-ring absolute inset-0 rounded-full border border-neutral-400/30" style={{ animationDelay: `${i * 2.6}s` }} />
         ))}
       </div>
 
@@ -359,8 +357,8 @@ export function PortalPanel() {
               key === active ? "opacity-100" : "translate-y-2 opacity-0",
             )}
           >
-            <p className="max-w-[420px] text-[22px] leading-7 font-semibold tracking-[-0.02em] text-white">{captions[key].title}</p>
-            <p className="mt-2 max-w-[400px] text-[14px] leading-5 text-warm-300">{captions[key].body}</p>
+            <p className="max-w-[420px] text-[22px] leading-7 font-semibold tracking-[-0.02em] text-neutral-900">{captions[key].title}</p>
+            <p className="mt-2 max-w-[400px] text-[14px] leading-5 text-neutral-600">{captions[key].body}</p>
           </div>
         ))}
       </div>

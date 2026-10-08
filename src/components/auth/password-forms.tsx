@@ -36,7 +36,7 @@ function SentTo({ email, what, expires }: { email: string; what: string; expires
         </div>
       </div>
       <p className="type-ui-caption text-warm-500">
-        {what} · Expires in <span className="font-medium text-brand-primary">{expires}</span>
+        {what} · Expires in <span className="font-medium text-blue-600">{expires}</span>
       </p>
       {inbox && (
         <Button asChild variant="secondary" size="sm" className="h-9 w-fit shadow-none">

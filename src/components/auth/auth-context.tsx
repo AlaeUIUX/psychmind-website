@@ -12,9 +12,12 @@ export type DraftProfile = {
   displayAsBusiness: boolean;
 };
 
+type Role = "patient" | "provider";
+
 type AuthPanelState = {
-  role: "patient" | "provider";
-  setRole: (role: "patient" | "provider") => void;
+  /** null until the person picks one (Continue stays disabled). */
+  role: Role | null;
+  setRole: (role: Role | null) => void;
   draft: DraftProfile;
   setDraft: (patch: Partial<DraftProfile>) => void;
 };
@@ -22,7 +25,7 @@ type AuthPanelState = {
 const AuthPanelContext = createContext<AuthPanelState | null>(null);
 
 export function AuthPanelProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<"patient" | "provider">("patient");
+  const [role, setRole] = useState<Role | null>(null);
   const [draft, setDraftState] = useState<DraftProfile>({ firstName: "", lastName: "", businessName: "", displayAsBusiness: false });
   const value = useMemo<AuthPanelState>(
     () => ({ role, setRole, draft, setDraft: (patch) => setDraftState((d) => ({ ...d, ...patch })) }),

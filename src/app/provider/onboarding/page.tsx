@@ -1,5 +1,4 @@
 import {
-  ArrowRightIcon,
   BadgeCheckIcon,
   CameraIcon,
   CircleDollarSignIcon,
@@ -13,6 +12,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HoverArrow } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";
 import { BASE_PLAN } from "@/lib/billing";
 import { sectionStatuses } from "@/lib/provider/completeness";
@@ -63,20 +63,20 @@ export default async function OnboardingWelcomePage() {
                 Welcome back{state.firstName ? `, ${state.firstName}` : ""}. You&apos;re {percent}% done.
               </p>
               <div className="h-1 w-40 overflow-hidden rounded-full bg-warm-100">
-                <div className="h-full rounded-full bg-brand-primary" style={{ width: `${percent}%` }} />
+                <div className="h-full rounded-full bg-blue-600" style={{ width: `${percent}%` }} />
               </div>
             </div>
             <Button asChild size="sm" className="h-9 shrink-0">
               <Link href={`/provider/onboarding/${resume.key}`}>
                 Continue: {resume.label}
-                <ArrowRightIcon />
+                <HoverArrow />
               </Link>
             </Button>
           </div>
         )}
 
         <div className="flex animate-ui-enter flex-col gap-3" style={{ "--i": 1 } as React.CSSProperties}>
-          <p className="type-ui-label text-brand-primary">For providers</p>
+          <p className="type-ui-label text-warm-500">For providers</p>
           <h1 className="type-ui-display text-warm-900">Reach people who are ready to start</h1>
           <p className="type-ui-body text-[15px] leading-6 text-warm-600">
             Psychmind connects verified mental health professionals with people actively looking for help.
@@ -114,12 +114,12 @@ export default async function OnboardingWelcomePage() {
         <div className="flex animate-ui-enter flex-col gap-4" style={{ "--i": 3 } as React.CSSProperties}>
           <p className="flex items-center gap-2 type-ui-small text-warm-600">
             <ClockIcon aria-hidden className="size-4 text-warm-500" />
-            Takes about 20 minutes · Goes live after verification <span className="font-medium text-brand-primary">1-2 days</span>
+            Takes about 20 minutes · Goes live after verification <span className="font-medium text-blue-600">1-2 days</span>
           </p>
           <Button asChild size="lg" className="h-11 w-full text-[15px] sm:w-auto sm:self-start sm:px-6">
             <Link href={`/provider/onboarding/${started ? state.onboardingStep : "identity"}`}>
               {started ? "Continue where you left off" : "Get started"}
-              <ArrowRightIcon />
+              <HoverArrow />
             </Link>
           </Button>
           <p className="type-ui-caption text-warm-500">

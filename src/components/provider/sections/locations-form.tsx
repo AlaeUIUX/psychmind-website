@@ -156,7 +156,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
         </div>
         <div aria-hidden className="flex gap-1">
           {Array.from({ length: limit }, (_, i) => (
-            <span key={i} className={cn("h-1.5 flex-1 rounded-pill", i < fields.length ? "bg-brand-primary" : "bg-warm-200")} />
+            <span key={i} className={cn("h-1.5 flex-1 rounded-pill", i < fields.length ? "bg-blue-600" : "bg-warm-200")} />
           ))}
         </div>
       </div>

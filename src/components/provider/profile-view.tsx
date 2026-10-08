@@ -26,7 +26,7 @@ function Region({ name, highlight, className, children }: { name: PreviewRegion;
       data-active={on || undefined}
       className={cn(
         "relative rounded-lg transition-[box-shadow,background-color] duration-500 ease-out-soft",
-        on && "bg-brand-soft/60 shadow-[0_0_0_6px_var(--color-brand-soft),0_0_0_7px_rgb(192_16_72/0.35)]",
+        on && "bg-blue-50/70 shadow-[0_0_0_6px_rgb(239_246_255),0_0_0_7px_rgb(96_165_250)]",
         className,
       )}
     >

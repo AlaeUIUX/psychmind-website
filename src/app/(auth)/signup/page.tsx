@@ -7,7 +7,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   const { role } = await searchParams;
   return (
     <>
-      <RoleSelect initial={role === "provider" ? "provider" : "patient"} />
+      <RoleSelect initial={role === "provider" || role === "patient" ? role : undefined} />
     </>
   );
 }

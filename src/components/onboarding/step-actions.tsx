@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon } from "lucide-react";
+import { ArrowLeftIcon, LoaderCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
+import { HoverArrow } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";
 
 /** Sticky wizard footer: Back · Continue, with the ⌘/Ctrl + Enter hint. */
@@ -43,7 +44,7 @@ export function StepActions({
         <Button type="submit" size="default" className="h-10 px-4 text-[14px]" disabled={disabled || pending} aria-busy={pending || undefined}>
           {pending && <LoaderCircleIcon className="size-4 animate-spin" />}
           {pending ? "Saving…" : submitLabel}
-          {!pending && <ArrowRightIcon />}
+          {!pending && <HoverArrow />}
         </Button>
       </div>
     </div>

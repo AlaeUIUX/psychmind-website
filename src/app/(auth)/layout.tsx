@@ -26,7 +26,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <div className="w-full max-w-[380px]">{children}</div>
           </main>
 
-          <footer className="flex flex-col gap-2 px-6 pb-6 text-[12px] text-warm-500 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+          <footer className="px-6 pb-6 text-[12px] text-warm-500 sm:px-10">
             <p>
               <Link href="/terms" className="hover:text-warm-800">
                 Terms
@@ -37,9 +37,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               </Link>
               <span className="mx-1.5">·</span>© {new Date().getFullYear()} PsychMind
             </p>
-            <a href="tel:988" className="font-medium text-warm-700 hover:text-warm-900">
-              In crisis? Call or text 988
-            </a>
           </footer>
         </div>
 

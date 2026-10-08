@@ -85,7 +85,7 @@ function PhaseProgress({ step }: { step: StepKey | "welcome" | "submitted" }) {
                   key={s.key}
                   className={cn(
                     "h-1 w-4 rounded-full transition-colors duration-500",
-                    i < done ? "bg-warm-900" : i === done && active ? "bg-brand-primary" : "bg-warm-200",
+                    i < done ? "bg-warm-900" : i === done && active ? "bg-blue-600" : "bg-warm-200",
                   )}
                 />
               ))}
@@ -114,10 +114,10 @@ function StepRail({ step, reached, complete }: { step: StepKey | "welcome" | "su
                 <span
                   className={cn(
                     "flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] transition-colors",
-                    done ? "border-warm-900 bg-warm-900 text-white" : isCurrent ? "border-brand-primary text-brand-primary" : "border-warm-300 text-transparent",
+                    done ? "border-warm-900 bg-warm-900 text-white" : isCurrent ? "border-blue-600 text-blue-600" : "border-warm-300 text-transparent",
                   )}
                 >
-                  {done ? <CheckIcon className="size-3" /> : isCurrent ? <span className="size-1.5 rounded-full bg-brand-primary" /> : null}
+                  {done ? <CheckIcon className="size-3" /> : isCurrent ? <span className="size-1.5 rounded-full bg-blue-600" /> : null}
                 </span>
                 <span className="truncate">{s.label}</span>
               </>
@@ -145,7 +145,7 @@ function StepRail({ step, reached, complete }: { step: StepKey | "welcome" | "su
           <span className="type-ui-mono text-warm-600">{score}%</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-warm-100" aria-hidden>
-          <div className="h-full rounded-full bg-linear-to-r from-brand-primary to-amber-500 transition-[width] duration-700 ease-out-soft" style={{ width: `${score}%` }} />
+          <div className="h-full rounded-full bg-linear-to-r from-blue-600 to-sky-400 transition-[width] duration-700 ease-out-soft" style={{ width: `${score}%` }} />
         </div>
         {/* TODO(client): copy */}
         <p className="type-ui-caption text-warm-500">Fees, education and a fuller story help people choose you.</p>

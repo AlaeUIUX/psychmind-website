@@ -6,6 +6,8 @@
   --foreground: #1c1917;
   /* Buttons are pills on the marketing site; the portal (.app-ui) squares them up. */
   --radius-button: 9999px;
+  /* Focus halo colour: crimson on the marketing site. */
+  --ring-accent: #c01048;
 }
 
 @theme inline {
@@ -73,7 +75,8 @@
   --color-destructive: #dc2626;
   --color-border: var(--color-warm-200);
   --color-input: var(--color-warm-200);
-  --color-ring: var(--color-brand-primary);
+  /* Through a runtime variable so a scope can swap it (.app-ui uses blue). */
+  --color-ring: var(--ring-accent);
 
   /* No named spacing tokens (spacing-xs/md/lg/xl…): in Tailwind v4 they
      shadow the named sizes shadcn relies on, e.g. `max-w-lg` became 12px.
@@ -414,6 +417,9 @@
    display type stays on the marketing site. Apply `.app-ui` on portal roots.
    ------------------------------------------------------------------------ */
 .app-ui {
+  /* Interface accent is blue (focus, selection, progress); crimson stays the
+     marketing call-to-action colour. */
+  --ring-accent: oklch(0.546 0.245 262.881); /* Tailwind blue-600 */
   --radius-button: 8px;
   --radius-field: 8px;
   --radius-card: 14px;
@@ -446,6 +452,12 @@
     font-size: 14px;
     line-height: 21px;
   }
+}
+/* Fields: neutral hover, blue focus (border + soft halo from --color-ring). */
+.app-ui [data-slot="input"]:focus-visible,
+.app-ui [data-slot="textarea"]:focus-visible,
+.app-ui [data-slot="select-trigger"]:focus-visible {
+  border-color: oklch(0.623 0.214 259.815); /* Tailwind blue-500 */
 }
 .app-ui [data-slot="label"],
 .app-ui [data-slot="field-label"] {
@@ -548,24 +560,38 @@
   }
 }
 
-/* Auth portal ambience (components/auth/portal-panel.tsx): two glows drift
-   slowly; rings expand and fade on an 8s "breath". */
-@keyframes portal-drift-a {
-  50% { transform: translate(-8%, 10%) scale(1.08); }
+/* Gray paper: the auth panel's surface. True neutral gray (no warm tint),
+   a dark paper grain and faint ruled lines — a quiet nod to the landing
+   page's notebook paper. */
+.paper-gray {
+  position: relative;
+  isolation: isolate;
+  background-color: #f0f0f0;
+  background-image:
+    radial-gradient(120% 70% at 50% 0%, rgb(255 255 255 / 0.75), transparent 65%),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgb(0 0 0 / 0.035) 31px 32px);
 }
-@keyframes portal-drift-b {
-  50% { transform: translate(10%, -6%) scale(0.94); }
+.paper-gray::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.45  0 0 0 0 0.45  0 0 0 0.22 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
+
+/* Auth portal ambience (components/auth/portal-panel.tsx): rings expand and
+   fade on an 8s "breath". */
 @keyframes portal-breathe {
   0% { transform: scale(0.35); opacity: 0; }
   30% { opacity: 1; }
   100% { transform: scale(1.25); opacity: 0; }
 }
-.portal-glow-a { animation: portal-drift-a 18s ease-in-out infinite; }
-.portal-glow-b { animation: portal-drift-b 22s ease-in-out infinite; }
 .portal-ring { animation: portal-breathe 7.8s cubic-bezier(0.37, 0, 0.63, 1) infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .portal-glow-a, .portal-glow-b, .portal-ring { animation: none; }
+  .portal-ring { animation: none; }
   .portal-ring { opacity: 0.6; transform: scale(0.8); }
 }
 

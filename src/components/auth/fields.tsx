@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
+import { ArrowRightIcon, EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -203,12 +203,25 @@ export function PasswordInput({
   );
 }
 
+/** An arrow that slides in on hover/focus (absent at rest). Put it last inside a Button. */
+export function HoverArrow() {
+  return (
+    <span
+      aria-hidden
+      className="-ml-2 inline-flex w-0 items-center overflow-hidden opacity-0 transition-[margin,width,opacity] duration-300 ease-out-soft group-hover/button:ml-0 group-hover/button:w-4 group-hover/button:opacity-100 group-focus-visible/button:ml-0 group-focus-visible/button:w-4 group-focus-visible/button:opacity-100 motion-reduce:transition-none"
+    >
+      <ArrowRightIcon className="size-4 -translate-x-1.5 group-hover/button:translate-x-0 group-focus-visible/button:translate-x-0" />
+    </span>
+  );
+}
+
 export function SubmitButton({ children, pendingLabel }: { children: ReactNode; pendingLabel?: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="default" fullWidth disabled={pending} aria-busy={pending || undefined} className="h-10 text-[14px]">
       {pending && <LoaderCircleIcon className="size-4 animate-spin" />}
       {pending ? (pendingLabel ?? children) : children}
+      {!pending && <HoverArrow />}
     </Button>
   );
 }

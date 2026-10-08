@@ -37,8 +37,12 @@ export function SignUpForm({ role, googleEnabled }: { role: "patient" | "provide
         />
       </div>
 
-      <GoogleSignIn enabled={googleEnabled} intent={role === "provider" ? "provider" : undefined} />
-      <OrDivider />
+      {googleEnabled && (
+        <>
+          <GoogleSignIn enabled intent={role === "provider" ? "provider" : undefined} />
+          <OrDivider />
+        </>
+      )}
 
       <form action={action} noValidate className="flex flex-col gap-4">
         <FormAlert message={state?.error} />

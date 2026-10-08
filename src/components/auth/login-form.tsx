@@ -16,8 +16,13 @@ export function LoginForm({ next, googleEnabled, notice }: { next?: string; goog
     <div className="flex flex-col gap-7">
       <AuthTitle title="Log in to PsychMind" description="Good to see you again. Pick up right where you left off." />
       <FormAlert message={notice} tone="success" />
-      <GoogleSignIn enabled={googleEnabled} />
-      <OrDivider />
+      {/* Google sign-in shows once its keys are configured. */}
+      {googleEnabled && (
+        <>
+          <GoogleSignIn enabled />
+          <OrDivider />
+        </>
+      )}
       <form action={action} onSubmit={() => rememberMethod("email")} noValidate className="flex flex-col gap-4">
         <input type="hidden" name="next" value={next ?? ""} />
         <FormAlert message={state?.error} />
