@@ -40,7 +40,10 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - **Email:** `src/server/email.ts` sends through Resend, or writes to the local outbox at `/dev/mail` when `EMAIL_TRANSPORT=outbox` or when there's no key.
 - **Uploads:** `/api/uploads` and `/api/files/[id]` check ownership and sniff file bytes. Bytes live in `.data/uploads` locally and in the private `file_blob` table on Vercel (`STORAGE_DRIVER`). Supabase Storage replaces that at scale.
 - **Forms:** react-hook-form with Zod 4. Use our `zodResolver` in `src/lib/forms`, not `@hookform/resolvers`. Provider sections are shared by the wizard and the editor.
-- **Rate limits:** `rateLimit()` uses Upstash, falling back to in-memory. Better Auth does **not** rate-limit server-side `auth.api` calls, so wrap actions yourself.
+- **Rate limits:** `rateLimit()` uses Upstash when configured, else the `rate_limit_counter` table in Postgres (production), else memory (local). Keys are hashed. Better Auth's own limiter uses the same store (`customStorage`), but it does **not** rate-limit server-side `auth.api` calls, so wrap actions yourself. Sign-in is also limited per account, whatever the IP.
+- **Two-step login:** the Better Auth `twoFactor` plugin (authenticator app + 10 backup codes). **Required for admins**: `requireRole("admin")` sends them to `/two-factor/setup`, and admins can't sign in with Google. Any user can turn it on in Settings.
+- **Account data:** Settings → "Download your data" (`/api/account/export`, no secrets) and "Delete your account" (password required when the account has one; `server/account/cleanup.ts` cancels billing and deletes files first).
+- **CSP:** set in `proxy.ts` (`lib/csp.ts`). Portal pages get a per-request nonce with `'strict-dynamic'`; marketing pages allow `'self' 'unsafe-inline'` scripts. A new third-party script, image host or form target must be added there.
 
 **Planned:** nuqs for URL state, and Supabase for Postgres and Storage.
 
@@ -118,6 +121,7 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
 - **Health context: keep sensitive data out.** No health details, message text or patient names in emails, URLs, logs, Sentry or analytics. No ad pixels in the app.
 - **Auth checks in layers:** RLS on every table, plus a role check in the server-only data access layer. The service-role key is used only in webhooks and cron.
 - **Rate limits:** every write a stranger can trigger is rate-limited (`rateLimit()`).
+- **Data layer checks its own role.** Admin data functions call `requireRole("admin")` themselves; a layout's check alone isn't enough (Next can skip layouts on client navigation).
 - **Crisis access:** every patient-facing app screen offers 988.
 
 ## Files and encoding

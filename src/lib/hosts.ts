@@ -14,6 +14,7 @@ const APP_PREFIXES = [
   "/verify-email",
   "/forgot-password",
   "/reset-password",
+  "/two-factor",
   "/auth",
   "/provider",
   "/account",

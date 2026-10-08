@@ -29,6 +29,20 @@
       "when": 1791454298657,
       "tag": "0003_file_blob_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791459739696,
+      "tag": "0004_admin_two_factor",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791460822912,
+      "tag": "0005_rate_limit_counter",
+      "breakpoints": true
     }
   ]
 }

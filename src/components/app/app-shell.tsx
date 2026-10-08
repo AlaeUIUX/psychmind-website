@@ -56,7 +56,11 @@ function initials(name: string) {
 export function AppShell({ nav, user, homeHref = "/", banner, onSignOut, children }: AppShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // The most specific matching item wins, so /account/settings lights up
+  // "Settings", not also "Overview" (/account).
+  const matches = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const activeHref = nav.map((i) => i.href).filter(matches).sort((a, b) => b.length - a.length)[0];
+  const isActive = (href: string) => href === activeHref;
 
   const navLinks = (onNavigate?: () => void, vertical = false) =>
     nav.map((item) => (

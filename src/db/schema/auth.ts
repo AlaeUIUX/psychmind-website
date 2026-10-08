@@ -1,7 +1,7 @@
 import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 // Tables owned by Better Auth (core + admin-style `role` field + the Stripe
-// plugin). Field names must match what Better Auth expects; column names are
+// and two-factor plugins). Field names must match what Better Auth expects; column names are
 // snake_case. Better Auth validates these on startup (SCHEMA_MISMATCH if a
 // field is missing). Compare with `npx auth@1.7.7 generate` when upgrading.
 
@@ -22,6 +22,8 @@ export const user = pgTable("user", {
   lastName: text("last_name"),
   // Stripe plugin
   stripeCustomerId: text("stripe_customer_id"),
+  // Two-factor plugin (required for admins)
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
 });
 
 export const session = pgTable(
@@ -103,3 +105,20 @@ export const subscription = pgTable("subscription", {
   billingInterval: text("billing_interval"),
   stripeScheduleId: text("stripe_schedule_id"),
 });
+
+/** Authenticator-app secret and hashed backup codes (two-factor plugin). */
+export const twoFactor = pgTable(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true),
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  },
+  (t) => [index("two_factor_secret_idx").on(t.secret), index("two_factor_user_idx").on(t.userId)],
+);

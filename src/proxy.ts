@@ -1,5 +1,6 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
+import { contentSecurityPolicy } from "@/lib/csp";
 import { appHost, isAppPath, isProtectedPath, isSharedPath, marketingHost } from "@/lib/hosts";
 
 // 1. Host routing (see lib/hosts.ts): portal pages live on the app host,
@@ -7,6 +8,7 @@ import { appHost, isAppPath, isProtectedPath, isSharedPath, marketingHost } from
 // 2. Optimistic gate for signed-in areas: no session cookie → log in (keeping
 //    where they were going). Real checks — valid session, verified email,
 //    role — happen in the pages and actions (src/server/auth/session.ts).
+// 3. Content-Security-Policy on every page (lib/csp.ts).
 export function proxy(request: NextRequest) {
   const url = request.nextUrl;
   const path = url.pathname;
@@ -15,7 +17,7 @@ export function proxy(request: NextRequest) {
   // only error, so they're "not found" until both are set.
   const appConfigured = !process.env.VERCEL || Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET);
   if (!appConfigured) {
-    if (/^\/api\/(auth|uploads|files)(\/|$)/.test(path)) return NextResponse.json({ error: "Not available." }, { status: 404 });
+    if (/^\/api\/(auth|uploads|files|account)(\/|$)/.test(path)) return NextResponse.json({ error: "Not available." }, { status: 404 });
     if (isAppPath(path)) return NextResponse.rewrite(new URL("/_app-not-configured", request.url));
   }
 
@@ -46,7 +48,22 @@ export function proxy(request: NextRequest) {
     login.searchParams.set("next", path + url.search);
     return NextResponse.redirect(login);
   }
-  return NextResponse.next();
+  return withContentSecurityPolicy(request, path);
+}
+
+function withContentSecurityPolicy(request: NextRequest, path: string) {
+  // Decap CMS is its own static app; API responses aren't pages (and a CSP
+  // would get in the way of the browser's PDF viewer for license documents).
+  if (/^\/(cms|api)(\/|$)/.test(path)) return NextResponse.next();
+  // Portal pages render per request, so Next can tag its scripts with a
+  // nonce; it reads the nonce from this request header.
+  const nonce = isAppPath(path) ? btoa(crypto.randomUUID()) : null;
+  const csp = contentSecurityPolicy(nonce);
+  const requestHeaders = new Headers(request.headers);
+  if (nonce) requestHeaders.set("Content-Security-Policy", csp);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("Content-Security-Policy", csp);
+  return response;
 }
 
 function redirectToHost(request: NextRequest, hostname: string) {

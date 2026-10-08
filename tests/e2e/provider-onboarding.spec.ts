@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import path from "node:path";
-import { ADMIN_EMAIL, TEST_PASSWORD, uniqueEmail } from "./fixtures";
+import { ADMIN_EMAIL, readAdminSecret, saveAdminSecret, signUp, TEST_PASSWORD, totp, uniqueEmail } from "./fixtures";
 
 // The full provider journey against the local app (PGlite + /dev/mail):
 // sign up → verify email → 9-step onboarding with uploads → submit →
@@ -14,31 +14,23 @@ test.setTimeout(180_000);
 const PHOTO = path.join(process.cwd(), "public/images/how-it-works/avatar-1.png");
 const PDF = { name: "Texas-LPC-license.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n% test license\n%%EOF\n") };
 
-/** Opens the newest email sent to `email` in the dev mailbox and follows its first link. */
-async function followEmailLink(page: Page, email: string) {
-  await expect(async () => {
-    await page.goto("/dev/mail");
-    await expect(page.getByTestId("dev-mail").filter({ hasText: email }).first()).toBeVisible({ timeout: 1000 });
-  }).toPass({ timeout: 15_000 });
-  const href = await page.getByTestId("dev-mail").filter({ hasText: email }).first().getByTestId("dev-mail-link").first().getAttribute("href");
-  expect(href).toBeTruthy();
-  await page.goto(href!);
-}
-
-async function signUp(page: Page, role: "patient" | "provider", email: string, first: string, last: string) {
-  await page.goto(`/signup/${role}`);
-  await page.getByLabel("First name").fill(first);
-  await page.getByLabel("Last name").fill(last);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
-  await followEmailLink(page, email);
-}
-
 async function saveAndContinue(page: Page, nextHeading: string | RegExp) {
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page.getByRole("heading", { level: 1, name: nextHeading })).toBeVisible({ timeout: 15_000 });
+}
+
+/** Admins must use two-step login: sets it up on first use, then enters codes. */
+async function setUpTwoFactor(page: Page) {
+  await page.getByLabel("Confirm your password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Continue" }).click();
+  const key = (await page.getByTestId("totp-key").textContent())!.replace(/\s/g, "");
+  saveAdminSecret(key);
+  await page.getByLabel("Code from your app").fill(totp(key));
+  await page.getByRole("button", { name: "Turn on two-step login" }).click();
+  await expect(page.getByRole("heading", { name: "Save your backup codes" })).toBeVisible();
+  await expect(page.getByTestId("backup-codes").locator("li")).toHaveCount(10);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("link", { name: "Continue" }).click();
 }
 
 async function adminPage(browser: Browser) {
@@ -51,12 +43,20 @@ async function adminPage(browser: Browser) {
   // First run: the admin account doesn't exist yet — create it.
   const failed = page.getByText("don't match");
   const queue = page.getByRole("heading", { level: 1, name: "Verification queue" });
-  await expect(failed.or(queue)).toBeVisible({ timeout: 15_000 });
+  const setup = page.getByRole("heading", { name: "Set up two-step login" });
+  const challenge = page.getByRole("heading", { name: "Two-step verification" });
+  await expect(failed.or(queue).or(setup).or(challenge)).toBeVisible({ timeout: 15_000 });
   if (await failed.isVisible()) {
     await signUp(page, "patient", ADMIN_EMAIL, "Brenda", "Admin");
+    await page.goto("/admin");
   }
-  await page.goto("/admin");
-  await expect(page.getByRole("heading", { level: 1, name: "Verification queue" })).toBeVisible();
+  if (await challenge.isVisible()) {
+    await page.getByLabel("Authentication code").fill(totp(readAdminSecret()!));
+    await page.getByRole("button", { name: "Verify" }).click();
+  }
+  await expect(queue.or(setup)).toBeVisible({ timeout: 15_000 });
+  if (await setup.isVisible()) await setUpTwoFactor(page);
+  await expect(queue).toBeVisible({ timeout: 15_000 });
   return page;
 }
 
@@ -165,6 +165,27 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.getByLabel(/About you/).fill("Updated: collaborative, warm and direct.");
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  });
+
+  await test.step("provider deletes their account and their files go with it", async () => {
+    await page.goto("/provider/profile");
+    const photo = await page.locator('img[src*="/api/files/"]').first().getAttribute("src");
+    expect(photo).toBeTruthy();
+    const photoPath = new URL(photo!, page.url()).pathname;
+    const status = (p: Page = page) => p.evaluate(async (url) => (await fetch(url, { cache: "no-store" })).status, photoPath);
+    expect(await status()).toBe(200);
+
+    await page.goto("/provider/settings");
+    await page.getByRole("button", { name: "Delete account" }).click();
+    await page.getByLabel("Enter your password to confirm").fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await expect(page.getByText("Your account has been deleted.")).toBeVisible();
+
+    // The file no longer exists, even for an admin.
+    expect(await status()).toBe(404);
+    const admin = await adminPage(browser);
+    expect(await status(admin)).toBe(404);
+    await admin.context().close();
   });
 });
 

@@ -9,6 +9,7 @@ import {
   MapPinIcon,
   MonitorIcon,
   SearchIcon,
+  ShieldCheckIcon,
   SparklesIcon,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -27,7 +28,7 @@ import { useAuthPanel } from "./auth-context";
 // Ambient layer: paper grain, faint rules and a breathing ring (a calm
 // 8-second cycle).
 
-type SceneKey = "login" | "role" | "provider" | "patient" | "inbox" | "key";
+type SceneKey = "login" | "role" | "provider" | "patient" | "inbox" | "key" | "shield";
 
 function sceneFor(path: string): SceneKey {
   if (path.startsWith("/signup/provider")) return "provider";
@@ -35,6 +36,7 @@ function sceneFor(path: string): SceneKey {
   if (path.startsWith("/signup")) return "role";
   if (path.startsWith("/verify-email")) return "inbox";
   if (path.startsWith("/forgot-password") || path.startsWith("/reset-password")) return "key";
+  if (path.startsWith("/two-factor")) return "shield";
   return "login";
 }
 
@@ -354,6 +356,26 @@ function KeyScene() {
   );
 }
 
+/** Two-step login: an authenticator code card. Copy: TODO(client). */
+function ShieldScene() {
+  return (
+    <FloatCard depth={0.8} className="top-1/2 left-1/2 flex w-[300px] flex-col items-center gap-3 p-6 text-center" style={{ translate: "-50% -58%" }}>
+      <span className="flex size-12 items-center justify-center rounded-full bg-zinc-900 text-white">
+        <ShieldCheckIcon className="size-5" />
+      </span>
+      <p className="text-[14px] font-semibold">Two-step verification</p>
+      <div className="flex items-center gap-1.5 font-mono text-[18px] font-medium tracking-wider text-zinc-900">
+        {["4", "8", "2", "9", "1", "3"].map((d, i) => (
+          <span key={i} className={cn("flex h-9 w-7 items-center justify-center rounded-md bg-zinc-100", i === 3 && "ml-2")}>
+            {d}
+          </span>
+        ))}
+      </div>
+      <p className="text-[12px] text-zinc-500">A new code every 30 seconds</p>
+    </FloatCard>
+  );
+}
+
 const scenes: Record<SceneKey, () => ReactNode> = {
   login: LoginScene,
   role: RoleScene,
@@ -361,6 +383,7 @@ const scenes: Record<SceneKey, () => ReactNode> = {
   patient: PatientScene,
   inbox: InboxScene,
   key: KeyScene,
+  shield: ShieldScene,
 };
 
 export function PortalPanel() {

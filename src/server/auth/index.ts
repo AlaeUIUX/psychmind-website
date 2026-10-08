@@ -4,14 +4,17 @@ import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { twoFactor } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { after } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { providerProfile } from "@/db/schema";
+import { providerProfile, user as userTable } from "@/db/schema";
 import { BASE_PLAN, stripeConfigured } from "@/lib/billing";
 import { defaultOrigin } from "@/lib/hosts";
+import { rateLimit } from "@/lib/rate-limit";
+import { afterAccountDeleted, beforeAccountDeleted } from "@/server/account/cleanup";
 import { sendEmail } from "@/server/email";
 import { resetPasswordEmail, verifyEmail } from "@/server/emails";
 import { onSubscriptionChange } from "@/server/billing/sync";
@@ -20,6 +23,9 @@ import { onSubscriptionChange } from "@/server/billing/sync";
 // - Email + password with required email verification (Figma sign-up and
 //   reset flows), reset links valid for 30 minutes (Figma A5).
 // - Google sign-in once GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are set.
+// - Two-step login (authenticator app + backup codes). Required for admins:
+//   requireRole sends an admin without it to /two-factor/setup.
+// - Account deletion (password required when the account has one).
 // - Stripe subscriptions once STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET /
 //   STRIPE_PRICE_BASE are set; without them the plugin isn't loaded and the
 //   billing page explains payments aren't connected yet.
@@ -103,6 +109,11 @@ export const auth = betterAuth({
       }
     : {},
   user: {
+    deleteUser: {
+      enabled: true,
+      beforeDelete: async (user) => beforeAccountDeleted(user.id),
+      afterDelete: async (user) => afterAccountDeleted(user.id, (user as { role?: string }).role),
+    },
     additionalFields: {
       role: { type: "string", required: false, defaultValue: "patient", input: false },
       firstName: { type: "string", required: false, input: true },
@@ -117,11 +128,46 @@ export const auth = betterAuth({
         }),
       },
     },
+    session: {
+      create: {
+        // Two-step login only guards password sign-in, so admins can't use
+        // Google: their sign-in must always pass the authenticator check.
+        before: async (session, ctx) => {
+          if (!ctx?.path.includes("/callback")) return;
+          const [owner] = await db.select({ role: userTable.role }).from(userTable).where(eq(userTable.id, session.userId));
+          if (owner?.role === "admin") {
+            throw new APIError("FORBIDDEN", { message: "Admins sign in with their email, password and authenticator code." });
+          }
+        },
+      },
+    },
   },
   hooks: {
     // authorizeReference doesn't run for a user's own subscription, so who
     // may subscribe is enforced here: verified providers only.
     before: createAuthMiddleware(async (ctx) => {
+      // Per-account limit on password guesses, whatever IP they come from
+      // (the IP-based limits are in rateLimit below and in the actions).
+      if (ctx.path === "/sign-in/email") {
+        const email = String((ctx.body as { email?: unknown } | undefined)?.email ?? "").toLowerCase();
+        if (email && !(await rateLimit("auth-signin-account", email, 10, "15 m")).ok) {
+          throw new APIError("TOO_MANY_REQUESTS", { message: "Too many attempts. Please wait a few minutes and try again." });
+        }
+        return;
+      }
+      // Deleting an account that has a password always needs that password,
+      // not just a recent session.
+      if (ctx.path === "/delete-user") {
+        const session = await getSessionFromCtx(ctx);
+        const password = (ctx.body as { password?: unknown } | undefined)?.password;
+        if (session && !password) {
+          const methods = await ctx.context.internalAdapter.findAccounts(session.user.id);
+          if (methods.some((a) => a.providerId === "credential")) {
+            throw new APIError("BAD_REQUEST", { message: "Enter your password to delete your account." });
+          }
+        }
+        return;
+      }
       if (ctx.path !== "/subscription/upgrade" && ctx.path !== "/subscription/billing-portal") return;
       const session = await getSessionFromCtx(ctx);
       const role = (session?.user as { role?: string } | undefined)?.role;
@@ -156,10 +202,27 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60 * 10, max: 5 },
       "/request-password-reset": { window: 60 * 10, max: 3 },
       "/send-verification-email": { window: 60 * 10, max: 3 },
+      "/delete-user": { window: 60 * 10, max: 5 },
+    },
+    // Shared across serverless instances (Upstash in production; see
+    // lib/rate-limit.ts), checked and counted in one step.
+    customStorage: {
+      consume: async (key, rule) => {
+        const result = await rateLimit("better-auth", key, rule.max, `${rule.window} s`);
+        return { allowed: result.ok, retryAfter: result.ok ? null : result.retryAfterSeconds };
+      },
     },
   },
   advanced: { cookiePrefix: "psychmind" },
-  plugins: [...stripePlugins(), nextCookies()],
+  plugins: [
+    ...stripePlugins(),
+    twoFactor({
+      issuer: "PsychMind",
+      // Codes are checked within 10 minutes of the password step.
+      twoFactorCookieMaxAge: 60 * 10,
+    }),
+    nextCookies(), // must stay last
+  ],
 });
 
 export type AuthSession = typeof auth.$Infer.Session;

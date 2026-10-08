@@ -178,3 +178,11 @@ export const fileBlob = pgTable("file_blob", {
   bytes: bytea("bytes").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Shared rate-limit counters when there's no Redis (lib/rate-limit.ts).
+ *  Keys are hashes: no IP address or email is stored. */
+export const rateLimitCounter = pgTable("rate_limit_counter", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+});

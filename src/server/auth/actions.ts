@@ -10,7 +10,7 @@ import { user } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
-import { homeFor } from "./session";
+import { getSession, hasTwoFactor, homeFor } from "./session";
 
 // Email/password auth as server actions. Roles are assigned here, server-side,
 // never from client input. Messages are new microcopy — TODO(client).
@@ -128,12 +128,16 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
   if (await limited("signin", parsed.data.email, 5, "1 m")) return { error: TOO_MANY, values };
   await dbReady;
   let role: string | undefined;
+  let needsCode = false;
+  const next = safeNext(form.get("next"));
   try {
     const result = await auth.api.signInEmail({
       body: { email: parsed.data.email, password: parsed.data.password, rememberMe: true },
       headers: await headers(),
     });
-    role = (result.user as { role?: string }).role;
+    // Two-step login on: the password was right, now the authenticator code.
+    if ("twoFactorRedirect" in result && result.twoFactorRedirect) needsCode = true;
+    else role = (result.user as { role?: string }).role;
   } catch (err) {
     const message = authMessage(err);
     if (message === "EMAIL_NOT_VERIFIED") {
@@ -142,7 +146,76 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
     }
     return { error: message, values };
   }
+  if (needsCode) redirect(next ? `/two-factor?next=${encodeURIComponent(next)}` : "/two-factor");
+  redirect(next ?? homeFor(role));
+}
+
+// ---------------------------------------------------------------------------
+// Two-step login (authenticator app). Required for admins; see requireRole.
+
+function twoFactorMessage(err: unknown) {
+  const code = err instanceof APIError ? (err.body as { code?: string } | undefined)?.code : undefined;
+  if (code === "INVALID_CODE" || code === "INVALID_BACKUP_CODE") return "That code didn't work. Check it and try again.";
+  if (code === "INVALID_TWO_FACTOR_COOKIE" || code === "TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE") return "EXPIRED";
+  if (code === "ACCOUNT_TEMPORARILY_LOCKED") return "Too many wrong codes. Your account is locked for a while. Try again later.";
+  if (code === "INVALID_PASSWORD") return "That password isn't right.";
+  return authMessage(err);
+}
+
+/** Step 2 of logging in: the 6-digit code, or a backup code. */
+export async function verifyTwoFactor(_prev: AuthState, form: FormData): Promise<AuthState> {
+  const backup = form.get("method") === "backup";
+  const code = String(form.get("code") ?? "").replace(/\s/g, "");
+  const valid = backup ? /^[A-Za-z0-9-]{6,20}$/.test(code) : /^\d{6}$/.test(code);
+  if (!valid) return { fieldErrors: { code: backup ? "Enter one of your backup codes." : "Enter the 6-digit code from your app." } };
+  if (await limited("two-factor", "challenge", 10, "10 m")) return { error: TOO_MANY };
+  await dbReady;
+  let role: string | undefined;
+  try {
+    const result = backup
+      ? await auth.api.verifyBackupCode({ body: { code }, headers: await headers() })
+      : await auth.api.verifyTOTP({ body: { code }, headers: await headers() });
+    role = (result.user as { role?: string }).role;
+  } catch (err) {
+    const message = twoFactorMessage(err);
+    if (message === "EXPIRED") return { error: "This sign-in has timed out. Log in again to get a new chance.", values: { expired: "1" } };
+    return { error: message };
+  }
   redirect(safeNext(form.get("next")) ?? homeFor(role));
+}
+
+export type TwoFactorSetupState = { error?: string; totpURI?: string; backupCodes?: string[]; enabled?: boolean } | null;
+
+/** Setup step 1: confirm the password, get a new secret and backup codes. */
+export async function startTwoFactorSetup(_prev: TwoFactorSetupState, form: FormData): Promise<TwoFactorSetupState> {
+  const session = await getSession();
+  if (!session) redirect("/login?next=/two-factor/setup");
+  if (hasTwoFactor(session.user)) redirect(homeFor(session.user.role));
+  const passwordValue = String(form.get("password") ?? "");
+  if (!passwordValue) return { error: "Enter your password." };
+  if (await limited("two-factor-setup", session.user.id, 5, "10 m")) return { error: TOO_MANY };
+  try {
+    const result = await auth.api.enableTwoFactor({ body: { password: passwordValue }, headers: await headers() });
+    if (result.method !== "totp") return { error: "Something went wrong. Please try again." };
+    return { totpURI: result.totpURI, backupCodes: result.backupCodes };
+  } catch (err) {
+    return { error: twoFactorMessage(err) };
+  }
+}
+
+/** Setup step 2: the first code from the app turns two-step login on. */
+export async function confirmTwoFactorSetup(prev: TwoFactorSetupState, form: FormData): Promise<TwoFactorSetupState> {
+  const session = await getSession();
+  if (!session) redirect("/login?next=/two-factor/setup");
+  const code = String(form.get("code") ?? "").replace(/\s/g, "");
+  if (!/^\d{6}$/.test(code)) return { ...prev, error: "Enter the 6-digit code from your app." };
+  if (await limited("two-factor-confirm", session.user.id, 5, "10 m")) return { ...prev, error: TOO_MANY };
+  try {
+    await auth.api.verifyTOTP({ body: { code }, headers: await headers() });
+    return { ...prev, error: undefined, enabled: true };
+  } catch (err) {
+    return { ...prev, error: twoFactorMessage(err) };
+  }
 }
 
 export async function requestPasswordReset(_prev: AuthState, form: FormData): Promise<AuthState> {

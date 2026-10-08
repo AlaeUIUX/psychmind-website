@@ -14,6 +14,7 @@ export type OutboxEntry = Email & { id: string; sentAt: string };
 
 const OUTBOX = path.join(process.cwd(), ".data", "outbox.json");
 const FROM = process.env.EMAIL_FROM || "PsychMind <onboarding@resend.dev>";
+let outboxWrite: Promise<void> = Promise.resolve();
 
 export async function readOutbox(): Promise<OutboxEntry[]> {
   try {
@@ -34,9 +35,13 @@ export async function sendEmail(email: Email) {
   if (process.env.VERCEL_ENV === "production") {
     throw new Error("RESEND_API_KEY is not set; cannot send email in production.");
   }
-  const outbox = await readOutbox();
-  outbox.unshift({ ...email, id: crypto.randomUUID(), sentAt: new Date().toISOString() });
-  await mkdir(path.dirname(OUTBOX), { recursive: true });
-  await writeFile(OUTBOX, JSON.stringify(outbox.slice(0, 200), null, 2));
+  // One write at a time: two emails sent together must not overwrite each other.
+  outboxWrite = outboxWrite.then(async () => {
+    const outbox = await readOutbox();
+    outbox.unshift({ ...email, id: crypto.randomUUID(), sentAt: new Date().toISOString() });
+    await mkdir(path.dirname(OUTBOX), { recursive: true });
+    await writeFile(OUTBOX, JSON.stringify(outbox.slice(0, 200), null, 2));
+  });
+  await outboxWrite;
   console.info(`[email:outbox] to=${email.to} subject="${email.subject}" — open /dev/mail`);
 }
