@@ -18,7 +18,9 @@ import { listDirectory, savedProfileIds, type DirectoryProvider } from "@/server
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const [providers, filters] = await Promise.all([listDirectory(), searchParams.then(loadSearchFilters)]);
+  // The URL first: it makes the page per-request, so the build never queries the database.
+  const filters = loadSearchFilters(await searchParams);
+  const providers = await listDirectory();
   return {
     title: "Browse providers — PsychMind",
     // TODO(client): copy.
