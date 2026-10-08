@@ -10,6 +10,15 @@ import { appHost, isAppPath, isProtectedPath, isSharedPath, marketingHost } from
 export function proxy(request: NextRequest) {
   const url = request.nextUrl;
   const path = url.pathname;
+  // A deployment without its database and session secret (e.g. production
+  // before they're added in Vercel) can't serve accounts: those pages would
+  // only error, so they're "not found" until both are set.
+  const appConfigured = !process.env.VERCEL || Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET);
+  if (!appConfigured) {
+    if (/^\/api\/(auth|uploads|files)(\/|$)/.test(path)) return NextResponse.json({ error: "Not available." }, { status: 404 });
+    if (isAppPath(path)) return NextResponse.rewrite(new URL("/_app-not-configured", request.url));
+  }
+
   const app = appHost();
   // nextUrl.hostname can be the server's own name in dev; trust the Host header.
   const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? url.host).split(":")[0];

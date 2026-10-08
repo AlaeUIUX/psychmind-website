@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { fileUrl, toProfileView } from "@/lib/provider/state";
 import { stateName } from "@/lib/taxonomy";
 import { providerHistory, providerOwnerEmail } from "@/server/admin/data";
+import { requireRole } from "@/server/auth/session";
 import { loadProviderStateById } from "@/server/provider/data";
 
 export const metadata: Metadata = { title: "Review provider — PsychMind admin" };
@@ -20,6 +21,7 @@ const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyl
 // see it, and the decision history.
 export default async function AdminProviderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await requireRole("admin", `/admin/providers/${id}`);
   const state = await loadProviderStateById(id);
   if (!state) notFound();
   const [email, history] = await Promise.all([providerOwnerEmail(id), providerHistory(id)]);

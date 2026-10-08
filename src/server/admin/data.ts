@@ -3,6 +3,11 @@ import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { auditLog, providerLocation, providerProfile, user } from "@/db/schema";
 import type { ProviderStatus } from "@/lib/provider/types";
+import { requireRole } from "@/server/auth/session";
+
+// Every function here checks for an admin itself. Layouts aren't enough: Next
+// can skip re-rendering a layout on client navigation, so a page's data must
+// never rely on its layout's check.
 
 export type ProviderRow = {
   id: string;
@@ -16,6 +21,7 @@ export type ProviderRow = {
 
 /** Providers for the admin lists. `queue` = waiting for a decision, oldest first. */
 export async function listProviders(filter: "queue" | "all"): Promise<ProviderRow[]> {
+  await requireRole("admin");
   await dbReady;
   const where =
     filter === "queue"
@@ -52,6 +58,7 @@ export async function listProviders(filter: "queue" | "all"): Promise<ProviderRo
 }
 
 export async function providerHistory(profileId: string) {
+  await requireRole("admin");
   return db
     .select({ action: auditLog.action, meta: auditLog.meta, createdAt: auditLog.createdAt, actor: user.name })
     .from(auditLog)
@@ -62,6 +69,7 @@ export async function providerHistory(profileId: string) {
 }
 
 export async function providerOwnerEmail(profileId: string) {
+  await requireRole("admin");
   const [row] = await db
     .select({ email: user.email })
     .from(providerProfile)

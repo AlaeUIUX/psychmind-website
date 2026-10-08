@@ -12,8 +12,11 @@ import { auth } from "./index";
 export type Role = "patient" | "provider" | "admin";
 
 export const getSession = cache(async () => {
+  // Read the request first: it marks the page as per-request, so Next never
+  // tries to pre-render a signed-in page (and its database calls) at build time.
+  const requestHeaders = await headers();
   await dbReady;
-  return auth.api.getSession({ headers: await headers() });
+  return auth.api.getSession({ headers: requestHeaders });
 });
 
 /** Where each role lands after logging in. */
