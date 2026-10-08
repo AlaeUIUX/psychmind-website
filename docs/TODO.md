@@ -11,6 +11,13 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 
 ## Later
 
+- **Custom tags report for admins** (owner request, 2026-10-08).
+  - Providers can add their own specialties and approaches. These are saved on
+    their profile (`provider_profile.specialties` / `approaches`), so nothing
+    is lost.
+  - Add an admin view listing the custom tags with how many providers use
+    each, so popular ones can be promoted to the standard list in
+    `lib/taxonomy.ts`.
 - **Admin accounts without sign-up** (owner request, 2026-10-08)
   - Admins are still added manually through `ADMIN_EMAILS`, but their accounts
     are created for them; nobody signs up as an admin.

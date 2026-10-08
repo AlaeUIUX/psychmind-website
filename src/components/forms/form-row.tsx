@@ -19,7 +19,9 @@ type FormRowProps = {
 export function FormRow({ id, label, required, optional, hint, error, className, children }: FormRowProps) {
   return (
     <Field data-invalid={error ? true : undefined} className={cn("gap-2", className)}>
-      <div className="flex items-baseline justify-between gap-3">
+      {/* min-h keeps rows with and without "Optional" the same height, so
+          side-by-side inputs line up. */}
+      <div className="flex min-h-5 items-baseline justify-between gap-3">
         <FieldLabel htmlFor={id} className="text-text-primary">
           {label}
           {required && (

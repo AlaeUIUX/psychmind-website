@@ -82,7 +82,7 @@ export function CredentialsForm({ state, mode, backHref, nextHref }: SectionProp
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-      <div className="grid gap-6 sm:grid-cols-[1fr_160px]">
+      <div className="grid gap-6 sm:grid-cols-2">
         <FormRow id="npiNumber" label="NPI number" required hint="Your 10-digit National Provider Identifier." error={e.npiNumber?.message}>
           <Input
             id="npiNumber"
