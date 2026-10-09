@@ -1,7 +1,7 @@
 "use client";
 
 import { SlidersHorizontalIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchIcon } from "@/components/ui/icons";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -137,6 +137,16 @@ export function MobileSearch({ count, facets, price, cities }: { count: number; 
   const { filters } = useSearch();
   const [open, setOpen] = useState(false);
   const active = activeFilterCount(filters);
+
+  // From the home page's "Start search" (?open=filters): start in the drawer.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("open") !== "filters") return;
+    url.searchParams.delete("open");
+    window.history.replaceState(window.history.state, "", url);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time, from the URL on arrival
+    if (window.matchMedia("(max-width: 1023px)").matches) setOpen(true);
+  }, []);
   const current = summary(filters);
 
   return (

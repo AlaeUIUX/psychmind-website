@@ -77,6 +77,8 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       primarySpecialty: p.primarySpecialty,
       approaches: p.approaches,
       languages: p.languages,
+      // For the "Provider gender" filter.
+      gender: p.gender,
       feeIndividual: p.feeIndividual,
       feeCouples: p.feeCouples,
       slidingScale: p.slidingScale,

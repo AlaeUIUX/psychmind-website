@@ -101,6 +101,27 @@ test("filters narrow the results and live in the URL", async ({ page, isMobile }
   await expect(page.getByTestId("provider-card").first()).toBeVisible();
 });
 
+test("the home page search opens the results with what was chosen", async ({ page, isMobile }) => {
+  if (isMobile) {
+    // Phones: "Start search" goes straight to the filters drawer.
+    await page.goto("/");
+    await page.getByRole("button", { name: /Start search/ }).click();
+    await expect(page.getByRole("dialog", { name: "Search filters" })).toBeVisible();
+    return;
+  }
+  await page.goto("/");
+  await page.locator("#hero-mind").fill("Anx");
+  await page.locator("#hero-mind").press("Enter");
+  await expect(page.getByRole("button", { name: "Clear “Anxiety”" })).toBeVisible();
+  await page.getByRole("button", { name: "Add preferences" }).click();
+  await page.getByRole("button", { name: "Female", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page).toHaveURL(/\/providers\?format=online&q=Anxiety&gender=female/);
+  await expect(count(page)).toHaveText(/[1-9]\d* providers? found/);
+  await expect(page.getByRole("button", { name: "Remove Female" })).toBeVisible();
+});
+
 test("on phones, filters open in a drawer and apply on Save", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Phones only.");
   await page.goto("/providers");
