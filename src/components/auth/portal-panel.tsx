@@ -38,7 +38,7 @@ function sceneFor(path: string): SceneKey {
   if (path.startsWith("/signup")) return "role";
   if (path.startsWith("/verify-email")) return "inbox";
   if (path.startsWith("/forgot-password") || path.startsWith("/reset-password")) return "key";
-  if (path.startsWith("/two-factor")) return "shield";
+  if (path.startsWith("/two-factor") || path.startsWith("/admin")) return "shield";
   if (path.startsWith("/request")) return "request";
   return "login";
 }

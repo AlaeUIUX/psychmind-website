@@ -24,6 +24,10 @@ export const user = pgTable("user", {
   stripeCustomerId: text("stripe_customer_id"),
   // Two-factor plugin (required for admins)
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  // Admin accounts are created with a temporary password (emailed); the
+  // first log-in must replace it before anything else.
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
+  tempPasswordExpiresAt: timestamp("temp_password_expires_at", { withTimezone: true }),
 });
 
 export const session = pgTable(

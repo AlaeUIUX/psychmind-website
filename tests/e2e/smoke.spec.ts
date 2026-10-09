@@ -44,8 +44,9 @@ test("contact honeypot swallows bot submissions", async ({ request }) => {
   const response = await request.post("/api/contact", {
     data: { firstName: "Bot", lastName: "Bot", email: "bot@example.com", message: "spam", company: "Spam Inc" },
   });
-  // 200 when the honeypot short-circuits; 500 only if RESEND_API_KEY is missing locally.
-  expect([200, 500]).toContain(response.status());
+  // 200 when the honeypot short-circuits; 500 only if RESEND_API_KEY is missing
+  // locally; 429 once repeated local runs reach the per-IP limit (5 an hour).
+  expect([200, 429, 500]).toContain(response.status());
 });
 
 test("setup check lists what's configured and the Google redirect URI", async ({ page }) => {

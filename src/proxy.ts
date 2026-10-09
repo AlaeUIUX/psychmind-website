@@ -1,7 +1,7 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import { contentSecurityPolicy } from "@/lib/csp";
-import { appHost, isAppPath, isProtectedPath, isSharedPath, marketingHost } from "@/lib/hosts";
+import { appHost, isAppPath, isProtectedPath, isSharedPath, loginPathFor, marketingHost } from "@/lib/hosts";
 
 // 1. Host routing (see lib/hosts.ts): portal pages live on the app host,
 //    marketing pages on www. Each redirects to the other, keeping the path.
@@ -44,7 +44,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (isProtectedPath(path) && !getSessionCookie(request, { cookiePrefix: "psychmind" })) {
-    const login = new URL("/login", request.url);
+    const login = new URL(loginPathFor(path), request.url);
     login.searchParams.set("next", path + url.search);
     return NextResponse.redirect(login);
   }

@@ -3,7 +3,9 @@ import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { auditLog, providerLocation, providerProfile, user } from "@/db/schema";
 import type { ProviderStatus } from "@/lib/provider/types";
+import { listedAdminEmails } from "@/server/auth/admin-emails";
 import { requireRole } from "@/server/auth/session";
+import { ensureAdminAccounts } from "./accounts";
 
 // Every function here checks for an admin itself. Layouts aren't enough: Next
 // can skip re-rendering a layout on client navigation, so a page's data must
@@ -80,4 +82,42 @@ export async function providerOwnerEmail(profileId: string) {
     .innerJoin(user, eq(user.id, providerProfile.userId))
     .where(eq(providerProfile.id, profileId));
   return row?.email ?? null;
+}
+
+export type AdminRow = {
+  email: string;
+  account: {
+    id: string;
+    name: string;
+    role: string;
+    twoFactorEnabled: boolean | null;
+    mustChangePassword: boolean;
+    tempPasswordExpiresAt: Date | null;
+    createdAt: Date;
+  } | null;
+};
+
+/** Everyone on ADMIN_EMAILS and how far they are in setting up (Admin → Admins). */
+export async function listAdmins(): Promise<AdminRow[]> {
+  await requireRole("admin", "/admin/admins");
+  // Anyone newly listed gets their account (and email) now.
+  await ensureAdminAccounts();
+  const emails = listedAdminEmails();
+  if (!emails.length) return [];
+  await dbReady;
+  const rows = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      twoFactorEnabled: user.twoFactorEnabled,
+      mustChangePassword: user.mustChangePassword,
+      tempPasswordExpiresAt: user.tempPasswordExpiresAt,
+      createdAt: user.createdAt,
+    })
+    .from(user)
+    .where(inArray(user.email, emails));
+  const byEmail = new Map(rows.map(({ email, ...rest }) => [email, rest]));
+  return emails.map((email) => ({ email, account: byEmail.get(email) ?? null }));
 }

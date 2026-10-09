@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 export function AuthTopLink() {
   const path = usePathname();
   const onSignup = path.startsWith("/signup");
-  if (path.startsWith("/verify-email") || path.startsWith("/reset-password") || path.startsWith("/two-factor") || path.startsWith("/request")) return null;
+  if (path.startsWith("/verify-email") || path.startsWith("/reset-password") || path.startsWith("/two-factor") || path.startsWith("/request") || path.startsWith("/admin")) return null;
   return (
     <p className="text-[13px] text-warm-600">
       {onSignup ? "Already have an account?" : "New to PsychMind?"}{" "}

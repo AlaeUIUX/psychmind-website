@@ -30,13 +30,17 @@ const SHARED_PREFIXES = ["/api", "/dev", "/_next", "/images", "/fonts", "/cms"] 
 
 /** Signed-in areas: no session cookie → log in. */
 const PROTECTED_PREFIXES = ["/provider", "/account", "/admin"] as const;
+/** The way in to a signed-in area, which can't itself require signing in. */
+const LOGIN_PAGES = ["/admin/login"] as const;
 
 const matches = (path: string, prefixes: readonly string[]) =>
   prefixes.some((p) => path === p || path.startsWith(`${p}/`));
 
 export const isAppPath = (path: string) => matches(path, APP_PREFIXES);
 export const isSharedPath = (path: string) => matches(path, SHARED_PREFIXES) || /\.[a-z0-9]+$/i.test(path);
-export const isProtectedPath = (path: string) => matches(path, PROTECTED_PREFIXES);
+export const isProtectedPath = (path: string) => matches(path, PROTECTED_PREFIXES) && !matches(path, LOGIN_PAGES);
+/** Where a signed-out visitor to a protected path logs in: the team has its own page. */
+export const loginPathFor = (path: string) => (matches(path, ["/admin"]) ? "/admin/login" : "/login");
 
 export function appHost(): string | null {
   // "off" serves everything from one host — e.g. to test Google sign-in

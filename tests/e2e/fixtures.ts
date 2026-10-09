@@ -68,6 +68,42 @@ async function setUpTwoFactor(page: Page) {
   await page.getByRole("link", { name: "Continue" }).click();
 }
 
+export async function logIn(page: Page, email: string, password: string) {
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+}
+
+const TEMP_PASSWORD = /[A-HJKMNP-Z2-9]{4}(?:-[A-HJKMNP-Z2-9]{4}){3}/;
+
+/** The temporary password in the newest admin-access email to `email`. */
+export async function latestTemporaryPassword(page: Page, email: string): Promise<string | null> {
+  await page.goto("/dev/mail");
+  const mail = page.getByTestId("dev-mail").filter({ hasText: email }).filter({ hasText: "Temporary password" }).first();
+  if (!(await mail.count())) return null;
+  return (await mail.getByTestId("dev-mail-text").textContent())?.match(TEMP_PASSWORD)?.[0] ?? null;
+}
+
+/** Waits for an admin-access email newer than the one holding `previous`. */
+export async function newTemporaryPassword(page: Page, email: string, previous: string | null) {
+  let temp: string | null = null;
+  await expect(async () => {
+    temp = await latestTemporaryPassword(page, email);
+    expect(temp).toBeTruthy();
+    expect(temp).not.toBe(previous);
+  }).toPass({ timeout: 15_000 });
+  return temp!;
+}
+
+/** A new admin's first step: their name and their own password. */
+export async function choosePassword(page: Page, first: string, last: string, password: string) {
+  await expect(page.getByRole("heading", { name: "Choose your password" })).toBeVisible({ timeout: 15_000 });
+  await page.getByLabel("First name").fill(first);
+  await page.getByLabel("Last name").fill(last);
+  await page.getByLabel("New password").fill(password);
+  await page.getByRole("button", { name: "Save and continue" }).click();
+}
+
 /** The last admin session, so a run doesn't log in (and enter a two-step
  *  code) for every test: codes are rate-limited per IP, and every test comes
  *  from the same one. Lives with the database, like the secret. */
@@ -92,19 +128,20 @@ export async function adminPage(browser: Browser) {
 
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(ADMIN_EMAIL);
-  await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  // First run: the admin account doesn't exist yet — create it.
+  // Opening the admin log-in also creates listed admins' accounts.
+  await page.goto("/admin/login");
+  await logIn(page, ADMIN_EMAIL, TEST_PASSWORD);
   const failed = page.getByText("don't match");
   const queue = page.getByRole("heading", { level: 1, name: "Verification queue" });
   const setup = page.getByRole("heading", { name: "Set up two-step login" });
   const challenge = page.getByRole("heading", { name: "Two-step verification" });
   await expect(failed.or(queue).or(setup).or(challenge)).toBeVisible({ timeout: 15_000 });
   if (await failed.isVisible()) {
-    await signUp(page, "patient", ADMIN_EMAIL, "Brenda", "Admin");
-    await page.goto("/admin");
+    // First run: the account was just made, with a temporary password by email.
+    const temp = await newTemporaryPassword(page, ADMIN_EMAIL, null);
+    await page.goto("/admin/login");
+    await logIn(page, ADMIN_EMAIL, temp);
+    await choosePassword(page, "Brenda", "Admin", TEST_PASSWORD);
   }
   if (await challenge.isVisible()) {
     await page.getByLabel("Authentication code").fill(totp(readAdminSecret()!));

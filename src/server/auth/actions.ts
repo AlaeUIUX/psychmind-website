@@ -9,6 +9,8 @@ import { db, dbReady } from "@/db";
 import { user } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { safeNext } from "@/lib/safe-next";
+import { ensureAdminAccounts } from "@/server/admin/accounts";
+import { isAdminEmail } from "./admin-emails";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
 import { getSession, hasTwoFactor, homeFor } from "./session";
@@ -59,6 +61,8 @@ function authMessage(err: unknown) {
     if (code === "PASSWORD_TOO_SHORT") return "Must be at least 8 characters long.";
     if (err.status === "TOO_MANY_REQUESTS") return "Too many attempts. Please wait a few minutes and try again.";
     if (code === "INVALID_TOKEN") return "This link has expired or was already used. Request a new one.";
+    if (code === "TEMPORARY_PASSWORD_EXPIRED")
+      return "This temporary password has expired. Use “Forgot your password?” to choose a new one, or ask another admin to reset your access.";
   }
   console.error("auth action failed", err);
   return "Something went wrong. Please try again.";
@@ -73,6 +77,14 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
   const v = parsed.data;
   if (await limited("signup", v.email, 5, "10 m")) return { error: TOO_MANY, values };
   await dbReady;
+  // Nobody signs up as an admin: their account is made for them, with a
+  // temporary password by email. Answer like any other sign-up so this form
+  // doesn't reveal which addresses are admins.
+  if (isAdminEmail(v.email)) {
+    await ensureAdminAccounts({ force: true });
+    await setPendingEmail(v.email);
+    redirect("/verify-email");
+  }
   try {
     const result = await auth.api.signUpEmail({
       body: {
@@ -265,4 +277,10 @@ export async function resendVerification(_prev: AuthState, form: FormData): Prom
 export async function signOut() {
   await auth.api.signOut({ headers: await headers() });
   redirect("/login");
+}
+
+/** The admin console's sign-out, back to the team's own log-in page. */
+export async function signOutAdmin() {
+  await auth.api.signOut({ headers: await headers() });
+  redirect("/admin/login");
 }

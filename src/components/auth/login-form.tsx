@@ -7,18 +7,40 @@ import { GoogleSignIn, LastUsed, rememberMethod, useLastUsed } from "./auth-bits
 import { AuthField, AuthTitle, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton } from "./fields";
 
 // Log in. Google first (one tap for most people), then email. Figma A3 copy.
-export function LoginForm({ next, googleEnabled, notice, error }: { next?: string; googleEnabled: boolean; notice?: string; error?: string }) {
+// `admin`: the team's own log-in at /admin/login (email and password only;
+// admins can't use Google). TODO(client): admin copy.
+export function LoginForm({
+  next,
+  googleEnabled,
+  notice,
+  error,
+  admin = false,
+}: {
+  next?: string;
+  googleEnabled: boolean;
+  notice?: string;
+  error?: string;
+  admin?: boolean;
+}) {
   const [state, action] = useActionState<AuthState, FormData>(signIn, null);
   const fe = state?.fieldErrors ?? {};
   const emailLast = useLastUsed() === "email";
 
   return (
     <div className="flex flex-col gap-7">
-      <AuthTitle title="Log in to PsychMind" description="Good to see you again. Pick up right where you left off." />
+      {admin ? (
+        <AuthTitle
+          eyebrow="PsychMind team"
+          title="Admin log-in"
+          description="New admin? Use the temporary password from your email. You'll choose your own password right after."
+        />
+      ) : (
+        <AuthTitle title="Log in to PsychMind" description="Good to see you again. Pick up right where you left off." />
+      )}
       <FormAlert message={notice} tone="success" />
       <FormAlert message={error} />
       {/* Google sign-in shows once its keys are configured. */}
-      {googleEnabled && (
+      {googleEnabled && !admin && (
         <>
           <GoogleSignIn enabled />
           <OrDivider />

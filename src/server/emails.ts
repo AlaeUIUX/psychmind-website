@@ -225,6 +225,39 @@ export function adminNewSubmissionEmail(to: string, reviewUrl: string): Email {
   };
 }
 
+/** A temporary password for a new admin, or for one whose access was reset.
+ *  TODO(client): copy. */
+export function adminAccessEmail(to: string, tempPassword: string, expiresAt: Date, loginUrl: string, kind: "new" | "reset"): Email {
+  const expires = expiresAt.toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+    timeZoneName: "short",
+  });
+  return {
+    to,
+    subject: kind === "new" ? "Your PsychMind admin account" : "Your PsychMind admin access was reset",
+    ...layout({
+      heading: kind === "new" ? "Your admin account is ready" : "Your admin access was reset",
+      body:
+        kind === "new"
+          ? "An admin account was created for you on PsychMind. Log in with the temporary password below. Right after, you'll choose your own password and set up an authenticator app."
+          : "Another admin reset your access. Log in with the temporary password below, then choose a new password and set up your authenticator app again.",
+      details: [
+        ["Email", to],
+        ["Temporary password", tempPassword],
+        ["Expires", expires],
+      ],
+      cta: { label: "Log in to PsychMind admin", url: loginUrl },
+      footnote: "Don't forward this email. If you weren't expecting it, let the PsychMind team know.",
+      preheader: "Your temporary password is inside. It expires in a few days.",
+      reason: "You're receiving this email because you were made a PsychMind admin.",
+    }),
+  };
+}
+
 export type RequestDetails = {
   name: string;
   email: string;

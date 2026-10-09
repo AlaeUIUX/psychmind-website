@@ -116,6 +116,8 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.getByLabel(/NPI number/).fill("1234567893");
     await page.locator('input[type="file"]').setInputFiles(PDF);
     await expect(page.getByText(PDF.name)).toBeVisible();
+    // Saving mid-upload is refused (no document yet), so wait for it to land.
+    await expect(page.getByRole("progressbar", { name: `Uploading ${PDF.name}` })).toHaveCount(0);
     await page.getByLabel(/License number/).fill("LPC-77812");
     await page.getByLabel(/Issuing body/).fill("Texas Behavioral Health Executive Council");
     await saveAndContinue(page, "Review and submit");

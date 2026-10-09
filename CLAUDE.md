@@ -30,7 +30,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 **App:**
 - **Auth:** Better Auth 1.7 (`src/server/auth`).
   - Email/password with required verification, password reset, and Google when its keys are set.
-  - `role` is `patient`, `provider` or `admin`. Admins come from `ADMIN_EMAILS`.
+  - `role` is `patient`, `provider` or `admin`. Admins come from `ADMIN_EMAILS`; see Admin accounts below.
   - API notes: `docs/build-plan/research/better-auth-stripe-cheatsheet.md`.
 - **Database:** Drizzle ORM on Postgres. The schema is in `src/db/schema`; migrations are in `drizzle/`.
   - `npm run db:generate` creates a migration; `npm run db:migrate` applies it to `DATABASE_URL`. On Vercel, `npm run build` applies them first (skipped without `DATABASE_URL`).
@@ -42,6 +42,11 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - **Forms:** react-hook-form with Zod 4. Use our `zodResolver` in `src/lib/forms`, not `@hookform/resolvers`. Provider sections are shared by the wizard and the editor.
 - **Rate limits:** `rateLimit()` uses Upstash when configured, else the `rate_limit_counter` table in Postgres (production), else memory (local). Keys are hashed. Better Auth's own limiter uses the same store (`customStorage`), but it does **not** rate-limit server-side `auth.api` calls, so wrap actions yourself. Sign-in is also limited per account, whatever the IP.
 - **Two-step login:** the Better Auth `twoFactor` plugin (authenticator app + 10 backup codes). **Required for admins**: `requireRole("admin")` sends them to `/two-factor/setup`, and admins can't sign in with Google. Any user can turn it on in Settings.
+- **Admin accounts** (`server/admin/accounts.ts`): made for people, never signed up for.
+  - Every `ADMIN_EMAILS` address without an account gets one, with a temporary password by email (valid 3 days), when `/admin/login` or Admin → Admins is next opened. Signing up with a listed address creates nothing and answers like any sign-up.
+  - The team logs in at `/admin/login` (signed-out `/admin` visits go there). `requireRole("admin")` then requires, in order: a new password (12+ characters, with their name) at `/admin/password`, then two-step login.
+  - An expired temporary password is refused at sign-in (only someone who knows it is told). A password reset replaces it too.
+  - Admin → Admins lists everyone and their setup state; "Reset access" emails a new temporary password and clears their authenticator and sessions. Everything is audit-logged.
 - **Account data:** Settings → "Download your data" (`/api/account/export`, no secrets) and "Delete your account" (password required when the account has one; `server/account/cleanup.ts` cancels billing and deletes files first).
 - **CSP:** set in `proxy.ts` (`lib/csp.ts`). Portal pages get a per-request nonce with `'strict-dynamic'`; marketing pages allow `'self' 'unsafe-inline'` scripts. A new third-party script, image host or form target must be added there.
 - **Directory** (`src/server/directory`, `components/directory`, `components/search`, route group `(directory)`):
@@ -100,7 +105,8 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 | `(directory)` | `/providers`: results and public profiles (marketing chrome, account menu when signed in) |
 | `(patient)` | `/account` |
 | `(provider)` | `/provider` |
-| `(admin)` | `/admin` |
+| `admin/(console)` | `/admin`: the admin console (AppShell; `requireRole("admin")`) |
+| `admin/(entry)` | `/admin/login` and `/admin/password` (first log-in), in the auth shell |
 
 The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is reserved for the admin dashboard.
 

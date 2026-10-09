@@ -5,16 +5,18 @@ import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/a
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
+import { verifyPassword } from "better-auth/crypto";
+import { and, eq } from "drizzle-orm";
 import { after } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { providerProfile, user as userTable } from "@/db/schema";
+import { account, providerProfile, user as userTable } from "@/db/schema";
 import { BASE_PLAN, stripeConfigured } from "@/lib/billing";
 import { defaultOrigin } from "@/lib/hosts";
 import { rateLimit } from "@/lib/rate-limit";
 import { afterAccountDeleted, beforeAccountDeleted } from "@/server/account/cleanup";
+import { isAdminEmail } from "./admin-emails";
 import { sendEmail } from "@/server/email";
 import { resetPasswordEmail, verifyEmail } from "@/server/emails";
 import { onSubscriptionChange } from "@/server/billing/sync";
@@ -30,17 +32,6 @@ import { onSubscriptionChange } from "@/server/billing/sync";
 //   STRIPE_PRICE_BASE are set; without them the plugin isn't loaded and the
 //   billing page explains payments aren't connected yet.
 // `role` can never be set by the client: sign-up actions set it server-side.
-
-/** Accounts that become admins (comma-separated, e.g. the owner's email).
- *  Admin pages still require the email to be verified, so listing an address
- *  doesn't let a stranger claim it. */
-const adminEmails = new Set(
-  (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean),
-);
-const isAdminEmail = (email: string) => adminEmails.has(email.toLowerCase());
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
@@ -89,6 +80,11 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       after(() => sendEmail(resetPasswordEmail(user.email, url)).catch((err) => console.error("reset email failed", err)));
     },
+    // A reset link proves the inbox and sets a password they chose, so a
+    // temporary admin password is replaced (the authenticator is still required).
+    onPasswordReset: async ({ user }) => {
+      await db.update(userTable).set({ mustChangePassword: false, tempPasswordExpiresAt: null }).where(eq(userTable.id, user.id));
+    },
   },
   emailVerification: {
     sendOnSignUp: true,
@@ -118,6 +114,8 @@ export const auth = betterAuth({
       role: { type: "string", required: false, defaultValue: "patient", input: false },
       firstName: { type: "string", required: false, input: true },
       lastName: { type: "string", required: false, input: true },
+      // Set for admins created with a temporary password (server/admin/accounts.ts).
+      mustChangePassword: { type: "boolean", required: false, defaultValue: false, input: false },
     },
   },
   databaseHooks: {
@@ -164,6 +162,19 @@ export const auth = betterAuth({
         const email = String((ctx.body as { email?: unknown } | undefined)?.email ?? "").toLowerCase();
         if (email && !(await rateLimit("auth-signin-account", email, 10, "15 m")).ok) {
           throw new APIError("TOO_MANY_REQUESTS", { message: "Too many attempts. Please wait a few minutes and try again." });
+        }
+        // An expired temporary password (new admins) no longer signs in. Only
+        // someone who knows it is told why, so this reveals nothing else.
+        const [temp] = email
+          ? await db
+              .select({ expiresAt: userTable.tempPasswordExpiresAt, hash: account.password })
+              .from(userTable)
+              .innerJoin(account, and(eq(account.userId, userTable.id), eq(account.providerId, "credential")))
+              .where(and(eq(userTable.email, email), eq(userTable.mustChangePassword, true)))
+          : [];
+        const password = String((ctx.body as { password?: unknown } | undefined)?.password ?? "");
+        if (temp?.expiresAt && temp.expiresAt < new Date() && temp.hash && password && (await verifyPassword({ hash: temp.hash, password }))) {
+          throw new APIError("FORBIDDEN", { code: "TEMPORARY_PASSWORD_EXPIRED", message: "This temporary password has expired." });
         }
         return;
       }
