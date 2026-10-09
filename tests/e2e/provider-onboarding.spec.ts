@@ -4,12 +4,12 @@ import { adminPage, signUp, TEST_PASSWORD, uniqueEmail } from "./fixtures";
 
 // The full provider journey against the local app (PGlite + /dev/mail):
 // sign up → verify email → 9-step onboarding with uploads → submit →
-// admin approves → provider sees "You're verified" and billing.
+// admin approves → provider is live: analytics, billing, a session request.
 // Runs once (desktop); it's a long, stateful flow.
 
 test.describe.configure({ mode: "serial" });
 test.skip(({ isMobile }) => isMobile, "Full flow runs on desktop; mobile layouts are covered elsewhere.");
-test.setTimeout(180_000);
+test.setTimeout(240_000);
 
 const PHOTO = path.join(process.cwd(), "public/images/how-it-works/avatar-1.png");
 const PDF = { name: "Texas-LPC-license.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n% test license\n%%EOF\n") };
@@ -139,10 +139,14 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await admin.context().close();
   });
 
-  await test.step("provider is verified and can see billing", async () => {
+  await test.step("provider is live, sees their analytics and can see billing", async () => {
     await page.goto("/provider");
-    await expect(page.getByText("You're verified")).toBeVisible();
-    await page.getByRole("link", { name: "Activate your listing" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
+    // Until billing is connected, approval alone lists a provider.
+    await expect(page.getByText("Live", { exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Overview" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /View public profile/ })).toBeVisible();
+    await page.goto("/provider/billing");
     await expect(page.getByRole("heading", { level: 1, name: "Billing" })).toBeVisible();
     await expect(page.getByText("Payments aren't connected yet")).toBeVisible();
     await expect(page.getByRole("button", { name: "Activate your listing" })).toBeDisabled();
@@ -205,6 +209,55 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.reload();
     await page.getByRole("tab", { name: /All/ }).click();
     await expect(page.getByRole("tabpanel").getByRole("switch", { name: "Mark Guest Patient as contacted" })).toBeChecked();
+  });
+
+  await test.step("analytics count patients finding the provider, never the provider", async () => {
+    const stat = (name: string) => page.getByRole("group", { name }).locator('[data-slot="stat-value"]');
+    // The provider looks at their own public profile: not counted.
+    await page.goto("/provider");
+    const profileHref = await page.getByRole("link", { name: /View public profile/ }).getAttribute("href");
+    await page.goto(profileHref!);
+    await expect(page.getByRole("heading", { level: 1, name: new RegExp(`Sara ${last}`) })).toBeVisible();
+    await page.goto("/provider"); // leaving sends the page's events
+
+    // A guest finds them in search, takes a quick look, then opens the profile.
+    const guest = await browser.newContext();
+    const g = await guest.newPage();
+    await g.goto("/providers?format=online&where=TX&specialty=anxiety");
+    const card = g.getByTestId("provider-card").filter({ hasText: `Sara ${last}` });
+    await card.scrollIntoViewIfNeeded();
+    await g.waitForTimeout(1000); // an impression needs the card on screen for a moment
+    await card.getByRole("button", { name: `Preview Sara ${last}` }).click();
+    await expect(g.getByRole("dialog")).toBeVisible();
+    await g.goto(profileHref!);
+    await expect(g.getByRole("heading", { level: 1, name: new RegExp(`Sara ${last}`) })).toBeVisible();
+
+    // One quick look plus one full profile; the guest's request from earlier.
+    await expect(async () => {
+      await page.reload();
+      await expect(stat("Profile views")).toHaveText("2", { timeout: 1000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(stat("Session requests")).toHaveText("1");
+    expect(Number(await stat("Impressions").textContent())).toBeGreaterThanOrEqual(1);
+    await expect(stat("Conversion rate")).toHaveText("50%");
+    const recent = page.getByRole("region", { name: "Recent session requests" });
+    await expect(recent).toContainText("Guest P.");
+    await expect(recent.getByRole("link", { name: "1 total" })).toHaveAttribute("href", "/provider/requests");
+
+    // Another range keeps the page and updates the address.
+    await page.getByRole("radio", { name: "Last 30 days" }).click();
+    await expect(page).toHaveURL(/\?range=30d$/);
+    await expect(stat("Profile views")).toHaveText("2");
+    await guest.close();
+
+    // For reviewers: the dashboard on desktop and on a phone.
+    for (const [name, width] of [["provider-analytics-desktop", 1280], ["provider-analytics-phone", 375]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      const file = test.info().outputPath(`${name}.png`);
+      await page.screenshot({ path: file, fullPage: true });
+      await test.info().attach(name, { path: file, contentType: "image/png" });
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
   });
 
   await test.step("provider deletes their account and their files go with it", async () => {

@@ -64,6 +64,15 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - Patients see theirs under "My requests" (`/account`). Providers see theirs at `/provider/requests` and can mark them contacted. Providers reply outside the app.
   - Requests to sample providers are a demo: saved, never emailed.
 
+- **Analytics** (in-house; `lib/analytics`, `server/analytics`, `/api/events`, `components/analytics`):
+  - Pages report counts in batches with `sendBeacon` (`lib/analytics/client.ts`): page views, searches, impressions (a result card at least half on screen for 0.6 s), quick looks and full profile views. Saves are counted on the server; session requests come from `session_request`.
+  - Only daily totals are stored (`analytics_daily`, per provider or `""` for the whole site). Days are New York days (`lib/analytics/range.ts`).
+  - Search terms are rebuilt on the server from known filter values ("Anxiety · Online · Florida"), never from typed text. Providers see a term once it reaches 5 uses (D24).
+  - Unique visitors: a hash of IP and browser with a salt that changes daily. `maintainAnalytics()` turns each finished day into a plain count and deletes the hashes. Browsers that send DNT or GPC aren't counted. No cookies.
+  - `/api/events` drops bots and other sites' pages, is rate-limited per IP, caps each provider's counts per batch, and ignores a provider viewing their own profile.
+  - Dashboards: the provider's at `/provider` (Figma D1) and the team's at `/admin/analytics`. One date filter scopes everything below it, with deltas against the same number of days just before. Charts are shadcn Chart (Recharts) in `--chart-1`, with a table view.
+  - Deleting a provider (or the samples) deletes their analytics (`forgetProviderAnalytics`).
+
 **Planned:** Supabase for Postgres and Storage.
 
 **Every env var** is documented in `.env.local.example`.
@@ -75,7 +84,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - **Locally**, open the portal at `http://app.localhost:<port>`. `APP_HOST=off` serves it from `localhost` instead, which Google sign-in needs.
 - **Vercel previews** serve everything from one host and use the branch URL as the auth origin (`defaultOrigin()`).
 - **`/dev/setup`** shows what a deployment has configured and the exact Google redirect URI. The guide is `docs/live-testing.md`.
-- **Portal UI** uses the `.app-ui` scope from `globals.css`:
+- **Portal UI** uses the `.app-ui` scope from `globals.css` (the auth shell, onboarding and `AppShell`, so every dashboard):
   - Geist `type-ui-*` roles and product-sized controls;
   - squarer radii via `--radius-button`, `--radius-field` and `--radius-card`;
   - `animate-ui-enter` for content as it enters.

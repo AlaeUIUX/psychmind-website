@@ -63,7 +63,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <section aria-labelledby="plan-title" className="flex flex-col gap-6 rounded-card border border-warm-200 bg-white p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
-              <h2 id="plan-title" className="type-h4 text-text-primary">
+              <h2 id="plan-title" className="type-ui-title text-text-primary">
                 {BASE_PLAN.title}
               </h2>
               <p className="type-small text-text-tertiary">{BASE_PLAN.summary}</p>
@@ -71,7 +71,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
           </div>
           <p className="flex items-baseline gap-1.5">
-            <span className="type-stat text-text-primary">{BASE_PLAN.priceLabel}</span>
+            <span className="type-ui-hero-figure text-text-primary">{BASE_PLAN.priceLabel}</span>
             <span className="type-body text-text-tertiary">{BASE_PLAN.period}</span>
           </p>
           <ul className="grid gap-2.5 sm:grid-cols-2">

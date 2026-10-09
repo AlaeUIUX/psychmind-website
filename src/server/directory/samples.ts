@@ -2,6 +2,7 @@ import "server-only";
 import { and, count, eq, like } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { auditLog, providerLicense, providerLocation, providerProfile, user } from "@/db/schema";
+import { forgetProviderAnalytics } from "@/server/analytics/forget";
 import { SAMPLE_PROVIDERS } from "./sample-data";
 import { SAMPLE_DOMAIN, sampleEmail, sampleRows } from "./sample-rows";
 
@@ -60,6 +61,8 @@ export async function addSampleProviders(adminId: string) {
 /** Deletes every sample provider. Returns how many were removed. */
 export async function removeSampleProviders(adminId: string) {
   await dbReady;
+  const samples = await db.select({ id: providerProfile.id }).from(providerProfile).where(eq(providerProfile.isSample, true));
+  await forgetProviderAnalytics(samples.map((s) => s.id));
   const removed = await db
     .delete(user)
     .where(and(like(user.email, `%@${SAMPLE_DOMAIN}`), eq(user.role, "provider")))

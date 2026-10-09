@@ -17,7 +17,7 @@ const MENUS: Record<string, AppUser["menu"]> = {
     { href: "/account/settings", label: "Settings" },
   ],
   provider: [
-    { href: "/provider", label: "Dashboard" },
+    { href: "/provider", label: "Analytics" },
     { href: "/provider/profile", label: "Edit profile" },
   ],
   admin: [{ href: "/admin", label: "Admin" }],

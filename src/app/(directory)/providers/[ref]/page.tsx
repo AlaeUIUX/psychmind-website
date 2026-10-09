@@ -5,6 +5,7 @@ import { cache } from "react";
 import { CrisisStrip } from "@/components/app/crisis-strip";
 import { RequestSessionButton, ShareButton, VerifiedExplainer } from "@/components/directory/profile-actions";
 import { SampleNotice } from "@/components/directory/sample-notice";
+import { TrackProfile } from "@/components/directory/track-profile";
 import { SaveButton, SavedProvidersProvider, type Viewer } from "@/components/directory/save-button";
 import { ProviderProfileView } from "@/components/provider/profile-view";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -80,6 +81,7 @@ export default async function ProviderProfilePage({ params, searchParams }: Prop
           </Breadcrumb>
 
           {p.isSample && <SampleNotice single />}
+          <TrackProfile publicId={p.publicId} />
 
           <SavedProvidersProvider initial={saved ? [p.id] : []}>
             <ProviderProfileView

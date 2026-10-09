@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       nav={[
         { href: "/admin", label: "Verification queue" },
         { href: "/admin/providers", label: "All providers" },
+        { href: "/admin/analytics", label: "Analytics" },
       ]}
       user={{ name: user.name, email: user.email }}
       onSignOut={signOut}

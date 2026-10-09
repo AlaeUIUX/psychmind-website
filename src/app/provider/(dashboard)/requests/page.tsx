@@ -11,7 +11,7 @@ export default async function ProviderRequestsPage() {
   return (
     <>
       <PageHeader
-        breadcrumbs={[{ label: "Dashboard", href: "/provider" }, { label: "Requests" }]}
+        breadcrumbs={[{ label: "Analytics", href: "/provider" }, { label: "Requests" }]}
         title="Session requests"
         description="People who'd like a session with you. Reply by email or phone, then mark them contacted to keep track."
       />

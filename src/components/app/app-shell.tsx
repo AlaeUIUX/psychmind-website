@@ -60,7 +60,8 @@ export function AppShell({ nav, user, homeHref = "/", banner, onSignOut, childre
     ));
 
   return (
-    <div className="flex min-h-svh flex-col bg-warm-25">
+    // .app-ui: the portal look (zinc, blue accent, Geist, product-sized controls).
+    <div className="app-ui flex min-h-svh flex-col bg-warm-25">
       <a
         href="#main"
         className="sr-only z-[60] rounded-pill bg-warm-900 px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

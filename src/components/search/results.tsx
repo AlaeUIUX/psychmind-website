@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MapPinIcon, MonitorIcon } from "@/components/ui/icons";
+import type { TermParts } from "@/lib/analytics/events";
 import type { Ranked, SearchResult } from "@/lib/search/engine";
 import { SORTS, type SearchFilters, type Sort } from "@/lib/search/filters";
 import { parsePlace } from "@/lib/search/location";
@@ -158,14 +159,17 @@ export function NeedsLocation({ needs, cities }: { needs: SearchResult["needs"];
   );
 }
 
-function CardList({ items, viewer, onOpen }: { items: Ranked[]; viewer: Viewer; onOpen: (r: Ranked) => void }) {
+/** What an impression is reported against: the search, as known values. */
+export type Impression = { term: TermParts; key: string };
+
+function CardList({ items, viewer, onOpen, impression }: { items: Ranked[]; viewer: Viewer; onOpen: (r: Ranked) => void; impression?: Impression }) {
   const [visible, setVisible] = useState(PAGE);
   return (
     <>
       <ol className="flex flex-col gap-3" aria-label="Providers">
         {items.slice(0, visible).map((r) => (
           <li key={r.provider.id} id={`provider-${r.provider.publicId}`} className="scroll-mt-28">
-            <ProviderCard ranked={r} viewer={viewer} onOpen={() => onOpen(r)} />
+            <ProviderCard ranked={r} viewer={viewer} onOpen={() => onOpen(r)} impression={impression} />
           </li>
         ))}
       </ol>
@@ -178,13 +182,23 @@ function CardList({ items, viewer, onOpen }: { items: Ranked[]; viewer: Viewer; 
   );
 }
 
-export function ResultsBody({ result, viewer, onOpen }: { result: SearchResult; viewer: Viewer; onOpen: (r: Ranked) => void }) {
+export function ResultsBody({
+  result,
+  viewer,
+  onOpen,
+  impression,
+}: {
+  result: SearchResult;
+  viewer: Viewer;
+  onOpen: (r: Ranked) => void;
+  impression?: Impression;
+}) {
   const { pending, clear } = useSearch();
   return (
     <div className={cn("flex flex-col gap-3 transition-opacity duration-200", pending && "pointer-events-none opacity-60")} aria-busy={pending}>
       {result.results.length ? (
         // Re-keyed per search so "Show more" starts over.
-        <CardList key={result.results.map((r) => r.provider.id).join()} items={result.results} viewer={viewer} onOpen={onOpen} />
+        <CardList key={result.results.map((r) => r.provider.id).join()} items={result.results} viewer={viewer} onOpen={onOpen} impression={impression} />
       ) : (
         <div className="flex flex-col items-center gap-4 rounded-card border border-warm-200 bg-white px-6 py-12 text-center">
           <DoodleMagnifier aria-hidden className="size-24 text-warm-800" />
@@ -207,7 +221,7 @@ export function ResultsBody({ result, viewer, onOpen }: { result: SearchResult; 
             </h2>
             <p className="type-small text-text-tertiary">These providers match everything you chose except one thing.</p>
           </div>
-          <CardList items={result.close} viewer={viewer} onOpen={onOpen} />
+          <CardList items={result.close} viewer={viewer} onOpen={onOpen} impression={impression} />
         </section>
       )}
 
@@ -223,7 +237,8 @@ export function ResultsBody({ result, viewer, onOpen }: { result: SearchResult; 
               Verified by PsychMind
             </p>
           </div>
-          <CardList items={result.recommended} viewer={viewer} onOpen={onOpen} />
+          {/* Seen in search, but not for this search: no search term. */}
+          <CardList items={result.recommended} viewer={viewer} onOpen={onOpen} impression={impression && { term: undefined, key: impression.key }} />
         </section>
       )}
     </div>

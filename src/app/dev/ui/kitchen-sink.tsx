@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { BarList } from "@/components/analytics/bar-list";
+import { TrendChart } from "@/components/analytics/trend-chart";
 import { AppShell } from "@/components/app/app-shell";
 import { ChoiceChips } from "@/components/app/choice-chips";
 import { CrisisStrip } from "@/components/app/crisis-strip";
@@ -25,6 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -60,6 +64,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Kbd } from "@/components/ui/kbd";
+import { addDays } from "@/lib/analytics/range";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Demo content only — option lists here are samples, not the approved taxonomy.
@@ -67,6 +72,13 @@ const specialties = ["Anxiety", "Depression", "Trauma & PTSD", "Relationships", 
   (label) => ({ value: label.toLowerCase(), label }),
 );
 const states = ["Arizona", "California", "Colorado", "New York", "Texas", "Washington"];
+
+/** Two weeks of made-up numbers for the chart demo (fixed, so renders match). */
+const DEMO_SERIES = [42, 51, 38, 64, 72, 58, 49, 81, 77, 90, 68, 95, 102, 88].map((impressions, i) => ({
+  day: addDays("2026-09-26", i),
+  impressions,
+  views: Math.round(impressions / 4),
+}));
 
 function Block({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return (
@@ -480,12 +492,39 @@ export function KitchenSink() {
         </Tabs>
       </Block>
 
-      <Block title="Analytics tiles">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile label="Impressions" value="1,284" delta={12} hint="vs last 30 days" />
-          <StatTile label="Profile views" value="312" delta={4} hint="vs last 30 days" />
-          <StatTile label="Saves" value="41" delta={-3} hint="vs last 30 days" />
-          <StatTile label="Session requests" value="24" />
+      <Block
+        title="Analytics"
+        note="Stat tiles (Figma D1), the trend chart (shadcn Chart on Recharts) with its table view, a bar list, a Card and the range Calendar."
+      >
+        <StatTile hero label="Conversion rate" value="6.9%" delta={2.5} deltaLabel="+2.5%" hint="vs the previous 7 days" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile label="Impressions" value="1,284" delta={250} deltaLabel="+250" info="Times your profile appeared in search results." />
+          <StatTile label="Profile views" value="347" delta={-12} deltaLabel="−12" />
+          <StatTile label="Session requests" value="24" delta={2} deltaLabel="+2" />
+          <StatTile label="Saves" value="61" delta={0} deltaLabel="0" />
+        </div>
+        <TrendChart
+          series={DEMO_SERIES}
+          metrics={[
+            { key: "impressions", label: "Impressions" },
+            { key: "views", label: "Profile views" },
+          ]}
+          empty="Nothing yet for these dates."
+        />
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card className="gap-4 p-5">
+            <CardTitle>How patients found you</CardTitle>
+            <BarList
+              label="Top search terms"
+              items={[
+                { label: "Anxiety · Online · New York", count: 142 },
+                { label: "Trauma · Online", count: 108 },
+                { label: "Children · In-person · Texas", count: 50 },
+                { label: "CBT", count: 31 },
+              ]}
+            />
+          </Card>
+          <Calendar mode="range" numberOfMonths={1} defaultMonth={new Date(2026, 9, 1)} className="w-fit rounded-card border border-warm-200" />
         </div>
       </Block>
 

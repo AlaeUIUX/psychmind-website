@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, type Browser, type Page } from "@playwright/test";
 
@@ -68,8 +68,28 @@ async function setUpTwoFactor(page: Page) {
   await page.getByRole("link", { name: "Continue" }).click();
 }
 
+/** The last admin session, so a run doesn't log in (and enter a two-step
+ *  code) for every test: codes are rate-limited per IP, and every test comes
+ *  from the same one. Lives with the database, like the secret. */
+const ADMIN_STATE_FILE = path.join(process.cwd(), ".data", "e2e-admin-state.json");
+
 /** A signed-in admin (created and given two-step login on first use). */
 export async function adminPage(browser: Browser) {
+  if (existsSync(ADMIN_STATE_FILE)) {
+    try {
+      const context = await browser.newContext({ storageState: ADMIN_STATE_FILE });
+      const page = await context.newPage();
+      await page.goto("/admin");
+      const queue = page.getByRole("heading", { level: 1, name: "Verification queue" });
+      const login = page.getByRole("heading", { level: 1, name: "Log in to PsychMind" });
+      await expect(queue.or(login)).toBeVisible({ timeout: 15_000 });
+      if (await queue.isVisible()) return page;
+      await context.close(); // expired: log in again
+    } catch {
+      // Unreadable state: log in again.
+    }
+  }
+
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto("/login");
@@ -93,5 +113,9 @@ export async function adminPage(browser: Browser) {
   await expect(queue.or(setup)).toBeVisible({ timeout: 15_000 });
   if (await setup.isVisible()) await setUpTwoFactor(page);
   await expect(queue).toBeVisible({ timeout: 15_000 });
+  // Written whole, then renamed: parallel workers never read half a file.
+  const tmp = `${ADMIN_STATE_FILE}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(await context.storageState()));
+  renameSync(tmp, ADMIN_STATE_FILE);
   return page;
 }

@@ -4,7 +4,9 @@ import { cn } from "cn";
 import { ArrowUpRightIcon, GlobeIcon, MapPinIcon, MonitorIcon, SparklesIcon, UserRoundIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { displayName, feeFrom, locationLabel, shortName, therapyType } from "@/lib/provider/display";
+import { useImpression } from "@/lib/analytics/client";
 import type { Ranked } from "@/lib/search/engine";
+import type { Impression } from "@/components/search/results";
 import { labelOf } from "@/lib/taxonomy";
 import type { DirectoryProvider } from "@/server/directory/data";
 import { SaveButton, type Viewer } from "./save-button";
@@ -51,8 +53,20 @@ function TrustLines({ className }: { className?: string }) {
   );
 }
 
-export function ProviderCard({ ranked, viewer, onOpen }: { ranked: Ranked; viewer: Viewer; onOpen: () => void }) {
+export function ProviderCard({
+  ranked,
+  viewer,
+  onOpen,
+  impression,
+}: {
+  ranked: Ranked;
+  viewer: Viewer;
+  onOpen: () => void;
+  /** Report when the card is seen (search analytics). */
+  impression?: Impression;
+}) {
   const p = ranked.provider;
+  const seenRef = useImpression(p.publicId, impression?.term, impression?.key ?? "");
   const name = displayName(p);
   const first = shortName(p);
   const fee = feeFrom(p);
@@ -102,6 +116,7 @@ export function ProviderCard({ ranked, viewer, onOpen }: { ranked: Ranked; viewe
 
   return (
     <article
+      ref={seenRef}
       className="@container group relative rounded-card border border-warm-200 bg-white p-3 transition-colors duration-200 hover:border-warm-300 hover:bg-warm-50 has-[>button:active]:bg-warm-100"
       data-testid="provider-card"
     >

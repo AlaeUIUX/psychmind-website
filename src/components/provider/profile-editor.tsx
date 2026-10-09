@@ -50,7 +50,7 @@ export function ProfileEditor({
       </nav>
 
       <section className="flex flex-col gap-6 rounded-card border border-warm-200 bg-white p-6 sm:p-8">
-        <h2 className="type-h4 text-text-primary">{current?.title}</h2>
+        <h2 className="type-ui-title text-text-primary">{current?.title}</h2>
         {locked ? (
           <p role="status" className="rounded-field bg-sky-50 px-4 py-3 type-small text-sky-950">
             {locked}

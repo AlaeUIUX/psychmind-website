@@ -22,7 +22,7 @@ export type DirectoryProvider = ProfileView & {
  *  3-day grace period after a failed renewal). Until Stripe is set up,
  *  approval alone lists a provider so verification can be tried end to end.
  *  Sample providers are always listed. */
-function listedCondition() {
+export function listedCondition() {
   const approved = eq(providerProfile.status, "approved");
   if (!stripeConfigured()) return approved;
   const paying = exists(

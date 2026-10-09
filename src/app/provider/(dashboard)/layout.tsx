@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app/app-shell";
 import { ProviderBanner } from "@/components/provider/provider-banner";
 import { db } from "@/db";
 import { providerProfile, sessionRequest } from "@/db/schema";
+import { shownListing } from "@/lib/billing";
 import { fileUrl } from "@/lib/provider/state";
 import { signOut } from "@/server/auth/actions";
 import { requireRole } from "@/server/auth/session";
@@ -12,7 +13,7 @@ import { loadProviderState } from "@/server/provider/data";
 import { providerOverview } from "@/server/provider/status";
 
 // Provider dashboard frame (Figma: Analytics · Blogs · Profile · Settings;
-// Analytics and Blogs arrive in later slices). A provider who hasn't started
+// Blogs arrive in a later slice). A provider who hasn't started
 // onboarding is sent to the intro first.
 export default async function ProviderDashboardLayout({ children }: { children: ReactNode }) {
   const { user } = await requireRole("provider", "/provider");
@@ -31,7 +32,7 @@ export default async function ProviderDashboardLayout({ children }: { children: 
     <AppShell
       homeHref="/provider"
       nav={[
-        { href: "/provider", label: "Dashboard" },
+        { href: "/provider", label: "Analytics" },
         {
           href: "/provider/requests",
           label: "Requests",
@@ -59,7 +60,7 @@ export default async function ProviderDashboardLayout({ children }: { children: 
       banner={
         <ProviderBanner
           status={state.status}
-          listing={overview.listing}
+          listing={shownListing(overview.listing)}
           graceDays={overview.graceDays}
           reviewNote={state.reviewNote}
           onboardingStep={state.onboardingStep}

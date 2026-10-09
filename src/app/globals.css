@@ -8,6 +8,9 @@
   --radius-button: 9999px;
   /* Focus halo colour: crimson on the marketing site. */
   --ring-accent: #c01048;
+  /* Chart marks: a single series is the portal's blue-600 (passes the
+     dataviz palette checks on white: lightness band, chroma, >= 3:1). */
+  --chart-1: oklch(0.546 0.245 262.881);
 
   /* The gray scale and text roles are runtime variables so a scope can swap
      them: the marketing site uses Tailwind stone (warm), the portal (.app-ui)
@@ -570,6 +573,29 @@
   line-height: 18px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+}
+
+/* Dashboard numbers (stat tiles). Geist with proportional figures: equal-width
+   digits look loose at this size. */
+@utility type-ui-figure {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 34px;
+  letter-spacing: -0.03em;
+}
+
+/* The one number a dashboard leads with. */
+@utility type-ui-hero-figure {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: -0.035em;
+  @media (width >= 40rem) {
+    font-size: 48px;
+    line-height: 52px;
+  }
 }
 
 /* Portal entrance: content rises a few px out of a soft blur. Stagger with

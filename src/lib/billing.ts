@@ -86,3 +86,9 @@ export function graceDaysLeft(pastDueSince: Date | null, now = new Date()) {
 export function stripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_BASE);
 }
+
+/** What a provider is told about their listing. Until billing is connected,
+ *  approval alone lists them (see listedCondition), so "unpaid" reads as live. */
+export function shownListing(listing: ListingState): ListingState {
+  return listing === "unpaid" && !stripeConfigured() ? "live" : listing;
+}

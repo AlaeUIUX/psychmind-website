@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   customType,
+  date,
   index,
   integer,
   jsonb,
@@ -253,4 +254,43 @@ export const sessionRequest = pgTable(
     index("session_request_patient_idx").on(t.patientId),
     index("session_request_email_idx").on(t.email, t.profileId),
   ],
+);
+
+// Analytics: in-house and private. Only daily totals are stored, never
+// individual visits, and nothing that identifies a person.
+
+/** Daily counts per metric, per provider ("" = the whole site). */
+export const analyticsDaily = pgTable(
+  "analytics_daily",
+  {
+    day: date("day").notNull(),
+    metric: text("metric").notNull(),
+    profileId: text("profile_id").notNull().default(""),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.metric, t.profileId] }), index("analytics_daily_profile_idx").on(t.profileId, t.day)],
+);
+
+/** Searches that showed a provider ("Anxiety · Online · Florida"), built
+ *  only from structured filters, never from free text. */
+export const analyticsTerm = pgTable(
+  "analytics_term",
+  {
+    day: date("day").notNull(),
+    profileId: text("profile_id").notNull().default(""),
+    term: text("term").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.profileId, t.term] })],
+);
+
+/** Daily unique visitors: a hash of IP + browser with a salt that changes
+ *  every day, so nobody can be followed from one day to the next. */
+export const analyticsVisitor = pgTable(
+  "analytics_visitor",
+  {
+    day: date("day").notNull(),
+    hash: text("hash").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.hash] })],
 );

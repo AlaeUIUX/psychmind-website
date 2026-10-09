@@ -7,6 +7,7 @@ import { SessionModeSwitch, type SessionMode } from "@/components/shared/session
 import { PlusIcon, SearchIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useTrackView } from "@/lib/analytics/client";
 import { searchHref } from "@/lib/search/filters";
 import { GENDERS, labelOf } from "@/lib/taxonomy";
 
@@ -223,6 +224,7 @@ function MobileSearchTrigger({ mode, setMode }: { mode: SessionMode; setMode: (m
 }
 
 export function HeroSearch() {
+  useTrackView("home");
   const [mode, setMode] = useState<SessionMode>("online");
   const [mind, setMind] = useState("");
   const [prefs, setPrefs] = useState<Prefs>({ gender: [], language: [] });

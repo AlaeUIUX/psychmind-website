@@ -11,6 +11,7 @@ import { AuthField, AuthTitle, FormAlert, HoverArrow, TextInput } from "@/compon
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useTrackView } from "@/lib/analytics/client";
 import { formatLabel, objectPronoun, sessionTypeLabel, type RequestInput } from "@/lib/requests";
 import { sendSessionRequest, type SendResult } from "@/server/requests/actions";
 import type { RequestTarget } from "@/server/requests/data";
@@ -182,6 +183,7 @@ function Done({ target, patient, result }: { target: RequestTarget; patient: Pat
 
 export function RequestWizard({ target, patient, resume }: { target: RequestTarget; patient: Patient; resume: boolean }) {
   const { setRequest } = useAuthPanel();
+  useTrackView("request");
   const [step, setStep] = useState(1);
   const [choice, setChoice] = useState<Choice | null>(null);
   const [draft, setDraft] = useState<Draft>(() => ({

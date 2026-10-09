@@ -2,8 +2,9 @@ import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import Stripe from "stripe";
 import { db } from "@/db";
-import { auditLog, subscription, upload } from "@/db/schema";
+import { auditLog, providerProfile, subscription, upload } from "@/db/schema";
 import { stripeConfigured } from "@/lib/billing";
+import { forgetProviderAnalytics } from "@/server/analytics/forget";
 import { deleteFile } from "@/server/storage";
 
 // What has to happen outside the database cascade when someone deletes their
@@ -29,6 +30,10 @@ export async function beforeAccountDeleted(userId: string) {
   // File bytes live outside the upload table (disk or file_blob).
   const files = await db.select({ storageKey: upload.storageKey }).from(upload).where(eq(upload.ownerId, userId));
   for (const f of files) await deleteFile(f.storageKey);
+
+  // Analytics rows aren't tied to the profile by a foreign key.
+  const profiles = await db.select({ id: providerProfile.id }).from(providerProfile).where(eq(providerProfile.userId, userId));
+  await forgetProviderAnalytics(profiles.map((p) => p.id));
 }
 
 /** After deletion: a record that it happened, with no personal details. */

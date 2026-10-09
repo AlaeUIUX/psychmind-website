@@ -6,6 +6,7 @@ import { db, dbReady } from "@/db";
 import { savedProvider } from "@/db/schema";
 import { rateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/server/auth/session";
+import { track } from "@/server/analytics/track";
 import { isListedProvider } from "./data";
 
 // The heart on provider cards and profiles. Saving is for patient accounts;
@@ -23,7 +24,8 @@ export async function setProviderSaved(profileId: string, saved: boolean): Promi
 
   if (saved) {
     if (!(await isListedProvider(profileId))) return { ok: false, reason: "missing" };
-    await db.insert(savedProvider).values({ userId: session.user.id, profileId }).onConflictDoNothing();
+    const added = await db.insert(savedProvider).values({ userId: session.user.id, profileId }).onConflictDoNothing().returning({ id: savedProvider.profileId });
+    if (added.length) track("save", profileId);
   } else {
     await db.delete(savedProvider).where(and(eq(savedProvider.userId, session.user.id), eq(savedProvider.profileId, profileId)));
   }

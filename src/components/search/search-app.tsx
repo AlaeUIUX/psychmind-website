@@ -3,6 +3,8 @@
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useMemo, useRef } from "react";
 import { SavedProvidersProvider, type Viewer } from "@/components/directory/save-button";
+import { trackEvent, useTrackOnChange, useTrackView } from "@/lib/analytics/client";
+import type { TermParts } from "@/lib/analytics/events";
 import type { Ranked, SearchResult } from "@/lib/search/engine";
 import type { DirectoryProvider } from "@/server/directory/data";
 import { FiltersPanel } from "./filters-panel";
@@ -36,6 +38,21 @@ export function SearchApp({
   const [openId, setOpenId] = useQueryState("p", parseAsString.withOptions({ shallow: true, scroll: false }));
   const pushed = useRef(false);
 
+  // Analytics: this search as known values only (see lib/analytics/events.ts).
+  const term = useMemo<TermParts>(
+    () => ({
+      sp: Array.from(new Set([...filters.specialty, ...(result.query?.specialties ?? [])])),
+      ap: filters.approach,
+      f: filters.format ?? undefined,
+      st: result.place?.state,
+    }),
+    [filters.specialty, filters.approach, filters.format, result.query, result.place],
+  );
+  const searchKey = JSON.stringify(term);
+  useTrackView("search");
+  useTrackOnChange(searchKey, () => ({ t: "search", s: JSON.parse(searchKey) as TermParts }));
+  const impression = useMemo(() => ({ term, key: searchKey }), [term, searchKey]);
+
   const items = useMemo<Ranked[]>(
     () => [...result.results, ...result.close, ...(result.results.length || result.close.length ? [] : result.recommended)],
     [result],
@@ -50,6 +67,7 @@ export function SearchApp({
   const open = useCallback(
     (r: Ranked) => {
       pushed.current = true;
+      trackEvent({ t: "quick_look", p: r.provider.publicId });
       void setOpenId(r.provider.publicId, { history: "push" });
     },
     [setOpenId],
@@ -65,7 +83,13 @@ export function SearchApp({
     // Back where they were in the list.
     if (last) requestAnimationFrame(() => document.getElementById(`provider-${last}`)?.scrollIntoView({ block: "nearest" }));
   }, [openId, setOpenId]);
-  const step = useCallback((i: number) => void setOpenId(overlayItems[i].provider.publicId, { history: "replace" }), [overlayItems, setOpenId]);
+  const step = useCallback(
+    (i: number) => {
+      trackEvent({ t: "quick_look", p: overlayItems[i].provider.publicId });
+      void setOpenId(overlayItems[i].provider.publicId, { history: "replace" });
+    },
+    [overlayItems, setOpenId],
+  );
 
   return (
     <SearchProvider value={controls}>
@@ -101,7 +125,7 @@ export function SearchApp({
                 <SortMenu />
               </div>
               <NeedsLocation needs={result.needs} cities={cities} />
-              <ResultsBody result={result} viewer={viewer} onOpen={open} />
+              <ResultsBody result={result} viewer={viewer} onOpen={open} impression={impression} />
             </section>
           </div>
         </div>

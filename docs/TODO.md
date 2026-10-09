@@ -14,16 +14,29 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 - **Remove the sample providers before real providers launch** (Admin → All
   providers → Remove samples). They're labelled and can't be booked, but they
   shouldn't sit next to real providers for long.
-- **Bring the dashboards up to the new portal design**: provider dashboard,
-  admin console and patient account. Use the approved caliber: zinc, blue
-  accent, `type-ui-*`, paper surfaces.
+- **Privacy policy: mention the in-house analytics** (client copy). What's
+  collected: daily counts of page views, searches and profile views; search
+  terms built only from filters; a daily visitor count from a hash of IP and
+  browser that's deleted at the end of each day. No cookies, no third
+  parties, and browsers that send Do Not Track or Global Privacy Control
+  aren't counted as visitors.
+- **Analytics copy to confirm with the client.** Figma D1's footnotes are shown
+  verbatim: "Search results are updated everyday" ("every day") and "This
+  visual helps optimizing for keywords" ("helps you optimize"). New copy
+  (metric definitions, empty states, the admin console) is marked
+  `TODO(client)`.
 
 ## Later
 
+- **Analytics: what's left** (slice 11 shipped its first version).
+  - **Data retention** (D23): daily counts are kept; search terms go after a
+    year and visitor hashes after a day. Revisit if the client wants less.
+  - **Funnels and sources** (which page or link brought a visitor) would need
+    the referrer; left out on purpose until there's a privacy decision.
+  - **Exports** (CSV) for providers and admins.
+
 - **Search: what's left after the first version** (slice 8). Filters, counts,
   close matches, the quick look and the phone drawer work.
-  - **Home page search:** wire it to `/providers` with the same fields. The
-    owner asked to hold off on this.
   - **Real distance:** "near" is same ZIP, city, ZIP area, then state. Real
     distance needs a ZIP-coordinates table, or a geocoder for "Use my location".
   - **Insurance filter:** hidden until the insurance decision (D2).
