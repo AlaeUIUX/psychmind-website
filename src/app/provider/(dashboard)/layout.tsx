@@ -1,10 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app/app-shell";
 import { ProviderBanner } from "@/components/provider/provider-banner";
 import { db } from "@/db";
-import { providerProfile } from "@/db/schema";
+import { providerProfile, sessionRequest } from "@/db/schema";
 import { fileUrl } from "@/lib/provider/state";
 import { signOut } from "@/server/auth/actions";
 import { requireRole } from "@/server/auth/session";
@@ -21,6 +21,10 @@ export default async function ProviderDashboardLayout({ children }: { children: 
 
   const [row] = await db.select({ pastDueSince: providerProfile.pastDueSince }).from(providerProfile).where(eq(providerProfile.id, state.id));
   const overview = await providerOverview(user.id, state, row?.pastDueSince ?? null);
+  const [{ n: newRequests } = { n: 0 }] = await db
+    .select({ n: count() })
+    .from(sessionRequest)
+    .where(and(eq(sessionRequest.profileId, state.id), eq(sessionRequest.status, "new")));
   const name = [state.firstName, state.lastName].filter(Boolean).join(" ") || user.name;
 
   return (
@@ -28,6 +32,15 @@ export default async function ProviderDashboardLayout({ children }: { children: 
       homeHref="/provider"
       nav={[
         { href: "/provider", label: "Dashboard" },
+        {
+          href: "/provider/requests",
+          label: "Requests",
+          badge: newRequests ? (
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white">
+              {newRequests}
+            </span>
+          ) : undefined,
+        },
         { href: "/provider/profile", label: "Profile" },
         { href: "/provider/billing", label: "Billing" },
         { href: "/provider/settings", label: "Settings" },

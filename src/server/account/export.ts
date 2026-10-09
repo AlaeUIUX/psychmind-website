@@ -7,7 +7,9 @@ import {
   providerLicense,
   providerLocation,
   providerProfile,
+  savedProvider,
   session,
+  sessionRequest,
   subscription,
   upload,
   user,
@@ -61,6 +63,31 @@ export async function exportAccountData(userId: string) {
     db.select().from(providerProfile).where(eq(providerProfile.userId, userId)),
   ]);
 
+  // As a patient: the session requests they sent and the providers they saved.
+  const [sentRequests, saved] = await Promise.all([
+    db
+      .select({
+        provider: providerProfile.publicId,
+        name: sessionRequest.name,
+        email: sessionRequest.email,
+        phone: sessionRequest.phone,
+        sessionType: sessionRequest.sessionType,
+        format: sessionRequest.format,
+        note: sessionRequest.note,
+        status: sessionRequest.status,
+        sentAt: sessionRequest.createdAt,
+      })
+      .from(sessionRequest)
+      .innerJoin(providerProfile, eq(providerProfile.id, sessionRequest.profileId))
+      .where(eq(sessionRequest.patientId, userId))
+      .orderBy(desc(sessionRequest.createdAt)),
+    db
+      .select({ provider: providerProfile.publicId, savedAt: savedProvider.createdAt })
+      .from(savedProvider)
+      .innerJoin(providerProfile, eq(providerProfile.id, savedProvider.profileId))
+      .where(eq(savedProvider.userId, userId)),
+  ]);
+
   const profile = profileRows[0];
   const [locations, licenses, history] = profile
     ? await Promise.all([
@@ -95,6 +122,8 @@ export async function exportAccountData(userId: string) {
     sessions,
     files,
     subscriptions,
+    sessionRequests: sentRequests,
+    savedProviders: saved,
     providerProfile: profile ? { ...profile, locations, licenses, reviewHistory: history } : null,
   };
 }

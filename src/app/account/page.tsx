@@ -5,9 +5,11 @@ import { CrisisStrip } from "@/components/app/crisis-strip";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
 import { SavedProviderCard } from "@/components/directory/saved-provider-card";
+import { MyRequests } from "@/components/requests/my-requests";
 import { Button } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
 import { savedProviders } from "@/server/directory/data";
+import { myRequests } from "@/server/requests/data";
 
 export const metadata: Metadata = { title: "Your account — PsychMind" };
 
@@ -16,7 +18,7 @@ export const metadata: Metadata = { title: "Your account — PsychMind" };
 export default async function AccountPage() {
   const { user } = await requireRole("patient", "/account");
   const firstName = (user as { firstName?: string | null }).firstName || user.name.split(" ")[0];
-  const saved = await savedProviders(user.id);
+  const [saved, requests] = await Promise.all([savedProviders(user.id), myRequests()]);
   return (
     <>
       <PageHeader breadcrumbs={[{ label: "Overview" }]} title={`Welcome, ${firstName}`} description="Your saved providers and session requests will appear here." />
@@ -48,9 +50,13 @@ export default async function AccountPage() {
         <h2 id="requests-title" className="type-title text-text-primary">
           My requests
         </h2>
-        <EmptyState art={<InboxIcon className="size-7" />} title="No requests yet">
-          When you request a session, you&apos;ll see its status here.
-        </EmptyState>
+        {requests.length ? (
+          <MyRequests requests={requests} />
+        ) : (
+          <EmptyState art={<InboxIcon className="size-7" />} title="No requests yet">
+            When you request a session, you&apos;ll see its status here.
+          </EmptyState>
+        )}
       </section>
       <CrisisStrip />
     </>

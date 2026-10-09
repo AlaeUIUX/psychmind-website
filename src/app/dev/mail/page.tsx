@@ -11,7 +11,9 @@ export const dynamic = "force-dynamic";
 export default async function DevMailPage() {
   const outboxMode = !process.env.RESEND_API_KEY || process.env.EMAIL_TRANSPORT === "outbox";
   if (process.env.VERCEL_ENV === "production" || !outboxMode) notFound();
-  const outbox = await readOutbox();
+  // The newest 40: rendering every stored email (each in an iframe) made the
+  // page slow enough to time out tests running in parallel.
+  const outbox = (await readOutbox()).slice(0, 40);
 
   return (
     <main className="mx-auto flex w-full max-w-[760px] flex-col gap-6 px-4 py-10">
@@ -30,9 +32,21 @@ export default async function DevMailPage() {
               <time className="type-caption text-text-placeholder">{new Date(mail.sentAt).toLocaleString()}</time>
             </div>
             <p className="type-small text-text-tertiary">To: <span data-testid="dev-mail-to">{mail.to}</span></p>
+            {mail.replyTo && (
+              <p className="type-small text-text-tertiary">
+                Reply-To: <span data-testid="dev-mail-reply-to">{mail.replyTo}</span>
+              </p>
+            )}
+            <details className="type-caption text-text-tertiary">
+              <summary className="cursor-pointer">Plain text</summary>
+              <pre className="mt-2 whitespace-pre-wrap font-mono" data-testid="dev-mail-text">
+                {mail.text}
+              </pre>
+            </details>
             <iframe
               title={mail.subject}
               srcDoc={mail.html}
+              loading="lazy"
               sandbox="allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
               className="h-[420px] w-full rounded-field border border-warm-200"
             />

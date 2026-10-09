@@ -57,6 +57,13 @@
       "when": 1791474624861,
       "tag": "0007_sample_providers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791544422161,
+      "tag": "0008_session_requests",
+      "breakpoints": true
     }
   ]
 }

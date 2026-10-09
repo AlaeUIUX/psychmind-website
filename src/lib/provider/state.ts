@@ -12,6 +12,8 @@ export type ProviderState = {
   isSample: boolean;
   /** Sample providers' hotlinked photo (real providers upload theirs). */
   externalPhotoUrl: string | null;
+  /** Where session requests are emailed; null = the account email. */
+  requestEmail: string | null;
   status: ProviderStatus;
   onboardingStep: string;
   reviewNote: string | null;

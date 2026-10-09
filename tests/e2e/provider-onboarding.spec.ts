@@ -16,7 +16,8 @@ const PDF = { name: "Texas-LPC-license.pdf", mimeType: "application/pdf", buffer
 
 async function saveAndContinue(page: Page, nextHeading: string | RegExp) {
   await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: nextHeading })).toBeVisible({ timeout: 15_000 });
+  // Generous: saving (with uploads) is slow while the whole suite shares one dev server.
+  await expect(page.getByRole("heading", { level: 1, name: nextHeading })).toBeVisible({ timeout: 30_000 });
 }
 
 /** The test provider, until the last step deletes them. */
@@ -152,6 +153,58 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.getByLabel(/About you/).fill("Updated: collaborative, warm and direct.");
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  });
+
+  await test.step("a guest requests a session; the provider gets an email and sees it", async () => {
+    const guestEmail = uniqueEmail("guest");
+    const guest = await browser.newContext();
+    const g = await guest.newPage();
+    await g.goto("/providers");
+    const href = await g.getByTestId("provider-card").filter({ hasText: `Sara ${last}` }).getByRole("link", { name: /See profile/ }).getAttribute("href");
+    await g.goto(href!.replace("/providers/", "/request/"));
+    await g.getByRole("button", { name: "Confirm" }).click();
+    await expect(g.getByRole("heading", { name: "Session details" })).toBeVisible();
+    await g.getByRole("button", { name: "Continue" }).click();
+    await g.getByLabel(/Message/).fill("Looking for help with anxiety at work.");
+    await g.getByRole("button", { name: "Continue" }).first().click();
+    await g.getByRole("radio", { name: /Continue as guest/ }).click();
+    await g.getByLabel("Your name").fill("Guest Patient");
+    await g.getByLabel("Email").fill(guestEmail);
+    await g.getByRole("button", { name: "Confirm", exact: true }).click();
+    await expect(g.getByRole("heading", { name: "Review your request" })).toBeVisible();
+    await g.getByRole("button", { name: "Confirm request" }).click();
+    await expect(g.getByText("We sent an email on your behalf!")).toBeVisible({ timeout: 15_000 });
+
+    // The same request again the same day isn't emailed twice.
+    await g.goto(href!.replace("/providers/", "/request/"));
+    await g.getByRole("button", { name: "Confirm" }).click();
+    await g.getByRole("button", { name: "Continue" }).click();
+    await g.getByRole("button", { name: "Skip for now" }).click();
+    await g.getByRole("radio", { name: /Continue as guest/ }).click();
+    await g.getByLabel("Your name").fill("Guest Patient");
+    await g.getByLabel("Email").fill(guestEmail);
+    await g.getByRole("button", { name: "Confirm", exact: true }).click();
+    await g.getByRole("button", { name: "Confirm request" }).click();
+    await expect(g.getByRole("heading", { name: `Sara already has your request` })).toBeVisible({ timeout: 15_000 });
+    await guest.close();
+
+    // One email to the provider (with the details), one confirmation to the guest.
+    await page.goto("/dev/mail");
+    const toProvider = page.getByTestId("dev-mail").filter({ hasText: "New session request" }).filter({ hasText: guestEmail });
+    await expect(toProvider).toHaveCount(1);
+    await expect(toProvider).toContainText("Looking for help with anxiety at work.");
+    await expect(toProvider.getByTestId("dev-mail-to")).toHaveText(email);
+    // Replying goes straight to the patient.
+    await expect(toProvider.getByTestId("dev-mail-reply-to")).toHaveText(guestEmail);
+    await expect(page.getByTestId("dev-mail").filter({ hasText: "Your request was sent" }).filter({ hasText: guestEmail })).toHaveCount(1);
+
+    await page.goto("/provider/requests");
+    const request = page.getByTestId("provider-request").filter({ hasText: "Guest Patient" }).first();
+    await expect(request).toContainText(guestEmail);
+    await request.getByRole("switch", { name: "Mark Guest Patient as contacted" }).click();
+    await page.reload();
+    await page.getByRole("tab", { name: /All/ }).click();
+    await expect(page.getByRole("tabpanel").getByRole("switch", { name: "Mark Guest Patient as contacted" })).toBeChecked();
   });
 
   await test.step("provider deletes their account and their files go with it", async () => {

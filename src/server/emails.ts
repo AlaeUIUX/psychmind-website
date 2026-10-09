@@ -7,8 +7,10 @@ import type { Email } from "./email";
 // (pink margin line, blue rules) with the founders' path illustration.
 // Built from tables with inline styles so Gmail, Outlook and Apple Mail all
 // render it; images are PNGs in /images/email (Gmail doesn't show SVG).
-// Privacy rule: emails carry links, not data. No health details, and no
-// tracking pixels. TODO(client): approve all email copy.
+// Privacy rule: emails carry links, not data, with one exception the owner
+// decided on: a session request is forwarded to the provider with the
+// patient's details and optional note, so their office can reply directly
+// (as directory sites do). No tracking pixels. TODO(client): approve all email copy.
 
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -57,18 +59,32 @@ function notepadFooter() {
 function layout({
   heading,
   body,
+  details,
   cta,
   footnote,
   preheader,
+  reason = "You're receiving this email because of your PsychMind account.",
 }: {
   heading: string;
   body: string;
+  /** Label/value rows under the body (escaped here). */
+  details?: [label: string, value: string][];
   cta?: { label: string; url: string };
   footnote?: string;
   /** Inbox preview line; defaults to the body. */
   preheader?: string;
+  /** The small print at the very bottom. */
+  reason?: string;
 }) {
   const { app } = origins();
+  const detailRows = details?.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;border:1px solid #e7e5e4;border-radius:12px;border-collapse:separate">${details
+        .map(
+          ([label, value], i) =>
+            `<tr><td style="padding:12px 16px;${i ? "border-top:1px solid #f5f5f4;" : ""}font-family:${SANS};font-size:12px;line-height:18px;color:#78716c;text-transform:uppercase;letter-spacing:0.05em;width:120px;vertical-align:top">${escape(label)}</td><td style="padding:12px 16px;${i ? "border-top:1px solid #f5f5f4;" : ""}font-family:${SANS};font-size:15px;line-height:22px;color:${INK};white-space:pre-line">${escape(value)}</td></tr>`,
+        )
+        .join("")}</table>`
+    : "";
   const button = cta
     ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0"><tr>
         <td bgcolor="${INK}" style="border-radius:999px">
@@ -105,11 +121,12 @@ function layout({
       <tr><td class="pm-card" style="background:#ffffff;border:1px solid #e7e5e4;border-radius:16px;padding:40px">
         <h1 class="pm-h1" style="margin:0 0 14px;font-family:${SERIF};font-weight:400;font-size:30px;line-height:38px;letter-spacing:-0.01em;color:${INK}">${escape(heading)}</h1>
         <p style="margin:0;font-family:${SANS};font-size:16px;line-height:26px;color:#44403c">${body}</p>
+        ${detailRows}
         ${button}
         ${footnote ? `<p style="margin:28px 0 0;padding-top:20px;border-top:1px solid #f5f5f4;font-family:${SANS};font-size:13px;line-height:20px;color:#78716c">${escape(footnote)}</p>` : ""}
       </td></tr>
       <tr><td style="padding:16px 0 0">${notepadFooter()}</td></tr>
-      <tr><td style="padding:20px 4px 0;font-family:${SANS};font-size:11px;line-height:16px;color:#a8a29e;text-align:center">You're receiving this email because of your PsychMind account.</td></tr>
+      <tr><td style="padding:20px 4px 0;font-family:${SANS};font-size:11px;line-height:16px;color:#a8a29e;text-align:center">${escape(reason)}</td></tr>
     </table>
   </td></tr>
 </table>
@@ -120,6 +137,7 @@ function layout({
     heading,
     "",
     body.replace(/<[^>]+>/g, ""),
+    details?.length ? `\n${details.map(([l, v]) => `${l}: ${v}`).join("\n")}` : "",
     cta ? `\n${cta.label}: ${cta.url}` : "",
     footnote ? `\n${footnote}` : "",
     "\n—",
@@ -203,6 +221,57 @@ export function adminNewSubmissionEmail(to: string, reviewUrl: string): Email {
       heading: "A provider is waiting for review",
       body: "A provider just submitted their profile for verification.",
       cta: { label: "Open the verification queue", url: reviewUrl },
+    }),
+  };
+}
+
+export type RequestDetails = {
+  name: string;
+  email: string;
+  phone?: string | null;
+  sessionType: string;
+  format: string;
+  note?: string | null;
+};
+
+/** A session request, forwarded to the provider's requests address. Replying
+ *  answers the patient directly (Reply-To). */
+export function sessionRequestEmail(to: string, providerFirst: string, r: RequestDetails, requestsUrl: string): Email {
+  return {
+    to,
+    replyTo: r.email,
+    // No patient name in the subject: it shows on lock screens.
+    subject: "New session request on PsychMind",
+    ...layout({
+      heading: "New session request",
+      body: `Someone would like a session with ${escape(providerFirst)}. Reply to this email to reach them directly. They've been told to expect a reply within 2 days.`,
+      details: [
+        ["Name", r.name],
+        ["Email", r.email],
+        ...(r.phone ? ([["Phone", r.phone]] as [string, string][]) : []),
+        ["Session type", r.sessionType],
+        ["Format", r.format],
+        ...(r.note ? ([["Note", r.note]] as [string, string][]) : []),
+      ],
+      cta: { label: "See all requests", url: requestsUrl },
+      footnote: "These details were shared with you so you can respond to this request. Please don't use them for anything else.",
+      reason: "You're receiving this email because session requests for your PsychMind profile are sent to this address.",
+    }),
+  };
+}
+
+/** The patient's copy: no note, no health details. */
+export function sessionRequestSentEmail(to: string, providerName: string, cta: { label: string; url: string }): Email {
+  return {
+    to,
+    // Generic on purpose: the subject shows on lock screens and in inbox lists.
+    subject: "Your session request was sent",
+    ...layout({
+      heading: "Your request was sent",
+      body: `We sent your request to ${escape(providerName)}. They usually reply within 2 days, by email or phone. If you don't hear back, you can request a session with another provider.`,
+      cta,
+      footnote: "If you didn't make this request, you can ignore this email.",
+      reason: "You're receiving this email because a session request was sent with this address on PsychMind.",
     }),
   };
 }

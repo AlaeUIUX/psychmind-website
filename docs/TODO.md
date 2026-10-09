@@ -5,9 +5,12 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 
 ## Next
 
-- **Session requests** (the owner will send the details). "Request a session"
-  opens a placeholder dialog that offers Save for now. Requests should work
-  as a guest or with an account; Figma B1–B7 has the wizard.
+- **Request copy to confirm with the client** (Figma B6/B7 says things the
+  flow doesn't do). "You'll receive a confirmation with the session link and
+  a calendar invite": we send a confirmation, but no session link or invite.
+  "Most providers respond within 2-3 business days?" has a stray "?" and
+  disagrees with "within 48 hours" on the account version. Both are shown
+  verbatim until the client decides.
 - **Remove the sample providers before real providers launch** (Admin → All
   providers → Remove samples). They're labelled and can't be booked, but they
   shouldn't sit next to real providers for long.

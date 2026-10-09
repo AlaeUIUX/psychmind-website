@@ -30,7 +30,7 @@ import { useAuthPanel } from "./auth-context";
 // Ambient layer: paper grain, faint rules and a breathing ring (a calm
 // 8-second cycle).
 
-type SceneKey = "login" | "role" | "provider" | "patient" | "inbox" | "key" | "shield";
+type SceneKey = "login" | "role" | "provider" | "patient" | "inbox" | "key" | "shield" | "request";
 
 function sceneFor(path: string): SceneKey {
   if (path.startsWith("/signup/provider")) return "provider";
@@ -39,6 +39,7 @@ function sceneFor(path: string): SceneKey {
   if (path.startsWith("/verify-email")) return "inbox";
   if (path.startsWith("/forgot-password") || path.startsWith("/reset-password")) return "key";
   if (path.startsWith("/two-factor")) return "shield";
+  if (path.startsWith("/request")) return "request";
   return "login";
 }
 
@@ -376,6 +377,56 @@ function ShieldScene() {
   );
 }
 
+/** A session request on its way: the provider being asked, and the request
+ *  card filling in with what the patient chose. Copy: TODO(client). */
+function RequestScene() {
+  const { request } = useAuthPanel();
+  if (!request) return null;
+  return (
+    <>
+      <FloatCard depth={1.2} className="top-[22%] left-[14%] flex w-[300px] items-center gap-3 p-3.5">
+        {request.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={request.photoUrl} alt="" width={44} height={44} className="size-11 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <span className="size-11 shrink-0 rounded-lg bg-zinc-100" />
+        )}
+        <div className="flex min-w-0 flex-col">
+          <span className="flex items-center gap-1 truncate text-[13px] font-semibold">
+            {request.name}
+            <BadgeCheckIcon className="size-3.5 shrink-0 text-blue-600" />
+          </span>
+          <span className="truncate text-[12px] text-zinc-600">{request.title}</span>
+        </div>
+      </FloatCard>
+      <FloatCard depth={0.8} className="top-[44%] left-[28%] w-[320px] overflow-hidden" style={{ animation: "ui-enter 700ms var(--ease-out-soft) 200ms both" }}>
+        <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3 text-[12px] font-medium text-zinc-600">
+          <MailIcon className="size-3.5" /> New session request
+        </div>
+        <div className="flex flex-col gap-2.5 px-4 py-3.5">
+          <span className="text-[13px] text-zinc-500">
+            From <span className="font-semibold text-zinc-900">{request.from || "you"}</span>
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {request.chips.map((c) => (
+              <Chip key={c}>{c}</Chip>
+            ))}
+          </div>
+          {request.sent ? (
+            <span className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
+              <BadgeCheckIcon className="size-3.5" /> Sent
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[12px] text-zinc-500">
+              <BellIcon className="size-3.5" /> Usually replies within 2 days
+            </span>
+          )}
+        </div>
+      </FloatCard>
+    </>
+  );
+}
+
 const scenes: Record<SceneKey, () => ReactNode> = {
   login: LoginScene,
   role: RoleScene,
@@ -384,6 +435,7 @@ const scenes: Record<SceneKey, () => ReactNode> = {
   inbox: InboxScene,
   key: KeyScene,
   shield: ShieldScene,
+  request: RequestScene,
 };
 
 export function PortalPanel() {

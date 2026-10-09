@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "cn";
-import { CalendarHeartIcon, CheckIcon, FlaskConicalIcon, Share2Icon, ShieldCheckIcon } from "lucide-react";
+import { CalendarHeartIcon, CheckIcon, Share2Icon, ShieldCheckIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,9 @@ type ActionProvider = {
   acceptingNewClients?: boolean;
 };
 
-/** "Request a session" in the provider's banner colour. The request flow
- *  itself comes later; for now it explains what happens and offers Save. */
+/** "Request a session" in the provider's banner colour. It opens the request
+ *  flow (/request/…; sample providers run it as a demo). A provider who
+ *  isn't taking new clients gets an explanation and Save instead. */
 export function RequestSessionButton({
   provider,
   viewer,
@@ -34,53 +36,40 @@ export function RequestSessionButton({
   provider: ActionProvider;
   viewer: Viewer;
   saved: boolean;
+  /** The provider's profile link (/providers/{name}-{id}). */
   returnTo: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const { name } = provider;
-  const notAccepting = provider.acceptingNewClients === false;
+  const look = cn(
+    "flex h-10 w-full items-center justify-center rounded-field px-4 type-small font-semibold shadow-control transition-[filter,scale] duration-200 hover:brightness-95 focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:outline-none active:scale-[0.98]",
+    className,
+  );
 
-  const copy = provider.isSample
-    ? {
-        icon: FlaskConicalIcon,
-        title: "This is a sample profile",
-        body: `${name} is an example provider we created to show how PsychMind works. Verified providers will appear here as they join, and you'll be able to request sessions with them.`,
-      }
-    : notAccepting
-      ? {
-          icon: CalendarHeartIcon,
-          title: `${name} isn't taking new clients right now`,
-          body: `Save ${name}'s profile to check back later, or browse other verified providers who are accepting new clients.`,
-        }
-      : {
-          icon: CalendarHeartIcon,
-          title: "Session requests open soon",
-          body: `You'll be able to request a session with ${name} right from this page. Save ${name} so you can find them again when requests open.`,
-        };
-  const Icon = copy.icon;
+  if (provider.acceptingNewClients !== false) {
+    return (
+      <Link href={`/request/${returnTo.split("/").pop()}`} style={bannerCta(provider.bannerStyle)} className={look}>
+        Request a session
+      </Link>
+    );
+  }
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        style={bannerCta(provider.bannerStyle)}
-        className={cn(
-          "flex h-10 w-full items-center justify-center rounded-field px-4 type-small font-semibold shadow-control transition-[filter,scale] duration-200 hover:brightness-95 focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:outline-none active:scale-[0.98]",
-          className,
-        )}
-      >
+      <button type="button" onClick={() => setOpen(true)} style={bannerCta(provider.bannerStyle)} className={look}>
         Request a session
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <span className="mb-1 flex size-10 items-center justify-center rounded-full bg-warm-100 text-warm-700">
-              <Icon className="size-5" />
+              <CalendarHeartIcon className="size-5" />
             </span>
-            <DialogTitle>{copy.title}</DialogTitle>
-            <DialogDescription>{copy.body}</DialogDescription>
+            <DialogTitle>{name} isn&apos;t taking new clients right now</DialogTitle>
+            <DialogDescription>
+              Save {name}&apos;s profile to check back later, or browse other verified providers who are accepting new clients.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <SaveButton profileId={provider.id} name={name} initialSaved={saved} viewer={viewer} returnTo={returnTo} variant="full" />

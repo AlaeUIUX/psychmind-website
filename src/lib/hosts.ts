@@ -22,6 +22,7 @@ const APP_PREFIXES = [
   // The directory: public, but it needs the session (saving a provider,
   // requesting a session), and the session cookie belongs to this host.
   "/providers",
+  "/request",
 ] as const;
 
 /** Served on both hosts. */

@@ -82,6 +82,8 @@ export const providerProfile = pgTable(
 
     // Practice details
     gender: text("gender"),
+    /** Where session requests are emailed (an assistant, say); the account email when empty. */
+    requestEmail: text("request_email"),
     feeIndividual: integer("fee_individual"),
     feeCouples: integer("fee_couples"),
     slidingScale: boolean("sliding_scale").notNull().default(false),
@@ -218,4 +220,37 @@ export const savedProvider = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.profileId] }), index("saved_provider_profile_idx").on(t.profileId)],
+);
+
+export const requestStatus = pgEnum("session_request_status", ["new", "contacted"]);
+
+/** "Request a session": what a patient (guest or signed in) sent a provider.
+ *  The details are emailed to the provider's requests address; the provider
+ *  replies outside PsychMind and can mark the request contacted. */
+export const sessionRequest = pgTable(
+  "session_request",
+  {
+    id: id(),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => providerProfile.id, { onDelete: "cascade" }),
+    /** Signed-in patients only (their "My requests"); deleted with their account. */
+    patientId: text("patient_id").references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone"),
+    sessionType: text("session_type").notNull(),
+    format: text("format").notNull(),
+    note: text("note"),
+    status: requestStatus("status").notNull().default("new"),
+    contactedAt: timestamp("contacted_at", { withTimezone: true }),
+    /** Sent to a sample provider: kept, never emailed. */
+    isDemo: boolean("is_demo").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("session_request_profile_idx").on(t.profileId, t.createdAt),
+    index("session_request_patient_idx").on(t.patientId),
+    index("session_request_email_idx").on(t.email, t.profileId),
+  ],
 );

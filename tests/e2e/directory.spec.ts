@@ -161,10 +161,8 @@ test("the full profile explains Verified and shows where they're licensed", asyn
   await expect(page.getByText("License checked with the licensing board in Florida")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  // Samples can't be booked.
-  await page.getByRole("button", { name: "Request a session" }).click();
-  await expect(page.getByRole("dialog", { name: "This is a sample profile" })).toBeVisible();
-  await page.keyboard.press("Escape");
+  // "Request a session" opens the request flow (a demo for sample providers).
+  await expect(page.getByRole("link", { name: "Request a session" })).toHaveAttribute("href", /^\/request\/sara-oliisi-[a-z0-9]{8}$/);
 
   // Signed out, the heart asks for an account and remembers the provider.
   await page.getByRole("button", { name: "Save Sara" }).click();
@@ -206,4 +204,19 @@ test("signing up from the save prompt comes back with the provider saved", async
   await expect(page.getByText("Sara removed from your saved providers")).toBeVisible();
   await page.reload();
   await expect(page.getByText("No saved providers yet")).toBeVisible();
+
+  // Signed in, a request has their details filled in and lands in "My requests".
+  await page.goto("/providers");
+  await page.getByTestId("provider-card").filter({ hasText: "Sara Oliisi" }).getByRole("button", { name: "Preview Sara Oliisi" }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Request a session" }).click();
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await expect(page.getByLabel("Your name")).toHaveValue("Annah Solto");
+  await expect(page.getByLabel("Email")).toHaveValue(email);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Confirm request" }).click();
+  await expect(page.getByText("This request has been saved to “My requests”")).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("link", { name: "Check all requests" }).click();
+  await expect(page.getByTestId("my-request").filter({ hasText: "Sara Oliisi" })).toContainText("Sample provider: no email was sent");
 });
