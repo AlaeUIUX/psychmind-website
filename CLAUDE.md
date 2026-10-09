@@ -37,6 +37,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - Without `DATABASE_URL`, local dev uses **PGlite** in memory, snapshotted to `.data/pglite.tar.gz`. Delete that file to reset.
 - **Billing:** the Better Auth Stripe plugin, loaded only when `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_BASE` are set.
   - Listing and grace rules: `src/lib/billing.ts`.
+  - Test-mode setup (product, keys, webhook, local Stripe CLI): `docs/live-testing.md` §C.
 - **Email:** `src/server/email.ts` sends through Resend, or writes to the local outbox at `/dev/mail` when `EMAIL_TRANSPORT=outbox` or when there's no key.
 - **Uploads:** `/api/uploads` and `/api/files/[id]` check ownership and sniff file bytes. Bytes live in `.data/uploads` locally and in the private `file_blob` table on Vercel (`STORAGE_DRIVER`). Supabase Storage replaces that at scale.
 - **Forms:** react-hook-form with Zod 4. Use our `zodResolver` in `src/lib/forms`, not `@hookform/resolvers`. Provider sections are shared by the wizard and the editor.

@@ -1,6 +1,6 @@
-# Testing sign-in live (Google + email)
+# Testing live: sign-in (Google + email) and payments (Stripe)
 
-Two ways to try the real login. Do **A** first (about 10 minutes, all local), then **B** to get a link you can open on any device.
+Two ways to try the real login: do **A** first (about 10 minutes, all local), then **B** to get a link you can open on any device. **C** turns on payments in Stripe test mode.
 
 Open **`/dev/setup`** at any point. It shows what's connected and the exact URLs Google needs, and it never shows secret values. It's hidden on the production site.
 
@@ -97,6 +97,53 @@ Always test on the branch URL. Per-deploy URLs send portal pages to it automatic
 4. Open `<branch URL>/login` and choose **Continue with Google**.
 
 Previews are behind **Vercel Authentication** by default: only people logged in to your Vercel team can open them. To let someone else test, use **Share** on the deployment, which creates a shareable link.
+
+---
+
+## C. Payments in test mode (Stripe)
+
+Any Stripe account works for testing, including a personal one: **test mode** never moves money. Moving to the client's account later means repeating these steps there and swapping the three values.
+
+### 1. In Stripe (Test mode switched on, top right)
+
+1. **Product catalog → Add product.** Name it "PsychMind listing", recurring, monthly, the plan's price (Figma shows $10; build plan D9 is still open). Save, then copy the **price ID** (`price_…`).
+2. **Developers → API keys.** Copy the **secret key** (`sk_test_…`). It's secret: paste it only into Vercel and `.env.local`.
+3. **Developers → Webhooks → Add destination.** Endpoint URL: `https://www.psychmind.org/api/auth/stripe/webhook`. Use `www`, because the bare domain redirects and Stripe doesn't follow redirects. Events:
+   - `checkout.session.completed`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+
+   Then copy the **signing secret** (`whsec_…`).
+4. **Settings → Billing → Customer portal.** Turn it on, with cancelling and updating the payment method allowed. This is where providers manage their card ("Manage billing").
+
+### 2. Add the values to Vercel
+
+In Vercel → Settings → Environment Variables (Production), add:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_BASE`
+
+Then redeploy. `/dev/setup` (locally) shows "Payments: Stripe" once all three are set.
+
+**What changes when they're set:** approved providers are listed only while they pay (or for 3 days after a failed renewal). Until then their dashboard says "Not listed" and asks them to activate. Sample providers stay listed.
+
+### 3. Locally
+
+Add the same three values to `.env.local`, except the webhook secret: local webhooks come from the Stripe CLI.
+1. Run `stripe login`.
+2. Run `stripe listen --forward-to http://app.localhost:3000/api/auth/stripe/webhook`.
+3. Use the `whsec_…` it prints as `STRIPE_WEBHOOK_SECRET`, then restart `npm run dev`.
+
+### 4. Try it
+
+1. Approve a provider.
+2. Log in as them → **Billing → Activate your listing**.
+3. Pay with the card `4242 4242 4242 4242` (any future date, any CVC). Back on Billing the listing is live, and the provider appears in search.
+4. Failure paths:
+   - `4000 0000 0000 0341` is a card that's saved but declines later.
+   - Stripe's **test clocks** move a subscription to its next renewal.
+   - A past-due provider stays listed for 3 days, then is hidden until they pay.
 
 ---
 
