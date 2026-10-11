@@ -7,8 +7,9 @@ import { useActionState, useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { signUpPatient, signUpProvider, type AuthState } from "@/server/auth/actions";
 import { useAuthPanel } from "./auth-context";
+import { AgeBlocked } from "./age-blocked";
 import { GoogleSignIn } from "./auth-bits";
-import { AuthField, AuthTitle, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton, TextInput } from "./fields";
+import { AuthField, AuthTitle, BirthDateField, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton, TextInput } from "./fields";
 
 // Figma A2 "Create your account", streamlined: one password field with
 // show/hide and a strength meter instead of "Confirm Password", the business
@@ -23,6 +24,9 @@ export function SignUpForm({ role, googleEnabled, next }: { role: "patient" | "p
   const [showBusiness, setShowBusiness] = useState(false);
 
   useEffect(() => setRole(role), [role, setRole]);
+
+  // An under-age answer on the age screen (lib/age.ts).
+  if (state?.blocked) return <AgeBlocked />;
 
   return (
     <div className="flex flex-col gap-7">
@@ -39,7 +43,7 @@ export function SignUpForm({ role, googleEnabled, next }: { role: "patient" | "p
 
       {googleEnabled && (
         <>
-          <GoogleSignIn enabled intent={role === "provider" ? "provider" : undefined} />
+          <GoogleSignIn enabled ageCheck errorPath={`/signup/${role}`} intent={role === "provider" ? "provider" : undefined} />
           <OrDivider />
         </>
       )}
@@ -118,6 +122,7 @@ export function SignUpForm({ role, googleEnabled, next }: { role: "patient" | "p
         <AuthField id="email" label="Email" error={fe.email}>
           <EmailInput error={fe.email} defaultValue={v.email} />
         </AuthField>
+        <BirthDateField error={fe.birthDate} values={v} />
         <AuthField id="password" label="Password" error={fe.password} hint="Must be at least 8 characters long.">
           <PasswordInput error={fe.password} meter autoComplete="new-password" />
         </AuthField>

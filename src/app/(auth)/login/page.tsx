@@ -23,7 +23,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const error = params.error
     ? params.error === "access_denied"
       ? "Google sign-in was cancelled. You can try again or use your email."
-      : "We couldn't sign you in with Google. Please try again or use your email."
+      : params.error === "AGE_REQUIRED"
+        ? "There's no PsychMind account for that Google address yet. Create one from Sign up."
+        : "We couldn't sign you in with Google. Please try again or use your email."
     : undefined;
   return (
     <>

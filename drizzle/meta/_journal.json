@@ -78,6 +78,13 @@
       "when": 1791549279235,
       "tag": "0010_admin_temp_passwords",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791752778057,
+      "tag": "0011_legal_safeguards",
+      "breakpoints": true
     }
   ]
 }

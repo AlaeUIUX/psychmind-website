@@ -4,6 +4,7 @@ PsychMind is a US directory that connects people with licensed mental-health pro
 
 - **The plan:** `docs/build-plan/BUILD-PLAN.md`. Research behind it is in `docs/build-plan/research/`.
 - **One slice per session.** Before building, copy the slice into `docs/specs/slice-NN-name.md`.
+- **Progress tracker:** `/dev/progress` (local only) shows what's built and what's left per contract milestone (`../contract/contract.html`). Its list is `src/app/dev/progress/tracker.ts`: update it in the same change that starts or ships a feature, and bump `REVIEWED`.
 
 ## Commands
 
@@ -162,6 +163,13 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
 - **Rate limits:** every write a stranger can trigger is rate-limited (`rateLimit()`).
 - **Data layer checks its own role.** Admin data functions call `requireRole("admin")` themselves; a layout's check alone isn't enough (Next can skip layouts on client navigation).
 - **Crisis access:** every patient-facing app screen offers 988.
+- **Legal safeguards** (`docs/legal/README.md`, guarded by `tests/unit/legal-safeguards.test.ts`):
+  - every account passes the 18+ age screen, including Google sign-up and the raw endpoint;
+  - visitors' browsers contact no other host (fonts via `next/font`, other images via `selfHosted()`, CSP enforces it);
+  - no session replay or third-party analytics;
+  - marketing email only through `server/marketing.ts` (postal address, unsubscribe);
+  - automatic renewal terms beside every subscribe button (`renewalTerms`);
+  - DMCA agent on `/copyright`.
 
 ## Files and encoding
 

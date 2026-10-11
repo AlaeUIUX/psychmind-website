@@ -43,11 +43,19 @@ export async function followEmailLink(page: Page, email: string) {
   await page.goto(href!);
 }
 
+/** The sign-up form's date of birth (the 18+ age screen). Defaults to an adult. */
+export async function fillBirthDate(page: Page, { month = "04", day = "21", year = "1990" } = {}) {
+  await page.getByLabel("Month").fill(month);
+  await page.getByLabel("Day").fill(day);
+  await page.getByLabel("Year").fill(year);
+}
+
 export async function signUp(page: Page, role: "patient" | "provider", email: string, first: string, last: string) {
   await page.goto(`/signup/${role}`);
   await page.getByLabel("First name").fill(first);
   await page.getByLabel("Last name").fill(last);
   await page.getByLabel("Email").fill(email);
+  await fillBirthDate(page);
   await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();

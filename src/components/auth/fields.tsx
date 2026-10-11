@@ -244,6 +244,54 @@ export function FormAlert({ message, tone = "error" }: { message?: string; tone?
   );
 }
 
+/** Date of birth as three short fields (month, day, year), the accessible
+ *  pattern for a date someone knows by heart. Nothing is pre-filled and
+ *  nothing hints at the cut-off: it's the neutral age screen (lib/age.ts).
+ *  TODO(client): copy. */
+export function BirthDateField({ error, values, idPrefix = "" }: { error?: string; values?: Record<string, string>; idPrefix?: string }) {
+  const parts = [
+    { name: "birthMonth", label: "Month", placeholder: "MM", maxLength: 2, autoComplete: "bday-month", className: "w-16" },
+    { name: "birthDay", label: "Day", placeholder: "DD", maxLength: 2, autoComplete: "bday-day", className: "w-16" },
+    { name: "birthYear", label: "Year", placeholder: "YYYY", maxLength: 4, autoComplete: "bday-year", className: "w-24" },
+  ] as const;
+  const errorId = `${idPrefix}birthDate-error`;
+  return (
+    <fieldset className="flex flex-col gap-1.5" data-invalid={error ? true : undefined} aria-describedby={error ? errorId : `${idPrefix}birthDate-hint`}>
+      <legend className="mb-1.5 type-ui-label text-warm-800">Date of birth</legend>
+      <div className="flex gap-3">
+        {parts.map((p) => (
+          <div key={p.name} className="flex flex-col gap-1">
+            <Label htmlFor={`${idPrefix}${p.name}`} className="type-ui-caption text-warm-500">
+              {p.label}
+            </Label>
+            <TextInput
+              id={`${idPrefix}${p.name}`}
+              name={p.name}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder={p.placeholder}
+              maxLength={p.maxLength}
+              autoComplete={p.autoComplete}
+              defaultValue={values?.[p.name]}
+              aria-invalid={!!error}
+              className={cn("text-center tabular-nums", p.className)}
+            />
+          </div>
+        ))}
+      </div>
+      {error ? (
+        <p id={errorId} role="alert" className="type-ui-caption text-red-700">
+          {error}
+        </p>
+      ) : (
+        <p id={`${idPrefix}birthDate-hint`} className="type-ui-caption text-warm-500">
+          We ask everyone. It isn&apos;t shown on your profile or stored.
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
 export function OrDivider() {
   return (
     <div className="flex items-center gap-3 type-ui-caption text-warm-400" aria-hidden>

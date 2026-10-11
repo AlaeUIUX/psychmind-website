@@ -1,10 +1,13 @@
 "use client";
 
 import { LoaderCircleIcon } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth/client";
-import { FormAlert } from "./fields";
+import { confirmAgeForGoogle, type AgeCheckState } from "@/server/auth/actions";
+import { BirthDateField, FormAlert } from "./fields";
 
 /** Remembers only *how* someone signed in (never the address) for a "Last used" hint. */
 const LAST_USED_KEY = "psychmind:last-auth";
@@ -37,10 +40,14 @@ export function LastUsed() {
   );
 }
 
-/** "Continue with Google". Disabled (with a hint in dev) until Google keys are set. */
-export function GoogleSignIn({ enabled, intent }: { enabled: boolean; intent?: "provider" }) {
+/** "Continue with Google". Disabled (with a hint in dev) until Google keys are set.
+ *  On sign-up (`ageCheck`) it asks for a date of birth first: a new Google
+ *  account is refused without that age screen (server/auth/index.ts). */
+export function GoogleSignIn({ enabled, intent, ageCheck, errorPath = "/login" }: { enabled: boolean; intent?: "provider"; ageCheck?: boolean; errorPath?: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+  const router = useRouter();
 
   const lastUsed = useLastUsed() === "google";
 
@@ -51,7 +58,8 @@ export function GoogleSignIn({ enabled, intent }: { enabled: boolean; intent?: "
     const { error } = await authClient.signIn.social({
       provider: "google",
       callbackURL: intent ? `/auth/continue?intent=${intent}` : "/auth/continue",
-      errorCallbackURL: "/login?error=google",
+      // Better Auth adds ?error=<code> (e.g. AGE_REQUIRED, access_denied).
+      errorCallbackURL: errorPath,
     });
     if (error) {
       setError("Google sign-in didn't work. Please try again or use your email.");
@@ -65,7 +73,7 @@ export function GoogleSignIn({ enabled, intent }: { enabled: boolean; intent?: "
         variant="secondary"
         type="button"
         fullWidth
-        onClick={go}
+        onClick={ageCheck ? () => setAsking(true) : go}
         disabled={!enabled || pending}
         title={enabled ? undefined : "Google sign-in isn't set up yet"}
         className="h-10 text-[14px] shadow-none"
@@ -83,6 +91,59 @@ export function GoogleSignIn({ enabled, intent }: { enabled: boolean; intent?: "
         <p className="text-center type-ui-caption text-warm-400">Dev: add GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET to enable.</p>
       )}
       <FormAlert message={error ?? undefined} />
+      {ageCheck && (
+        <AgeBeforeGoogle
+          open={asking}
+          onOpenChange={setAsking}
+          onPassed={() => {
+            setAsking(false);
+            go();
+          }}
+          onBlocked={() => {
+            setAsking(false);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/** The age screen as one step before Google. TODO(client): copy. */
+function AgeBeforeGoogle({
+  open,
+  onOpenChange,
+  onPassed,
+  onBlocked,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onPassed: () => void;
+  onBlocked: () => void;
+}) {
+  const [state, action, pending] = useActionState<AgeCheckState, FormData>(confirmAgeForGoogle, null);
+  const handled = useRef(state);
+  useEffect(() => {
+    if (state === handled.current) return;
+    handled.current = state;
+    if (state?.ok) onPassed();
+    else if (state?.blocked) onBlocked();
+  }, [state, onPassed, onBlocked]);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="app-ui sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Before you continue</DialogTitle>
+          <DialogDescription>Enter your date of birth to create your account with Google.</DialogDescription>
+        </DialogHeader>
+        <form action={action} noValidate className="flex flex-col gap-5">
+          <BirthDateField idPrefix="google-" error={state?.error} values={state?.values} />
+          <Button type="submit" fullWidth disabled={pending} aria-busy={pending || undefined} className="h-10 text-[14px]">
+            {pending && <LoaderCircleIcon className="size-4 animate-spin" />}
+            Continue with Google
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

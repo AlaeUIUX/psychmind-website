@@ -16,6 +16,8 @@ export type Email = {
   text: string;
   /** Replies go here (a session request: the patient). */
   replyTo?: string;
+  /** Extra headers, e.g. List-Unsubscribe on marketing email (server/marketing.ts). */
+  headers?: Record<string, string>;
 };
 export type OutboxEntry = Email & { id: string; sentAt: string };
 

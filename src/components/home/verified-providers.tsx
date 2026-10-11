@@ -13,7 +13,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { privacyPromises as promises, verifySteps as steps } from "@/components/shared/trust-content";
-import { providerPhoto } from "@/lib/photos";
+import { providerPhotoSource } from "@/lib/photos";
 
 // Real people, carefully verified: provider polaroids taped to the page,
 // how verification works, and the privacy promise in plain words.
@@ -24,21 +24,21 @@ const providers = [
   {
     name: "Shatiria Johnson",
     title: "Psychiatrist, M.D.",
-    photo: providerPhoto("shatiria", 520),
+    photo: providerPhotoSource("shatiria", 520),
     tags: ["Anxiety", "Mood"],
     tape: "bg-tape-lilac/90 rotate-[4deg]",
   },
   {
     name: "Sara Oliisi",
     title: "Counselor, LMHC, M.S., B.S.",
-    photo: providerPhoto("sara", 520),
+    photo: providerPhotoSource("sara", 520),
     tags: ["Trauma", "Mindfulness"],
     tape: "bg-tape-rose/90 -rotate-[3deg]",
   },
   {
     name: "Monica Rios",
     title: "Licensed Professional Counselor",
-    photo: providerPhoto("monica", 520),
+    photo: providerPhotoSource("monica", 520),
     tags: ["Self-esteem", "Teens"],
     tape: "bg-review-mint rotate-[2deg]",
   },

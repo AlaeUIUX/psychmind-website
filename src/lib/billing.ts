@@ -92,3 +92,30 @@ export function stripeConfigured() {
 export function shownListing(listing: ListingState): ListingState {
   return listing === "unpaid" && !stripeConfigured() ? "live" : listing;
 }
+
+// ---------------------------------------------------------------------------
+// Automatic renewal terms (California Automatic Renewal Law, Bus. & Prof.
+// Code § 17600 ff., and similar state laws). One text, shown right next to
+// "Activate your listing", agreed to with its own checkbox, repeated above
+// Stripe's Subscribe button, and emailed after checkout. Changing it means
+// bumping RENEWAL_TERMS_VERSION, which the consent record keeps.
+// TODO(client): approve the wording and the cancellation policy it describes.
+// Stripe's Customer Portal must cancel "at the end of the billing period"
+// (Dashboard → Settings → Billing → Customer portal) for it to be true.
+
+export const RENEWAL_TERMS_VERSION = "2026-10-11";
+
+/** The plan's real price, from Stripe when connected (server/billing/price.ts). */
+export type PlanPrice = { amount: string; interval: "day" | "week" | "month" | "year" };
+
+const every = { day: "day", week: "week", month: "month", year: "year" } as const;
+const adverb = { day: "daily", week: "weekly", month: "monthly", year: "yearly" } as const;
+
+export function renewalTerms(price: PlanPrice) {
+  return (
+    `Your ${BASE_PLAN.title} renews automatically every ${every[price.interval]} at ${price.amount} until you cancel. ` +
+    `You're charged ${price.amount} today and then ${adverb[price.interval]} on the same date, to the card you enter at checkout. ` +
+    `Cancel anytime online from Billing → Manage billing, before your next renewal date to avoid the next charge. ` +
+    `After you cancel, your listing stays active until the end of the period you've paid for.`
+  );
+}

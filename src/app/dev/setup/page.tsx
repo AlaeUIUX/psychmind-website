@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
 import { db, dbReady } from "@/db";
 import { appHost } from "@/lib/hosts";
+import { dmcaAgentConfigured, legalDetails } from "@/lib/legal";
 import { storageDriver } from "@/server/storage";
 import { appUrl } from "@/server/url";
 import journal from "../../../../drizzle/meta/_journal.json";
@@ -67,6 +68,7 @@ export default async function DevSetupPage() {
   const google = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const env = process.env.VERCEL_ENV ?? (process.env.NODE_ENV === "development" ? "local" : "local build");
   const split = appHost();
+  const legal = legalDetails();
   const admins = (process.env.ADMIN_EMAILS ?? "").split(",").filter((e) => e.trim()).length;
 
   const rows: Row[] = [
@@ -91,6 +93,13 @@ export default async function DevSetupPage() {
     process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_BASE && process.env.STRIPE_WEBHOOK_SECRET
       ? { label: "Payments", status: "ok", badge: "Stripe", detail: "Provider subscriptions are on." }
       : { label: "Payments", status: "off", badge: "Not connected", detail: "Optional for now. The billing page says payments aren't connected yet." },
+    // Legal details (lib/legal.ts, docs/legal/README.md).
+    legal.postalAddress
+      ? { label: "Postal address", status: "ok", badge: "Set", detail: "Shown in every email's footer (CAN-SPAM). Marketing email can be sent." }
+      : { label: "Postal address", status: "warn", badge: "Missing", detail: "Set LEGAL_POSTAL_ADDRESS. Marketing email refuses to send without it." },
+    dmcaAgentConfigured()
+      ? { label: "DMCA agent", status: "ok", badge: legal.dmcaAgent.registration ? "Registered" : "No reg. number", detail: "Published on /copyright." }
+      : { label: "DMCA agent", status: "warn", badge: "Missing", detail: "Register at dmca.copyright.gov, then set DMCA_AGENT_* (docs/legal/dmca-agent.md)." },
     admins
       ? { label: "Admins", status: "ok", badge: `${admins} email${admins === 1 ? "" : "s"}`, detail: "ADMIN_EMAILS become admins once their email is verified (Google counts)." }
       : { label: "Admins", status: "off", badge: "None", detail: "Add your email to ADMIN_EMAILS to open /admin." },

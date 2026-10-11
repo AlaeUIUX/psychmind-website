@@ -8,6 +8,7 @@ import { profilePath } from "@/lib/provider/links";
 import { fileUrl } from "@/lib/provider/state";
 import type { ProfileView } from "@/lib/provider/types";
 import type { BannerStyle } from "@/lib/taxonomy";
+import { selfHosted } from "@/lib/photos";
 
 // The public directory: who appears in search and on public profile pages,
 // and only what's meant to be public (no email, NPI or private addresses).
@@ -67,7 +68,7 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       titleCredentials: p.titleCredentials,
       pronouns: p.pronouns,
       bannerStyle: p.bannerStyle as BannerStyle,
-      photoUrl: p.externalPhotoUrl ?? (p.photoId ? fileUrl(p.photoId) : null),
+      photoUrl: p.externalPhotoUrl ? selfHosted(p.externalPhotoUrl) : (p.photoId ? fileUrl(p.photoId) : null),
       verified: true,
       whoYouWorkWith: p.whoYouWorkWith,
       about: p.about,

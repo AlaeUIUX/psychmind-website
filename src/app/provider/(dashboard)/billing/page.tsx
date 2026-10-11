@@ -7,9 +7,10 @@ import { ActivateButton, ManageBillingButton } from "@/components/provider/billi
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
 import { providerProfile } from "@/db/schema";
-import { BASE_PLAN, stripeConfigured } from "@/lib/billing";
+import { BASE_PLAN, renewalTerms, stripeConfigured } from "@/lib/billing";
 import { locationLimit } from "@/lib/provider/schema";
 import { requireRole } from "@/server/auth/session";
+import { planPrice } from "@/server/billing/price";
 import { loadProviderState } from "@/server/provider/data";
 import { providerOverview } from "@/server/provider/status";
 
@@ -28,6 +29,8 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const connected = stripeConfigured() && Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const verified = state.status === "approved";
   const hasSubscription = billing.status !== null && billing.status !== "canceled" && billing.status !== "incomplete_expired";
+  // Only needed while there's something to buy; checkout re-reads it.
+  const terms = verified && !hasSubscription ? await planPrice().then(renewalTerms, () => null) : null;
 
   const statusBadge = {
     live: { variant: "success" as const, label: "Active" },
@@ -115,7 +118,13 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             ) : hasSubscription ? (
               <ManageBillingButton label={listing === "grace" || listing === "paused" ? "Update payment" : "Manage billing"} />
             ) : (
-              <ActivateButton disabled={!connected} />
+              terms ? (
+                <ActivateButton disabled={!connected} terms={terms} />
+              ) : (
+                <p role="alert" className="type-small text-destructive">
+                  We couldn&apos;t load the plan&apos;s price. Refresh the page to try again.
+                </p>
+              )
             )}
           </div>
         </section>

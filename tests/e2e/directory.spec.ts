@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { adminPage, followEmailLink, TEST_PASSWORD, uniqueEmail } from "./fixtures";
+import { adminPage, fillBirthDate, followEmailLink, TEST_PASSWORD, uniqueEmail } from "./fixtures";
 
 // The directory with the 50 sample providers (seeded by migration 0007, or
 // added by the admin): search with filters, the quick look over the results,
@@ -188,6 +188,7 @@ test("signing up from the save prompt comes back with the provider saved", async
   await page.getByLabel("First name").fill("Annah");
   await page.getByLabel("Last name").fill("Solto");
   await page.getByLabel("Email").fill(email);
+  await fillBirthDate(page);
   await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();

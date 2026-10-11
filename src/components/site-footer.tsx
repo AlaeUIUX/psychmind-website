@@ -17,6 +17,8 @@ const legalLinks = [
   { href: "/privacy-policy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms of Usage" },
   { href: "/cookie-policy", label: "Cookie Policy" },
+  // The DMCA agent's details must be reachable from the site. TODO(client): label.
+  { href: "/copyright", label: "Copyright Policy" },
 ];
 
 const socials = [

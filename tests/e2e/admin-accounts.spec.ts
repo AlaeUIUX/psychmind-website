@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { adminPage, choosePassword, latestTemporaryPassword, logIn, newTemporaryPassword, TEST_PASSWORD, totp } from "./fixtures";
+import { adminPage, choosePassword, fillBirthDate, latestTemporaryPassword, logIn, newTemporaryPassword, TEST_PASSWORD, totp } from "./fixtures";
 
 // Admin accounts are made for people, never signed up for: a temporary
 // password by email, then their own password and an authenticator app
@@ -86,6 +86,7 @@ test("signing up with an admin's address creates nothing", async ({ page }) => {
   await page.getByLabel("First name").fill("Not");
   await page.getByLabel("Last name").fill("Admin");
   await page.getByLabel("Email").fill(NEW_ADMIN);
+  await fillBirthDate(page);
   await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   // Same answer as any sign-up, so the form doesn't reveal who the admins are…

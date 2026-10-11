@@ -1,5 +1,6 @@
 import "server-only";
 import { defaultOrigin } from "@/lib/hosts";
+import { legalDetails } from "@/lib/legal";
 import type { Email } from "./email";
 
 // Email templates. One short message and one button, in the landing page's
@@ -33,8 +34,15 @@ function origins() {
 const ruledRow = (content: string, style = "") =>
   `<tr><td height="32" style="height:32px;border-bottom:1.5px solid ${RULE};padding:0 24px 0 20px;font-family:${SANS};font-size:13px;line-height:32px;color:#57534e;vertical-align:bottom;${style}">${content}</td></tr>`;
 
+/** The sender's postal address (CAN-SPAM), in every email once it's set (lib/legal.ts). */
+function postalLine() {
+  const { companyName, postalAddress } = legalDetails();
+  return postalAddress ? `${companyName}, ${postalAddress}` : null;
+}
+
 function notepadFooter() {
   const { app, site } = origins();
+  const postal = postalLine();
   const link = (href: string, label: string) =>
     `<a href="${site}${href}" style="color:#44403c;text-decoration:none;font-weight:500">${label}</a>`;
   const dot = `<span style="color:#a8a29e">&nbsp;&middot;&nbsp;</span>`;
@@ -50,13 +58,14 @@ function notepadFooter() {
         ${ruledRow(`${link("/how-it-works", "How it works")}${dot}${link("/blog", "Blog")}${dot}${link("/contact", "Contact")}`)}
         ${ruledRow(`<strong style="color:${INK};font-weight:600">In crisis?</strong> Call or text 988, any time. In an emergency, call 911.`)}
         ${ruledRow(`<img src="${app}/images/email/logo.png" width="14" height="14" alt="" style="display:inline-block;vertical-align:-2px;border:0">&nbsp; &copy; ${new Date().getFullYear()} PsychMind. All rights reserved.${dot}${link("/privacy-policy", "Privacy Policy")}`, "color:#78716c")}
+        ${postal ? ruledRow(escape(postal), "color:#78716c") : ""}
       </table>
     </td>
   </tr>
 </table>`;
 }
 
-function layout({
+export function layout({
   heading,
   body,
   details,
@@ -64,6 +73,7 @@ function layout({
   footnote,
   preheader,
   reason = "You're receiving this email because of your PsychMind account.",
+  unsubscribeUrl,
 }: {
   heading: string;
   body: string;
@@ -75,6 +85,8 @@ function layout({
   preheader?: string;
   /** The small print at the very bottom. */
   reason?: string;
+  /** Marketing email only (server/marketing.ts): the one-click way out. */
+  unsubscribeUrl?: string;
 }) {
   const { app } = origins();
   const detailRows = details?.length
@@ -126,7 +138,11 @@ function layout({
         ${footnote ? `<p style="margin:28px 0 0;padding-top:20px;border-top:1px solid #f5f5f4;font-family:${SANS};font-size:13px;line-height:20px;color:#78716c">${escape(footnote)}</p>` : ""}
       </td></tr>
       <tr><td style="padding:16px 0 0">${notepadFooter()}</td></tr>
-      <tr><td style="padding:20px 4px 0;font-family:${SANS};font-size:11px;line-height:16px;color:#a8a29e;text-align:center">${escape(reason)}</td></tr>
+      <tr><td style="padding:20px 4px 0;font-family:${SANS};font-size:11px;line-height:16px;color:#a8a29e;text-align:center">${escape(reason)}${
+        unsubscribeUrl
+          ? ` <a href="${escape(unsubscribeUrl)}" style="color:#57534e;text-decoration:underline">Unsubscribe from PsychMind marketing emails</a>.`
+          : ""
+      }</td></tr>
     </table>
   </td></tr>
 </table>
@@ -143,7 +159,13 @@ function layout({
     "\n—",
     "In crisis? Call or text 988, any time. In an emergency, call 911.",
     `© ${new Date().getFullYear()} PsychMind. All rights reserved.`,
-  ].join("\n");
+    postalLine() ?? "",
+    "",
+    reason,
+    unsubscribeUrl ? `Unsubscribe from PsychMind marketing emails: ${unsubscribeUrl}` : "",
+  ]
+    .join("\n")
+    .trimEnd();
   return { html, text };
 }
 
@@ -254,6 +276,23 @@ export function adminAccessEmail(to: string, tempPassword: string, expiresAt: Da
       footnote: "Don't forward this email. If you weren't expecting it, let the PsychMind team know.",
       preheader: "Your temporary password is inside. It expires in a few days.",
       reason: "You're receiving this email because you were made a PsychMind admin.",
+    }),
+  };
+}
+
+/** The acknowledgment after checkout that automatic renewal laws ask for:
+ *  the terms they agreed to, and how to cancel. TODO(client): copy. */
+export function subscriptionStartedEmail(to: string, terms: string, billingUrl: string): Email {
+  return {
+    to,
+    subject: "Your PsychMind listing is active",
+    ...layout({
+      heading: "Your listing is active",
+      body: "Thanks for subscribing. Here are the automatic renewal terms you agreed to. Keep this email for your records.",
+      details: [["Renewal terms", terms]],
+      cta: { label: "Manage billing or cancel", url: billingUrl },
+      footnote: "You can cancel online anytime from Billing → Manage billing. Cancelling stops the next renewal.",
+      reason: "You're receiving this email because you subscribed to a PsychMind plan.",
     }),
   };
 }

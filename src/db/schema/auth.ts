@@ -28,6 +28,9 @@ export const user = pgTable("user", {
   // first log-in must replace it before anything else.
   mustChangePassword: boolean("must_change_password").notNull().default(false),
   tempPasswordExpiresAt: timestamp("temp_password_expires_at", { withTimezone: true }),
+  // When they passed the 18+ age screen at sign-up (lib/age.ts). The date of
+  // birth itself is never stored. Null for admins and pre-screen accounts.
+  ageConfirmedAt: timestamp("age_confirmed_at", { withTimezone: true }),
 });
 
 export const session = pgTable(

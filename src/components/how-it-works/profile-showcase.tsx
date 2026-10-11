@@ -5,7 +5,7 @@ import { ProfileNotes } from "./profile-notes";
 import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
-import { providerPhoto } from "@/lib/photos";
+import { providerPhotoSource } from "@/lib/photos";
 
 const specialtyGroups = [
   { label: "Anxiety & mood", tags: ["Individuals", "Couples", "Adults 18+"] },
@@ -79,7 +79,7 @@ export function ProfileShowcase() {
 
           <div className="relative -mt-14 flex items-end justify-between px-6">
             <div className="relative size-28 shrink-0 overflow-hidden rounded-4xl border-4 border-white bg-white shadow-card">
-              <Image src={providerPhoto("sara", 320, 1)} alt="" fill sizes="112px" className="object-cover" />
+              <Image src={providerPhotoSource("sara", 320, 1)} alt="" fill sizes="112px" className="object-cover" />
             </div>
             <span
               aria-hidden
@@ -199,7 +199,7 @@ export function ProfileShowcase() {
             <div className="flex h-fit w-full shrink-0 flex-col gap-6 rounded-field border border-warm-200 bg-warm-100 p-6 lg:w-[360px]">
               <div className="flex items-center gap-2.5">
                 <div className="relative size-16 shrink-0 overflow-hidden rounded-field border border-black/[0.08] bg-white">
-                  <Image src={providerPhoto("sara", 320, 1)} alt="" fill sizes="112px" className="object-cover" />
+                  <Image src={providerPhotoSource("sara", 320, 1)} alt="" fill sizes="112px" className="object-cover" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label>Sara Oliisi</Label>

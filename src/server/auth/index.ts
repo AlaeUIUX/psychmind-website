@@ -12,14 +12,17 @@ import Stripe from "stripe";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { account, providerProfile, user as userTable } from "@/db/schema";
-import { BASE_PLAN, stripeConfigured } from "@/lib/billing";
+import { AGE_OK_COOKIE, isAdult, MIN_AGE, parseIsoDate } from "@/lib/age";
+import { BASE_PLAN, renewalTerms, stripeConfigured } from "@/lib/billing";
 import { defaultOrigin } from "@/lib/hosts";
 import { rateLimit } from "@/lib/rate-limit";
 import { afterAccountDeleted, beforeAccountDeleted } from "@/server/account/cleanup";
 import { isAdminEmail } from "./admin-emails";
+import { isValidAgeOkToken, readCookie } from "./age";
 import { sendEmail } from "@/server/email";
 import { resetPasswordEmail, verifyEmail } from "@/server/emails";
-import { onSubscriptionChange } from "@/server/billing/sync";
+import { planPrice } from "@/server/billing/price";
+import { onSubscriptionChange, sendSubscriptionConfirmation } from "@/server/billing/sync";
 
 // Authentication for PsychMind (Better Auth, sessions in our own Postgres).
 // - Email + password with required email verification (Figma sign-up and
@@ -50,7 +53,16 @@ function stripePlugins() {
         // Only for themselves (the hooks.before guard below also requires a verified provider).
         authorizeReference: async ({ user, referenceId }) =>
           (user as { role?: string }).role === "provider" && referenceId === user.id,
-        onSubscriptionComplete: async ({ subscription }) => onSubscriptionChange(subscription),
+        // The automatic renewal terms again, right above Stripe's Subscribe
+        // button (they're also beside ours, with a consent box). If the price
+        // can't be read, checkout doesn't open: no sale without the terms.
+        getCheckoutSessionParams: async () => ({
+          params: { custom_text: { submit: { message: renewalTerms(await planPrice()) } } },
+        }),
+        onSubscriptionComplete: async ({ subscription }) => {
+          await onSubscriptionChange(subscription);
+          await sendSubscriptionConfirmation(subscription.referenceId);
+        },
         onSubscriptionUpdate: async ({ subscription }) => onSubscriptionChange(subscription),
         onSubscriptionCancel: async ({ subscription }) => onSubscriptionChange(subscription),
         onSubscriptionCreated: async ({ subscription }) => onSubscriptionChange(subscription),
@@ -116,14 +128,29 @@ export const auth = betterAuth({
       lastName: { type: "string", required: false, input: true },
       // Set for admins created with a temporary password (server/admin/accounts.ts).
       mustChangePassword: { type: "boolean", required: false, defaultValue: false, input: false },
+      // When this person passed the 18+ age screen (lib/age.ts). Set below, never from input.
+      ageConfirmedAt: { type: "date", required: false, input: false },
     },
   },
   databaseHooks: {
     user: {
       create: {
-        before: async (newUser) => ({
-          data: { ...newUser, role: isAdminEmail(newUser.email) ? "admin" : "patient" },
-        }),
+        before: async (newUser, ctx) => {
+          // Every self-made account passes the age screen first: the email
+          // form's date of birth is checked in hooks.before below; a new
+          // Google account needs the cookie the screen leaves (server/auth/age.ts).
+          // Admin accounts are inserted directly (server/admin/accounts.ts) and skip this.
+          let ageConfirmedAt: Date | undefined;
+          if (ctx?.path === "/sign-up/email") ageConfirmedAt = new Date();
+          else if (ctx?.path?.includes("/callback")) {
+            const cookies = ctx.request?.headers.get("cookie") ?? ctx.headers?.get("cookie");
+            if (!isValidAgeOkToken(readCookie(cookies, AGE_OK_COOKIE))) {
+              throw new APIError("FORBIDDEN", { code: "AGE_REQUIRED", message: "Create your account from the sign-up page first." });
+            }
+            ageConfirmedAt = new Date();
+          }
+          return { data: { ...newUser, role: isAdminEmail(newUser.email) ? "admin" : "patient", ...(ageConfirmedAt && { ageConfirmedAt }) } };
+        },
       },
     },
     session: {
@@ -156,6 +183,15 @@ export const auth = betterAuth({
     // authorizeReference doesn't run for a user's own subscription, so who
     // may subscribe is enforced here: verified providers only.
     before: createAuthMiddleware(async (ctx) => {
+      // The 18+ age screen guards the endpoint itself, not just our form, so a
+      // direct POST to /api/auth/sign-up/email can't skip it. The date is
+      // checked and dropped; Better Auth ignores body fields it doesn't know.
+      if (ctx.path === "/sign-up/email") {
+        const birth = parseIsoDate((ctx.body as { dateOfBirth?: unknown } | undefined)?.dateOfBirth);
+        if (!birth) throw new APIError("BAD_REQUEST", { code: "DATE_OF_BIRTH_REQUIRED", message: "Enter your date of birth." });
+        if (!isAdult(birth)) throw new APIError("FORBIDDEN", { code: "AGE_REQUIREMENT", message: `You must be ${MIN_AGE} or older to create an account.` });
+        return;
+      }
       // Per-account limit on password guesses, whatever IP they come from
       // (the IP-based limits are in rateLimit below and in the actions).
       if (ctx.path === "/sign-in/email") {

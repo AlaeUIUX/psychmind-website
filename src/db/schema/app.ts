@@ -294,3 +294,15 @@ export const analyticsVisitor = pgTable(
   },
   (t) => [primaryKey({ columns: [t.day, t.hash] })],
 );
+
+/** Marketing email consent (CAN-SPAM). One row per address that has been
+ *  sent a marketing email; `token` is the secret in its unsubscribe link, so
+ *  the link carries no address. Rows outlive accounts: an opt-out must keep
+ *  working after someone deletes their account. Transactional email (sign-up,
+ *  resets, requests) isn't affected. */
+export const emailPreference = pgTable("email_preference", {
+  email: text("email").primaryKey(),
+  token: text("token").notNull().unique(),
+  marketingOptOutAt: timestamp("marketing_opt_out_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

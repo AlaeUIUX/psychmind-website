@@ -2,15 +2,26 @@
 
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, dbReady } from "@/db";
 import { user } from "@/db/schema";
+import {
+  AGE_BLOCK_COOKIE,
+  AGE_BLOCK_SECONDS,
+  AGE_OK_COOKIE,
+  AGE_OK_SECONDS,
+  isAdult,
+  isoDate,
+  parseBirthDate,
+  type BirthDate,
+} from "@/lib/age";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { safeNext } from "@/lib/safe-next";
 import { ensureAdminAccounts } from "@/server/admin/accounts";
 import { isAdminEmail } from "./admin-emails";
+import { ageOkToken } from "./age";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
 import { getSession, hasTwoFactor, homeFor } from "./session";
@@ -18,7 +29,7 @@ import { getSession, hasTwoFactor, homeFor } from "./session";
 // Email/password auth as server actions. Roles are assigned here, server-side,
 // never from client input. Messages are new microcopy — TODO(client).
 
-export type AuthState = { error?: string; fieldErrors?: Record<string, string>; values?: Record<string, string> } | null;
+export type AuthState = { error?: string; fieldErrors?: Record<string, string>; values?: Record<string, string>; blocked?: boolean } | null;
 
 const email = z.string().trim().toLowerCase().email("Enter a valid email address.");
 const password = z.string().min(8, "Must be at least 8 characters long.").max(128, "That password is too long.");
@@ -59,6 +70,7 @@ function authMessage(err: unknown) {
     if (code === "INVALID_EMAIL_OR_PASSWORD") return "That email and password don't match. Please try again.";
     if (code === "EMAIL_NOT_VERIFIED") return "EMAIL_NOT_VERIFIED";
     if (code === "PASSWORD_TOO_SHORT") return "Must be at least 8 characters long.";
+    if (code === "DATE_OF_BIRTH_REQUIRED" || code === "AGE_REQUIREMENT") return err.message;
     if (err.status === "TOO_MANY_REQUESTS") return "Too many attempts. Please wait a few minutes and try again.";
     if (code === "INVALID_TOKEN") return "This link has expired or was already used. Request a new one.";
     if (code === "TEMPORARY_PASSWORD_EXPIRED")
@@ -68,11 +80,37 @@ function authMessage(err: unknown) {
   return "Something went wrong. Please try again.";
 }
 
+/** The age screen (lib/age.ts): the date of birth from the form, or a field
+ *  error. An under-age answer closes sign-up on this browser for a day. */
+async function screenAge(form: FormData): Promise<{ birth: BirthDate } | { error: string } | { blocked: true }> {
+  const jar = await cookies();
+  if (jar.get(AGE_BLOCK_COOKIE)) return { blocked: true };
+  const birth = parseBirthDate(form.get("birthYear"), form.get("birthMonth"), form.get("birthDay"));
+  if (!birth) return { error: "Enter your date of birth, like 04 / 21 / 1990." };
+  if (!isAdult(birth)) {
+    jar.set(AGE_BLOCK_COOKIE, "1", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: AGE_BLOCK_SECONDS });
+    return { blocked: true };
+  }
+  return { birth };
+}
+
 async function signUp(role: "patient" | "provider", form: FormData): Promise<AuthState> {
   const raw = Object.fromEntries(form) as Record<string, string>;
   const parsed = signUpSchema.safeParse(raw);
-  const values = { firstName: raw.firstName ?? "", lastName: raw.lastName ?? "", email: raw.email ?? "", businessName: raw.businessName ?? "" };
-  if (!parsed.success) return { fieldErrors: issues(parsed.error), values };
+  const values = {
+    firstName: raw.firstName ?? "",
+    lastName: raw.lastName ?? "",
+    email: raw.email ?? "",
+    businessName: raw.businessName ?? "",
+    birthMonth: raw.birthMonth ?? "",
+    birthDay: raw.birthDay ?? "",
+    birthYear: raw.birthYear ?? "",
+  };
+  const age = await screenAge(form);
+  if ("blocked" in age) return { blocked: true };
+  if (!parsed.success || "error" in age) {
+    return { fieldErrors: { ...(parsed.success ? {} : issues(parsed.error)), ...("error" in age ? { birthDate: age.error } : {}) }, values };
+  }
 
   const v = parsed.data;
   if (await limited("signup", v.email, 5, "10 m")) return { error: TOO_MANY, values };
@@ -85,19 +123,20 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
     await setPendingEmail(v.email);
     redirect("/verify-email");
   }
+  // The date of birth isn't one of the endpoint's typed fields: it's checked
+  // again by its own hook (server/auth/index.ts), then dropped.
+  const body = {
+    name: `${v.firstName} ${v.lastName}`,
+    email: v.email,
+    password: v.password,
+    firstName: v.firstName,
+    lastName: v.lastName,
+    dateOfBirth: isoDate(age.birth),
+    // The verification link signs them in and returns them here.
+    callbackURL: role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account"),
+  };
   try {
-    const result = await auth.api.signUpEmail({
-      body: {
-        name: `${v.firstName} ${v.lastName}`,
-        email: v.email,
-        password: v.password,
-        firstName: v.firstName,
-        lastName: v.lastName,
-        // The verification link signs them in and returns them here.
-        callbackURL: role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account"),
-      },
-      headers: await headers(),
-    });
+    const result = await auth.api.signUpEmail({ body, headers: await headers() });
     // An existing email gets a synthetic success (no account enumeration):
     // only touch rows that really exist.
     const [created] = await db.select({ id: user.id, role: user.role }).from(user).where(eq(user.id, result.user.id));
@@ -127,6 +166,25 @@ export async function signUpPatient(_prev: AuthState, form: FormData) {
 
 export async function signUpProvider(_prev: AuthState, form: FormData) {
   return signUp("provider", form);
+}
+
+export type AgeCheckState = { ok?: boolean; blocked?: boolean; error?: string; values?: Record<string, string> } | null;
+
+/** The age screen before "Continue with Google" on sign-up: leaves the
+ *  short-lived proof the Google account hook asks for (server/auth/age.ts). */
+export async function confirmAgeForGoogle(_prev: AgeCheckState, form: FormData): Promise<AgeCheckState> {
+  const values = { birthMonth: String(form.get("birthMonth") ?? ""), birthDay: String(form.get("birthDay") ?? ""), birthYear: String(form.get("birthYear") ?? "") };
+  const age = await screenAge(form);
+  if ("blocked" in age) return { blocked: true };
+  if ("error" in age) return { error: age.error, values };
+  (await cookies()).set(AGE_OK_COOKIE, ageOkToken(), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: AGE_OK_SECONDS,
+  });
+  return { ok: true };
 }
 
 export async function signIn(_prev: AuthState, form: FormData): Promise<AuthState> {

@@ -1,5 +1,6 @@
 import type { BannerStyle } from "@/lib/taxonomy";
 import type { ProfileView, ProviderStatus } from "./types";
+import { selfHosted } from "@/lib/photos";
 
 // The serialisable snapshot of a provider's profile that server pages hand to
 // the wizard and editor (client components). Loaded in src/server/provider.
@@ -77,7 +78,7 @@ export function toProfileView(s: ProviderState): ProfileView {
     bannerStyle: s.bannerStyle,
     publicId: s.publicId,
     isSample: s.isSample,
-    photoUrl: s.externalPhotoUrl ?? (s.photo ? fileUrl(s.photo.id) : null),
+    photoUrl: s.externalPhotoUrl ? selfHosted(s.externalPhotoUrl) : (s.photo ? fileUrl(s.photo.id) : null),
     verified: s.status === "approved",
     whoYouWorkWith: s.whoYouWorkWith,
     about: s.about,

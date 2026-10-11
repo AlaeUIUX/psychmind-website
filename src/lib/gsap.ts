@@ -10,6 +10,10 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin, useGSAP);
 
+// iOS shows and hides its toolbar mid-scroll; re-measuring every trigger on
+// that height-only resize makes pinned, scrubbed sections jump.
+ScrollTrigger.config({ ignoreMobileResize: true });
+
 // House easing, matching --ease-out-soft in globals.css.
 gsap.defaults({ ease: "power3.out", duration: 0.9 });
 

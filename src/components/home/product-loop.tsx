@@ -12,7 +12,7 @@ import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
 import { VerifiedBadge } from "@/components/ui/tag";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
-import { providerPhoto } from "@/lib/photos";
+import { providerPhotoSource } from "@/lib/photos";
 
 // "Discovery" as a bento box: the whole product loop in one view —
 // search → verify → request → privacy → (back to search). Cards are laid out
@@ -165,7 +165,7 @@ function VerifiedVisual({ run }: { run: number }) {
     <div className="relative h-full bg-warm-100">
       <div data-parallax className="absolute -inset-y-[8%] inset-x-0">
         <Image
-          src={providerPhoto("sara", 900)}
+          src={providerPhotoSource("sara", 900)}
           alt="Sara Oliisi, a counselor on PsychMind"
           fill
           sizes="(min-width: 1024px) 500px, 100vw"

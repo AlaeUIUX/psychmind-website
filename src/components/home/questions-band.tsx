@@ -76,6 +76,10 @@ export function QuestionsBand() {
       const mm = gsap.matchMedia();
       mm.add(MOTION_OK, () => {
         const q = gsap.utils.selector(root);
+        // Phones and tablets get a lighter render: no SVG/CSS blur filters or
+        // blend modes in the frames that scrub, so iOS can keep the band on
+        // the compositor instead of repainting the whole sheet every frame.
+        const lite = !window.matchMedia("(pointer: fine)").matches;
         const box = frame.current!.getBoundingClientRect();
         const W = box.width;
         const H = box.height;
@@ -83,7 +87,8 @@ export function QuestionsBand() {
         const svg = q<SVGSVGElement>("[data-trail-svg]")[0];
         const trail = q<SVGPathElement>("[data-trail]")[0];
         const comet = q<SVGPathElement>("[data-comet]")[0];
-        const dot = q<SVGGElement>("[data-dot]")[0];
+        const halo = q<SVGPathElement>("[data-comet-halo]")[0];
+        const dot = q<HTMLElement>("[data-dot]")[0];
         const orb = q<HTMLElement>("[data-orb]")[0];
         const ring = q<HTMLElement>("[data-ring]")[0];
         const flash = q<HTMLElement>("[data-flash]")[0];
@@ -112,7 +117,27 @@ export function QuestionsBand() {
         svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
         trail.setAttribute("d", d);
         comet.setAttribute("d", d);
+        halo.setAttribute("d", d);
         const total = trail.getTotalLength();
+
+        // Sample the trail once, so each frame looks the light's position up
+        // instead of asking the browser to measure the path.
+        const STEP = 2;
+        const samples = Math.ceil(total / STEP) + 1;
+        const xs = new Float32Array(samples);
+        const ys = new Float32Array(samples);
+        for (let i = 0; i < samples; i++) {
+          const p = trail.getPointAtLength(Math.min(total, i * STEP));
+          xs[i] = p.x;
+          ys[i] = p.y;
+        }
+        const pointAt = (len: number) => {
+          const f = Math.min(samples - 1, Math.max(0, len / STEP));
+          const i = Math.floor(f);
+          const j = Math.min(samples - 1, i + 1);
+          const t = f - i;
+          return { x: xs[i] + (xs[j] - xs[i]) * t, y: ys[i] + (ys[j] - ys[i]) * t };
+        };
 
         // Length along the trail at each plotted point.
         const probe = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -128,19 +153,26 @@ export function QuestionsBand() {
         const COMET = Math.min(90, total * 0.06);
         trail.style.strokeDasharray = `${total}`;
         comet.style.strokeDasharray = `${COMET} ${total}`;
+        halo.style.strokeDasharray = `${COMET} ${total}`;
         gsap.set(orb, { left: orbPt.x, top: orbPt.y, xPercent: -50, yPercent: -50, scale: 0, autoAlpha: 0 });
         gsap.set(ring, { left: orbPt.x, top: orbPt.y, xPercent: -50, yPercent: -50, scale: 0.6, autoAlpha: 0 });
         gsap.set(flash, { autoAlpha: 0, background: `radial-gradient(circle at ${orbPt.x}px ${orbPt.y}px, rgba(255,214,226,0.55), rgba(192,16,72,0.18) 35%, transparent 70%)` });
 
         const state = { p: 0 };
+        let shown: boolean | null = null;
         const render = () => {
           const len = state.p * total;
           trail.style.strokeDashoffset = `${total - len}`;
           comet.style.strokeDashoffset = `${COMET - len}`;
-          const pt = trail.getPointAtLength(Math.max(0.01, len));
-          dot.setAttribute("transform", `translate(${pt.x} ${pt.y})`);
-          dot.style.opacity = state.p > 0.002 && state.p < 0.999 ? "1" : "0";
-          comet.style.opacity = state.p > 0.002 && state.p < 0.999 ? "1" : "0";
+          halo.style.strokeDashoffset = `${COMET - len}`;
+          // the light is an HTML layer, so moving it is a compositor-only transform
+          const pt = pointAt(len);
+          dot.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0)`;
+          const show = state.p > 0.002 && state.p < 0.999;
+          if (show !== shown) {
+            shown = show;
+            dot.style.opacity = comet.style.opacity = halo.style.opacity = show ? "1" : "0";
+          }
         };
         render();
 
@@ -155,7 +187,7 @@ export function QuestionsBand() {
           },
         );
 
-        const splits = items.map((el) => SplitText.create(el, { type: "words" }));
+        const splits = items.map((el) => SplitText.create(el, { type: "words", wordsClass: "will-change-transform" }));
         gsap.set(items, { autoAlpha: 0 });
         gsap.set(q("[data-answer] > *"), { autoAlpha: 0, y: 30 });
 
@@ -166,7 +198,8 @@ export function QuestionsBand() {
         const D = 7; // trail length in timeline units
         const tl = gsap.timeline({
           defaults: { ease: "none" },
-          scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: 0.6 },
+          // a lighter catch-up on touch, so the trail stays attached to the finger
+          scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: lite ? 0.25 : 0.6 },
         });
 
         tl.to(state, { p: 1, duration: D, ease: "none", onUpdate: render }, 0);
@@ -192,7 +225,7 @@ export function QuestionsBand() {
             },
             appear,
           );
-          if (i > 0) tl.to(items[i - 1], { opacity: 0.3, filter: "blur(0.6px)", duration: 0.4 }, start);
+          if (i > 0) tl.to(items[i - 1], { opacity: 0.3, ...(lite ? {} : { filter: "blur(0.6px)" }), duration: 0.4 }, start);
         });
 
         // The globe glows up out of the background as the light heads for it…
@@ -205,10 +238,10 @@ export function QuestionsBand() {
         tl.fromTo(ring, { autoAlpha: 0.6, scale: 0.6 }, { autoAlpha: 0, scale: 14, duration: 0.6, ease: "power2.out", immediateRender: false }, "activate");
         tl.to(flash, { autoAlpha: 1, duration: 0.07 }, "activate");
         tl.to(flash, { autoAlpha: 0, duration: 0.5 }, "activate+=0.07");
-        tl.to([...items, trail, comet], { opacity: 0, filter: "blur(6px)", duration: 0.45, stagger: 0.02 }, "activate+=0.05");
+        tl.to([...items, trail, comet, halo], { opacity: 0, ...(lite ? { y: -8 } : { filter: "blur(6px)" }), duration: 0.45, stagger: 0.02 }, "activate+=0.05");
         tl.to(q("[data-eyebrow]"), { autoAlpha: 0, duration: 0.3 }, "activate");
         // the globe drifts up and dissolves into the glow behind the answer
-        tl.to(orb, { y: H * 0.5 - orbPt.y, scale: 7, autoAlpha: 0.28, filter: "blur(28px)", duration: 0.7, ease: "power2.inOut" }, "activate+=0.2");
+        tl.to(orb, { y: H * 0.5 - orbPt.y, scale: 7, autoAlpha: lite ? 0.2 : 0.28, ...(lite ? {} : { filter: "blur(28px)" }), duration: 0.7, ease: "power2.inOut" }, "activate+=0.2");
         // the answer flickers on, like a light catching
         tl.to(q("[data-answer] > *"), {
           keyframes: [
@@ -233,11 +266,14 @@ export function QuestionsBand() {
       className="relative motion-safe:h-[420vh] motion-safe:sm:h-[440vh]"
     >
       <div ref={frame} data-header-dark className="motion-safe:sticky motion-safe:top-0 motion-safe:h-svh">
-        <div data-sheet className="grain relative h-full overflow-hidden bg-warm-950 text-warm-25 motion-reduce:py-24">
+        <div
+          data-sheet
+          className="grain relative h-full overflow-hidden bg-warm-950 text-warm-25 motion-reduce:py-24 pointer-coarse:after:opacity-[0.05] pointer-coarse:after:mix-blend-normal"
+        >
           {/* soft crimson glow, low and off-centre */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-1/3 left-1/2 h-[80%] w-[90%] -translate-x-1/2 rounded-full bg-brand-primary/20 blur-[120px]"
+            className="pointer-events-none absolute -bottom-1/3 left-1/2 h-[80%] w-[90%] -translate-x-1/2 rounded-full bg-brand-primary/20 blur-[120px] will-change-transform"
           />
 
           {/* The trail, its travelling light, and the globe it leads to. */}
@@ -252,12 +288,19 @@ export function QuestionsBand() {
               </filter>
             </defs>
             <path data-trail fill="none" stroke="rgb(215 211 208 / 0.4)" strokeWidth="1.4" strokeLinecap="round" />
-            <path data-comet fill="none" stroke="#ffd6e2" strokeWidth="2.2" strokeLinecap="round" filter="url(#trail-glow)" style={{ opacity: 0 }} />
-            <g data-dot style={{ opacity: 0 }}>
-              <circle r="9" fill="rgb(192 16 72 / 0.35)" filter="url(#trail-glow)" />
-              <circle r="3.2" fill="#fff" />
-            </g>
+            {/* on touch, a wide faint stroke stands in for the blur filter */}
+            <path data-comet-halo fill="none" stroke="rgb(255 154 184 / 0.28)" strokeWidth="7" strokeLinecap="round" className="pointer-fine:hidden" style={{ opacity: 0 }} />
+            <path data-comet fill="none" stroke="#ffd6e2" strokeWidth="2.2" strokeLinecap="round" className="pointer-fine:[filter:url(#trail-glow)]" style={{ opacity: 0 }} />
           </svg>
+          {/* The travelling light, as its own layer so it moves without repainting the trail. */}
+          <span
+            data-dot
+            aria-hidden
+            className="pointer-events-none absolute top-0 left-0 -mt-4 -ml-4 size-8 rounded-full will-change-transform motion-reduce:hidden"
+            style={{ opacity: 0, background: "radial-gradient(circle, rgb(192 16 72 / 0.42) 0%, rgb(192 16 72 / 0.3) 35%, transparent 70%)" }}
+          >
+            <span className="absolute inset-0 m-auto size-[6.4px] rounded-full bg-white shadow-[0_0_4px_rgb(255_255_255/0.7)]" />
+          </span>
           <span
             data-ring
             aria-hidden
@@ -267,7 +310,7 @@ export function QuestionsBand() {
           <span
             data-orb
             aria-hidden
-            className="pointer-events-none absolute size-24 rounded-full opacity-0 mix-blend-screen blur-[3px] motion-reduce:hidden sm:size-28"
+            className="pointer-events-none absolute size-24 rounded-full opacity-0 will-change-transform motion-reduce:hidden pointer-fine:mix-blend-screen pointer-fine:blur-[3px] sm:size-28"
             style={{
               background:
                 "radial-gradient(circle, rgb(255 222 232 / 0.85) 0%, rgb(236 72 120 / 0.55) 24%, rgb(192 16 72 / 0.28) 48%, rgb(192 16 72 / 0.08) 64%, transparent 72%)",

@@ -18,8 +18,10 @@ export function contentSecurityPolicy(nonce: string | null) {
     `script-src ${scripts.join(" ")}`,
     // Inline style attributes are everywhere in React; styles can't run code.
     "style-src 'self' 'unsafe-inline'",
-    // blob: for upload previews; Google profile photos; sample-provider photos.
-    "img-src 'self' blob: data: https://images.unsplash.com https://lh3.googleusercontent.com",
+    // blob: for upload previews. No third-party hosts: other sites' images
+    // come through our own /_next/image (lib/photos.ts selfHosted), so
+    // visitors' IP addresses aren't shared with them.
+    "img-src 'self' blob: data:",
     "font-src 'self' data:",
     `connect-src 'self'${dev ? " ws: wss:" : ""}`,
     "frame-src 'self'",

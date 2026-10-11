@@ -7,6 +7,7 @@ import { profilePath } from "@/lib/provider/links";
 import { fileUrl } from "@/lib/provider/state";
 import { requireRole } from "@/server/auth/session";
 import { getDirectoryProvider } from "@/server/directory/data";
+import { selfHosted } from "@/lib/photos";
 
 // Session requests: who a request can go to, and the lists patients and
 // providers see. Each function scopes itself to its caller.
@@ -87,7 +88,7 @@ export async function myRequests() {
       name: displayName(named(p)),
       first: shortName(named(p)),
       title: p.titleCredentials,
-      photoUrl: p.externalPhotoUrl ?? (p.photoId ? fileUrl(p.photoId) : null),
+      photoUrl: p.externalPhotoUrl ? selfHosted(p.externalPhotoUrl) : (p.photoId ? fileUrl(p.photoId) : null),
       href: profilePath({ ...p, businessName: p.businessName }),
     },
   }));
