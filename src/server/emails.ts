@@ -347,3 +347,139 @@ export function sessionRequestSentEmail(to: string, providerName: string, cta: {
     }),
   };
 }
+
+// Changing your email or password, and account recovery when the old inbox
+// is gone (server/account/email-change.ts, server/account/recovery.ts).
+// TODO(client): copy for every email below.
+
+/** "n•••@gmail.com": enough to recognise an address without spelling it out. */
+export function maskEmail(email: string) {
+  const [local, domain] = email.split("@");
+  if (!domain) return "•••";
+  return `${local.slice(0, 1)}•••@${domain}`;
+}
+
+/** Step 1 of changing your email: proof that the current inbox is yours. */
+export function emailChangeStartEmail(to: string, url: string): Email {
+  return {
+    to,
+    subject: "Confirm it's you to change your PsychMind email",
+    ...layout({
+      heading: "Confirm it's you",
+      body: "You asked to change the email on your PsychMind account. Continue below to choose your new email. The link expires in 30 minutes.",
+      cta: { label: "Choose a new email", url },
+      footnote: "If you didn't ask for this, you can ignore this email and nothing will change. If you think someone else knows your password, change it in Settings.",
+    }),
+  };
+}
+
+/** Step 2: proof that the new inbox is theirs too. */
+export function emailChangeConfirmEmail(to: string, url: string): Email {
+  return {
+    to,
+    subject: "Confirm your new email for PsychMind",
+    ...layout({
+      heading: "Confirm your new email",
+      body: "Tap the button below to make this your PsychMind email. The link expires in 30 minutes.",
+      cta: { label: "Confirm new email", url },
+      footnote: "If you didn't ask for this, you can ignore this email.",
+    }),
+  };
+}
+
+/** To the old address once the change is done. */
+export function emailChangedNoticeEmail(to: string, newEmail: string, helpUrl: string, bySupport = false): Email {
+  return {
+    to,
+    subject: "Your PsychMind email was changed",
+    ...layout({
+      heading: "Your email was changed",
+      body: `${bySupport ? "Our support team moved your PsychMind account" : "Your PsychMind account was moved"} to ${escape(maskEmail(newEmail))}. Account emails won't come to this address anymore.`,
+      cta: { label: "This wasn't me", url: helpUrl },
+      footnote: "If you made this change, there's nothing else to do.",
+    }),
+  };
+}
+
+export function passwordChangedEmail(to: string, resetUrl: string): Email {
+  return {
+    to,
+    subject: "Your PsychMind password was changed",
+    ...layout({
+      heading: "Your password was changed",
+      body: "The password for your PsychMind account was just changed, and you were logged out everywhere else.",
+      cta: { label: "This wasn't me: reset it", url: resetUrl },
+      footnote: "If you made this change, there's nothing else to do.",
+    }),
+  };
+}
+
+/** To the address they want to be reached at. Says the same whether or not
+ *  an account matched. */
+export function recoveryReceivedEmail(to: string): Email {
+  return {
+    to,
+    subject: "We got your account recovery request",
+    ...layout({
+      heading: "We got your request",
+      body: "Our support team will check your details and reply to this address, usually within 2 business days. For your security, nothing on any account changes until a person has verified who you are.",
+      footnote: "If you didn't ask for this, you can ignore this email.",
+      reason: "You're receiving this email because this address was given in a PsychMind account recovery request.",
+    }),
+  };
+}
+
+/** To the account's current address: a heads-up, in case it's not them. */
+export function recoveryOwnerAlertEmail(to: string, helpUrl: string): Email {
+  return {
+    to,
+    subject: "Someone asked to move your PsychMind account",
+    ...layout({
+      heading: "A request to move your account",
+      body: "Someone asked our support team to move your PsychMind account to a different email address. We check identity before making any change. If this was you, there's nothing to do.",
+      cta: { label: "This wasn't me", url: helpUrl },
+      footnote: "If this wasn't you, tell us and we'll keep your account as it is. It's also a good moment to turn on two-step login in Settings.",
+    }),
+  };
+}
+
+export function adminRecoveryRequestEmail(to: string, reviewUrl: string): Email {
+  return {
+    to,
+    subject: "New account recovery request",
+    ...layout({
+      heading: "Someone needs help getting into their account",
+      body: "A new account recovery request is waiting. Check who they are before moving the account.",
+      cta: { label: "Open account recovery", url: reviewUrl },
+      reason: "You're receiving this email because you're a PsychMind admin.",
+    }),
+  };
+}
+
+/** Approved: the account now uses this address; a link to choose a password. */
+export function recoveryCompletedEmail(to: string, passwordUrl: string): Email {
+  return {
+    to,
+    subject: "Your PsychMind account is back",
+    ...layout({
+      heading: "Your account is back",
+      body: "We verified your request, and your PsychMind account now uses this email address. Choose a new password to log in. The link expires in 24 hours.",
+      cta: { label: "Choose a password", url: passwordUrl },
+      footnote: "After you log in, we recommend turning on two-step login in Settings, so you can always prove it's you.",
+    }),
+  };
+}
+
+export function recoveryDeclinedEmail(to: string, note: string): Email {
+  return {
+    to,
+    subject: "About your account recovery request",
+    ...layout({
+      heading: "We couldn't verify your request",
+      body: "We looked at your account recovery request but couldn't confirm the account is yours, so nothing was changed.",
+      details: [["Note from our team", note]],
+      footnote: "You can send a new request with more details anytime.",
+      reason: "You're receiving this email because this address was given in a PsychMind account recovery request.",
+    }),
+  };
+}

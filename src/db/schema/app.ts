@@ -306,3 +306,38 @@ export const emailPreference = pgTable("email_preference", {
   marketingOptOutAt: timestamp("marketing_opt_out_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const recoveryStatus = pgEnum("account_recovery_status", ["open", "completed", "declined"]);
+
+/** "Can't access your email?": someone asks the team to move an account to a
+ *  new address. A person checks who they are (providers send a photo ID)
+ *  before anything changes. The ID document is deleted once the request is
+ *  closed. `userId` is the account the email matched, if any; the requester
+ *  is never told whether there was one. */
+export const accountRecoveryRequest = pgTable(
+  "account_recovery_request",
+  {
+    id: id(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    /** The address on the account, as typed (lowercased). */
+    accountEmail: text("account_email").notNull(),
+    /** Where to reach them now, and the account's new email if approved. */
+    contactEmail: text("contact_email").notNull(),
+    fullName: text("full_name").notNull(),
+    claimedRole: text("claimed_role", { enum: ["patient", "provider"] }).notNull(),
+    licenseNumber: text("license_number"),
+    details: text("details"),
+    /** Signed in when they asked (lost the inbox, no authenticator). */
+    signedIn: boolean("signed_in").notNull().default(false),
+    idStorageKey: text("id_storage_key"),
+    idFileName: text("id_file_name"),
+    idMimeType: text("id_mime_type"),
+    status: recoveryStatus("status").notNull().default("open"),
+    resolvedById: text("resolved_by_id").references(() => user.id, { onDelete: "set null" }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    /** Declined: the reply sent to the contact address. */
+    resolutionNote: text("resolution_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("account_recovery_status_idx").on(t.status, t.createdAt), index("account_recovery_email_idx").on(t.accountEmail)],
+);

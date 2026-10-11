@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { StepActions } from "@/components/onboarding/step-actions";
-import { useOptionalOnboarding } from "@/components/onboarding/onboarding-context";
+import { useOptionalOnboarding, useUploadingFlag } from "@/components/onboarding/onboarding-context";
 import { zodResolver } from "@/lib/forms/zod-resolver";
 import type { ActionResult, ProviderState } from "@/lib/provider/state";
 import type { ProfileView } from "@/lib/provider/types";
@@ -35,6 +35,7 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
   nextHref,
   toPreview,
   onPreview,
+  uploading,
 }: {
   section: SectionKey;
   schema: S;
@@ -43,6 +44,8 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
   nextHref?: string;
   toPreview?: (values: z.input<S>) => Partial<ProfileView>;
   onPreview?: (patch: Partial<ProfileView>) => void;
+  /** A file is still uploading: saving waits for it (also blocks ⌘/Ctrl + Enter). */
+  uploading?: boolean;
 }) {
   const router = useRouter();
   const onboarding = useOptionalOnboarding();
@@ -77,7 +80,7 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
     toast.error(result.error ?? "Please fix the highlighted fields.");
   };
 
-  const onSubmit = form.handleSubmit(() => {
+  const submit = form.handleSubmit(() => {
     // Send the raw input: the server parses it with the same schema.
     const values = form.getValues();
     startTransition(async () => {
@@ -89,30 +92,43 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
     });
   });
 
+  const onSubmit = (e?: React.BaseSyntheticEvent) => {
+    if (uploading) {
+      e?.preventDefault();
+      return Promise.resolve();
+    }
+    return submit(e);
+  };
+
   return { form, onSubmit, pending };
 }
 
-/** Wizard: Go back / Save and continue. Editor: a single Save changes. */
+/** Wizard: Go back / Save and continue. Editor: a single Save changes.
+ *  Both wait while a file is uploading. */
 export function SectionFooter({
   mode,
   backHref,
   pending,
+  uploading = false,
   dirty = true,
   disabled,
 }: {
   mode: SectionMode;
   backHref?: string | null;
   pending: boolean;
+  uploading?: boolean;
   dirty?: boolean;
   disabled?: boolean;
 }) {
-  if (mode === "wizard") return <StepActions backHref={backHref} pending={pending} disabled={disabled} />;
+  useUploadingFlag(uploading);
+  if (mode === "wizard") return <StepActions backHref={backHref} pending={pending} uploading={uploading} disabled={disabled} />;
   return (
     <div className="flex items-center justify-end gap-3 border-t border-warm-200 pt-6">
-      {!dirty && <span className="type-small text-text-placeholder">All changes saved</span>}
-      <Button type="submit" variant="primary" disabled={pending || !dirty || disabled} aria-busy={pending || undefined}>
-        {pending && <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-        {pending ? "Saving…" : "Save changes"}
+      {!dirty && !uploading && <span className="type-small text-text-placeholder">All changes saved</span>}
+      <Button type="submit" variant="primary" disabled={pending || uploading || !dirty || disabled} aria-busy={pending || uploading || undefined}>
+        {(pending || uploading) && <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
+        {/* TODO(client): "Uploading…" */}
+        {pending ? "Saving…" : uploading ? "Uploading…" : "Save changes"}
       </Button>
     </div>
   );

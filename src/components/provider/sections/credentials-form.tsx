@@ -58,6 +58,8 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
   const docs = new Map(state.licenses.filter((l) => l.document).map((l) => [l.state, l.document!]));
   const [documents, setDocuments] = useState<Map<string, UploadMeta>>(docs);
   const [uploads, setUploads] = useState<Record<string, UploadItem | undefined>>({});
+  // Saving waits while any license document is still uploading.
+  const uploading = Object.values(uploads).some((u) => u?.status === "uploading");
 
   const existing = new Map(state.licenses.map((l) => [l.state, l]));
   // The live preview shows each license number and the years in practice as typed.
@@ -75,6 +77,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
     nextHref,
     onPreview,
     toPreview,
+    uploading,
     defaultValues: {
       npiNumber: state.npiNumber,
       yearsExperience: state.yearsExperience ?? "",
@@ -298,7 +301,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
         <p className="type-small text-text-tertiary">Changes to your licenses are re-checked by our team before they show as verified.</p>
       )}
 
-      <SectionFooter mode={mode} backHref={backHref} pending={pending} dirty={formState.isDirty} />
+      <SectionFooter mode={mode} backHref={backHref} pending={pending} uploading={uploading} dirty={formState.isDirty} />
     </form>
   );
 }

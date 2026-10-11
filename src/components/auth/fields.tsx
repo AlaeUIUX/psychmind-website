@@ -76,12 +76,14 @@ export function TextInput({ id, error, className, ...props }: React.ComponentPro
 /** Email with an inline "Did you mean …?" fix for common domain typos. */
 export function EmailInput({
   id = "email",
+  name = "email",
   error,
   defaultValue,
   onValue,
   autoFocus,
 }: {
   id?: string;
+  name?: string;
   error?: string;
   defaultValue?: string;
   onValue?: (v: string) => void;
@@ -94,7 +96,7 @@ export function EmailInput({
     <>
       <TextInput
         id={id}
-        name="email"
+        name={name}
         type="email"
         autoComplete="email"
         inputMode="email"

@@ -20,7 +20,7 @@ function BackToLogin() {
 }
 
 /** The address an email went to, with expiry — Figma A5's "We sent an email!" card. */
-function SentTo({ email, what, expires }: { email: string; what: string; expires: string }) {
+export function SentTo({ email, what, expires }: { email: string; what: string; expires: string }) {
   const inbox = inboxLink(email);
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-warm-200 p-4">
@@ -85,6 +85,13 @@ export function ForgotPasswordForm() {
         </AuthField>
         <SubmitButton pendingLabel="Sending…">Send reset link</SubmitButton>
       </form>
+      {/* TODO(client): copy. */}
+      <p className="type-ui-small text-warm-600">
+        Can&apos;t access that email anymore?{" "}
+        <Link href="/account-recovery" className="font-medium text-warm-900 underline underline-offset-4">
+          Get help from support
+        </Link>
+      </p>
     </div>
   );
 }

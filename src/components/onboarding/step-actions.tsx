@@ -6,16 +6,19 @@ import { HoverArrow } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 
-/** Sticky wizard footer: Back · Continue, with the ⌘/Ctrl + Enter hint. */
+/** Sticky wizard footer: Back · Continue, with the ⌘/Ctrl + Enter hint.
+ *  While a file in the step is uploading, Continue waits ('Uploading…'). */
 export function StepActions({
   backHref,
   submitLabel = "Save and continue",
   pending,
+  uploading,
   disabled,
 }: {
   backHref?: string | null;
   submitLabel?: string;
   pending?: boolean;
+  uploading?: boolean;
   disabled?: boolean;
 }) {
   return (
@@ -34,10 +37,11 @@ export function StepActions({
         <Kbd meta className="hidden sm:inline-flex" aria-hidden title="Save and continue">
           ↵
         </Kbd>
-        <Button type="submit" size="default" className="h-10 px-4 text-[14px]" disabled={disabled || pending} aria-busy={pending || undefined}>
-          {pending && <LoaderCircleIcon className="size-4 animate-spin" />}
-          {pending ? "Saving…" : submitLabel}
-          {!pending && <HoverArrow />}
+        <Button type="submit" size="default" className="h-10 px-4 text-[14px]" disabled={disabled || pending || uploading} aria-busy={pending || uploading || undefined}>
+          {(pending || uploading) && <LoaderCircleIcon className="size-4 animate-spin motion-reduce:animate-none" />}
+          {/* TODO(client): "Uploading…" */}
+          {pending ? "Saving…" : uploading ? "Uploading…" : submitLabel}
+          {!pending && !uploading && <HoverArrow />}
         </Button>
       </div>
     </div>

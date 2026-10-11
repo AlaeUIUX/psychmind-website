@@ -64,6 +64,8 @@ test("unsubscribe links: a bad token is explained, and one-click POSTs answer", 
 
 test("the copyright policy is public and linked from the footer", async ({ page }) => {
   await page.goto("/");
+  // The home page hydrates slowly in dev; a click before the router is ready is dropped.
+  await page.waitForLoadState("networkidle");
   await page.getByRole("contentinfo").getByRole("link", { name: "Copyright Policy" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Copyright policy" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "3. Our designated agent" })).toBeVisible();

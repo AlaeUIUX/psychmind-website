@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon, CircleCheckIcon, EyeIcon, LogOutIcon } from "lucide-react";
+import { CheckIcon, CircleCheckIcon, EyeIcon, LoaderCircleIcon, LogOutIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -186,7 +186,7 @@ function StepRail({ step, reached, complete }: { step: StepKey | "welcome" | "su
 function Frame({ reached, complete, children }: Omit<ShellProps, "initial">) {
   const path = usePathname();
   const step = currentStep(path);
-  const { preview, focusRegion } = useOnboarding();
+  const { preview, focusRegion, uploading } = useOnboarding();
   const stepRegion = ONBOARDING_STEPS.find((s) => s.key === step)?.region ?? null;
   const highlight = focusRegion ?? stepRegion;
   const showPreview = step !== "welcome" && step !== "submitted";
@@ -225,12 +225,20 @@ function Frame({ reached, complete, children }: Omit<ShellProps, "initial">) {
               </SheetContent>
             </Sheet>
           )}
-          <Button asChild variant="ghost" size="sm" className="h-8">
-            <Link href="/provider">
-              <LogOutIcon />
+          {uploading ? (
+            // Leaving mid-upload would lose the file: wait for it, like the step's buttons.
+            <Button variant="ghost" size="sm" className="h-8" disabled aria-busy>
+              <LoaderCircleIcon className="animate-spin motion-reduce:animate-none" />
               <span className="hidden sm:inline">Save &amp; exit</span>
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="sm" className="h-8">
+              <Link href="/provider">
+                <LogOutIcon />
+                <span className="hidden sm:inline">Save &amp; exit</span>
+              </Link>
+            </Button>
+          )}
         </div>
       </header>
 

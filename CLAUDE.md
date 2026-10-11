@@ -50,6 +50,12 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - An expired temporary password is refused at sign-in (only someone who knows it is told). A password reset replaces it too.
   - Admin → Admins lists everyone and their setup state; "Reset access" emails a new temporary password and clears their authenticator and sessions. Everything is audit-logged.
 - **Account data:** Settings → "Download your data" (`/api/account/export`, no secrets) and "Delete your account" (password required when the account has one; `server/account/cleanup.ts` cancels billing and deletes files first).
+- **Login settings** (Settings → Login, every role; `components/app/login-settings.tsx`, `server/account/settings-actions.ts`):
+  - **Change email** takes two proofs (`server/account/email-change.ts`): a link to the current inbox, or the authenticator app (plus password) when that inbox is gone, opens `/change-email`; then a link to the new address opens `/change-email/confirm`, where a button (not the link, so mail scanners can't spend it) makes the change. The old address is told, and Stripe's customer email follows. Links are one-time hashed tokens in `verification` (`server/account/tokens.ts`), 30 minutes. Admins can only move to another `ADMIN_EMAILS` address, and nobody else can take one.
+  - **Password:** change it (other sessions end, and an email says so), or add one to a Google-only account. Admins need 12+ characters.
+- **Account recovery** (`/account-recovery`, `/api/account-recovery`, `server/account/recovery.ts`, Admin → Account recovery): for someone with no inbox and no authenticator. A request carries a new contact email, and a photo ID (required for providers). It answers the same whether or not an account matched, is rate-limited per IP and per account email, and alerts the account's current inbox. An admin compares the ID with the account (each ID view is audited), then moves the account (signs it out everywhere, optionally clears two-step login, emails a 24-hour link to choose a password) or declines with a note. The ID is deleted when the request closes. Admin accounts are recovered with Reset access instead.
+- **Daily job** (`/api/cron/daily`, `vercel.json`, needs `CRON_SECRET`): deletes uploads no profile uses after a day, sends onboarding reminders (1, 3, 7 days), re-checks billing (missed webhooks, "profile paused"), and runs `maintainAnalytics()`. Emails that must go out once use `server/once.ts` (an `audit_log` row per key).
+- **Billing emails** (`server/billing/notices.ts`, pure rules in `lib/billing-notices.ts`): payment failed, profile paused, payment recovered, cancellation confirmed.
 - **CSP:** set in `proxy.ts` (`lib/csp.ts`). Portal pages get a per-request nonce with `'strict-dynamic'`; marketing pages allow `'self' 'unsafe-inline'` scripts. A new third-party script, image host or form target must be added there.
 - **Directory** (`src/server/directory`, `components/directory`, `components/search`, route group `(directory)`):
   - **Search** (`/providers`, Figma S1/S5/S6): the search bar on top, the filters on the left, and the results; on phones, a "Search filters" drawer that applies on Save.
@@ -96,6 +102,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - squarer radii via `--radius-button`, `--radius-field` and `--radius-card`;
   - `animate-ui-enter` for content as it enters.
 - **Auth pages** share a persistent animated panel (`components/auth/portal-panel.tsx`).
+- **Profile photos** are cropped before upload (`components/provider/photo-crop-dialog.tsx`, react-easy-crop), and Save waits while any file is uploading.
 - **Onboarding** has its own shell (`components/onboarding`): step rail, save status, and a step-by-step live preview (`step-preview.tsx`). Each step shows its part of the profile at real size, in a browser window that wraps it on the gray paper panel. "Full profile" opens the whole page. Below `xl` the top bar shows the current phase and step instead of all phases.
 
 ## Route groups
@@ -107,7 +114,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 | `(directory)` | `/providers`: results and public profiles (marketing chrome, account menu when signed in) |
 | `(patient)` | `/account` |
 | `(provider)` | `/provider` |
-| `admin/(console)` | `/admin`: the admin console (AppShell; `requireRole("admin")`) |
+| `admin/(console)` | `/admin`: the admin console (AppShell; `requireRole("admin")`), including Account recovery and Settings |
 | `admin/(entry)` | `/admin/login` and `/admin/password` (first log-in), in the auth shell |
 
 The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is reserved for the admin dashboard.

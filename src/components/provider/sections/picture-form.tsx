@@ -6,20 +6,25 @@ import { UploadDropzone, type UploadItem } from "@/components/app/upload-dropzon
 import { pictureSchema } from "@/lib/provider/schema";
 import { fileUrl, type UploadMeta } from "@/lib/provider/state";
 import { UPLOAD_RULES } from "@/lib/provider/uploads";
+import { PhotoCropDialog } from "../photo-crop-dialog";
 import { uploadFile } from "../upload-client";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 // Figma P2 "Picture *": one photo, shown in the preview's avatar as soon as
 // it's uploaded. Accepted types and size aren't in Figma (gap) — JPG, PNG or
-// WebP up to 5 MB.
+// WebP up to 5 MB. A picked photo opens the crop dialog first; the cropped
+// square (WebP/JPEG, at most 800×800) is what gets uploaded.
 export function PictureForm({ state, mode, onPreview, backHref, nextHref }: SectionProps) {
   const [photo, setPhoto] = useState<UploadMeta | null>(state.photo);
   const [item, setItem] = useState<UploadItem | null>(null);
+  const [picked, setPicked] = useState<File | null>(null);
+  const uploading = item?.status === "uploading";
   const { form, onSubmit, pending } = useSectionForm({
     section: "picture",
     schema: pictureSchema,
     mode,
     nextHref,
+    uploading,
     defaultValues: { photoId: state.photo?.id ?? "" },
   });
 
@@ -67,8 +72,17 @@ export function PictureForm({ state, mode, onPreview, backHref, nextHref }: Sect
           accept={[...UPLOAD_RULES.photo.types]}
           maxBytes={UPLOAD_RULES.photo.maxBytes}
           files={item ? [item] : []}
-          onFiles={([file]) => start(file)}
+          onFiles={([file]) => setPicked(file)}
           onRemove={() => setItem(null)}
+          disabled={uploading}
+        />
+        <PhotoCropDialog
+          file={picked}
+          onCancel={() => setPicked(null)}
+          onConfirm={(cropped) => {
+            setPicked(null);
+            start(cropped);
+          }}
         />
         {error && (
           <p role="alert" className="type-small text-destructive">
@@ -80,6 +94,7 @@ export function PictureForm({ state, mode, onPreview, backHref, nextHref }: Sect
         mode={mode}
         backHref={backHref}
         pending={pending}
+        uploading={uploading}
         dirty={form.formState.isDirty || mode === "wizard"}
         disabled={!photo}
       />

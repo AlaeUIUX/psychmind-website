@@ -55,11 +55,6 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
   - Add an admin view listing the custom tags with how many providers use
     each, so popular ones can be promoted to the standard list in
     `lib/taxonomy.ts`.
-- **Saving while a license is still uploading** shows "document required"
-  until the upload lands, then clears. Better: disable "Save and continue"
-  (or wait) while an upload is in progress.
-- **Delete uploads that are never saved.** A photo or license uploaded during
-  onboarding but never saved stays in storage. Needs a scheduled cleanup job.
 - **Google sign-in in production.** The code is ready (`docs/live-testing.md`).
   It needs the Google client's production URLs and the consent screen
   published.

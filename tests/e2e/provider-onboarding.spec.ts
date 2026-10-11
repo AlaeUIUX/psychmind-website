@@ -71,7 +71,14 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
 
   await test.step("2 picture upload", async () => {
     await page.locator('input[type="file"]').setInputFiles(PHOTO);
+    // The crop dialog opens first; the cropped square is what gets uploaded.
+    const crop = page.getByRole("dialog", { name: "Crop your picture" });
+    await expect(crop).toBeVisible();
+    await expect(crop.getByRole("slider", { name: "Zoom" })).toBeVisible();
+    await crop.getByRole("button", { name: "Use photo" }).click();
+    await expect(crop).toBeHidden();
     await expect(page.getByRole("img", { name: "Your profile picture" })).toBeVisible();
+    await expect(page.getByText(/avatar-1\.(webp|jpg)/)).toBeVisible();
     await saveAndContinue(page, "Your story");
   });
 
@@ -114,10 +121,17 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.getByRole("button", { name: "Save and continue" }).click();
     await expect(page.getByText("An NPI number is 10 digits.")).toBeVisible();
     await page.getByLabel(/NPI number/).fill("1234567893");
+    // Hold the upload briefly: saving waits for it ("Uploading…", disabled).
+    await page.route("**/api/uploads", async (route) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      await route.continue();
+    });
     await page.locator('input[type="file"]').setInputFiles(PDF);
     await expect(page.getByText(PDF.name)).toBeVisible();
-    // Saving mid-upload is refused (no document yet), so wait for it to land.
+    await expect(page.getByRole("button", { name: "Uploading…" })).toBeDisabled();
     await expect(page.getByRole("progressbar", { name: `Uploading ${PDF.name}` })).toHaveCount(0);
+    await page.unroute("**/api/uploads");
+    await expect(page.getByRole("button", { name: "Save and continue" })).toBeEnabled();
     await page.getByLabel(/License number/).fill("LPC-77812");
     await page.getByLabel(/Issuing body/).fill("Texas Behavioral Health Executive Council");
     await saveAndContinue(page, "Review and submit");
