@@ -8,6 +8,7 @@ import { fileUrl, type UploadMeta } from "@/lib/provider/state";
 import { UPLOAD_RULES } from "@/lib/provider/uploads";
 import { PhotoCropDialog } from "../photo-crop-dialog";
 import { uploadFile } from "../upload-client";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 // Figma P2 "Picture *": one photo, shown in the preview's avatar as soon as
@@ -47,6 +48,7 @@ export function PictureForm({ state, mode, onPreview, backHref, nextHref }: Sect
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      <FormErrorSummary control={form.control} />
       <div className="flex flex-col gap-3" data-field="photo">
         <p className="text-sm font-medium text-text-primary">
           Picture <span aria-hidden className="text-destructive">*</span>
@@ -96,6 +98,7 @@ export function PictureForm({ state, mode, onPreview, backHref, nextHref }: Sect
         pending={pending}
         uploading={uploading}
         dirty={form.formState.isDirty || mode === "wizard"}
+        unsaved={form.formState.isDirty}
         disabled={!photo}
       />
     </form>

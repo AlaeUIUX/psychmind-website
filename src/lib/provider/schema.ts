@@ -29,11 +29,11 @@ const words = (label: string, maxWords: number) =>
   });
 
 /** Provider-typed chip values ("Add specialty") are allowed, so lists are free strings with limits. */
-const chipList = (label: string, { min = 1, max = 20 } = {}) =>
+const chipList = ([one, many]: [string, string], { min = 1, max = 20 } = {}) =>
   z
     .array(z.string().trim().min(1).max(40, "Each item must be 40 characters or fewer."))
-    .min(min, `Choose at least ${min === 1 ? "one" : min} ${label}.`)
-    .max(max, `Choose up to ${max} ${label}.`)
+    .min(min, min === 1 ? `Choose at least one ${one}.` : `Choose at least ${min} ${many}.`)
+    .max(max, `Choose up to ${max} ${many}.`)
     .transform((list) => Array.from(new Set(list)));
 
 export const identitySchema = z.object({
@@ -61,10 +61,10 @@ export const clientsSchema = z.object({
 
 export const expertiseSchema = z
   .object({
-    specialties: chipList("specialties", { max: 15 }),
+    specialties: chipList(["specialty", "specialties"], { max: 15 }),
     primarySpecialty: z.string().trim().min(1, "Choose your main specialty."),
-    approaches: chipList("approaches", { max: 10 }),
-    languages: chipList("languages", { max: 10 }),
+    approaches: chipList(["approach", "approaches"], { max: 10 }),
+    languages: chipList(["language", "languages"], { max: 10 }),
   })
   .refine((v) => v.specialties.includes(v.primarySpecialty), {
     path: ["primarySpecialty"],

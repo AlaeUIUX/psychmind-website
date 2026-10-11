@@ -11,6 +11,8 @@ import { auth } from "@/server/auth";
 import { getSession, hasTwoFactor } from "@/server/auth/session";
 import { sendEmail } from "@/server/email";
 import { passwordChangedEmail } from "@/server/emails";
+import { isNotificationKind, type NotificationRole } from "@/lib/notifications";
+import { setNotification } from "@/server/notifications";
 import { appUrl } from "@/server/url";
 import { hasPasswordLogin } from "./data";
 import { checkNewEmail, confirmEmailChange, sendConfirmLink, sendStartLink, startTokenOwner, startWithAuthenticator } from "./email-change";
@@ -139,4 +141,13 @@ export async function setPassword(_prev: SettingsState, form: FormData): Promise
   }
   await db.insert(auditLog).values({ actorId: user.id, action: "account.password_set", targetType: "user", targetId: user.id });
   return { ok: true };
+}
+
+/** Settings → Email notifications: one switch, saved as it's flipped. */
+export async function updateNotification(kind: string, enabled: boolean): Promise<{ ok: boolean; error?: string }> {
+  const { user } = await signedIn();
+  if (!isNotificationKind(kind) || typeof enabled !== "boolean") return { ok: false, error: "That setting doesn't exist." };
+  if (!(await rateLimit("notification-settings", user.id, 60, "10 m")).ok) return { ok: false, error: TOO_MANY };
+  const done = await setNotification({ id: user.id, email: user.email, role: (user.role ?? "patient") as NotificationRole }, kind, enabled);
+  return done ? { ok: true } : { ok: false, error: "That setting isn't available for your account." };
 }

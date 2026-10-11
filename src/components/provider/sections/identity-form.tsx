@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { identitySchema, type IdentityInput } from "@/lib/provider/schema";
 import { BANNER_STYLES } from "@/lib/taxonomy";
 import { ProfileBanner } from "../profile-view";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 const PRONOUNS = ["She/her", "He/him", "They/them"];
@@ -54,6 +55,7 @@ export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: Sec
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      <FormErrorSummary control={form.control} />
       <div className="grid gap-4 sm:grid-cols-2">
         <FormRow id="firstName" label="First name" required error={e.firstName?.message}>
           <Input

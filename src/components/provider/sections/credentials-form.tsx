@@ -14,6 +14,7 @@ import { UPLOAD_RULES } from "@/lib/provider/uploads";
 import { stateName } from "@/lib/taxonomy";
 import { formatsLabel } from "../profile-view";
 import { uploadFile } from "../upload-client";
+import { FormErrorSummary, useCardReveal } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, errorAt, hasErrorAt, useSectionForm } from "./shared";
 
 type License = CredentialsInput["licenses"][number];
@@ -119,6 +120,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
   });
   const firstError = state.locations.findIndex((_, i) => hasErrorAt(e, `licenses.${i}`));
   const expandedIndex = open ?? (firstError >= 0 ? firstError : null);
+  const revealRef = useCardReveal(setOpen);
   const licensed = state.locations.filter((_, i) => complete(i)).length;
 
   if (!state.locations.length) {
@@ -148,6 +150,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      <FormErrorSummary control={form.control} />
       <div className="grid gap-6 sm:grid-cols-2">
         <FormRow id="npiNumber" label="NPI number" required hint="Your 10-digit National Provider Identifier." error={e.npiNumber?.message}>
           <Input
@@ -189,7 +192,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
           </p>
         </div>
 
-        <ul className="flex flex-col gap-3">
+        <ul ref={revealRef} className="flex flex-col gap-3">
           {state.locations.map((loc, i) => {
             const expanded = expandedIndex === i;
             const doc = documents.get(loc.state);
@@ -207,6 +210,8 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
             return (
               <li
                 key={loc.state}
+                data-card-index={i}
+                data-error-scope={`${loc.city}, ${stateName(loc.state)}`}
                 className={cn(
                   "overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] duration-200",
                   hasError ? "border-red-300" : expanded ? "border-warm-300 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.12)]" : "border-warm-200",
@@ -224,7 +229,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
                       </span>
                       <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium", STATUS[status].className)}>{STATUS[status].label}</span>
                     </p>
-                    <p className={cn("truncate type-ui-caption", hasError ? "text-red-700" : "text-warm-500")}>
+                    <p className={cn("truncate type-ui-caption", hasError ? "text-red-700" : "text-warm-500")} data-card-error={hasError && !expanded ? "" : undefined}>
                       {/* TODO(client): copy */}
                       {hasError ? "Some details are missing" : summary}
                     </p>

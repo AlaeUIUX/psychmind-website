@@ -4,6 +4,7 @@ import { db, dbReady } from "@/db";
 import { auditLog, providerProfile, user } from "@/db/schema";
 import { reminderDue } from "@/lib/onboarding-reminders";
 import { sendEmail } from "@/server/email";
+import { optedOutOf } from "@/server/notifications";
 import { doOnce } from "@/server/once";
 import { appUrl } from "@/server/url";
 import { onboardingReminderEmail } from "./emails";
@@ -25,7 +26,7 @@ export async function sendOnboardingReminders(now = new Date()) {
   )`;
   const since = new Date(now.getTime() - LOOKBACK_DAYS * 86_400_000);
   const drafts = await db
-    .select({ id: providerProfile.id, email: user.email, lastActivity })
+    .select({ id: providerProfile.id, userId: user.id, email: user.email, lastActivity })
     .from(providerProfile)
     .innerJoin(user, eq(user.id, providerProfile.userId))
     .where(
@@ -55,16 +56,19 @@ export async function sendOnboardingReminders(now = new Date()) {
   const sentDays = new Map<string, number[]>();
   for (const h of history) sentDays.set(h.targetId, [...(sentDays.get(h.targetId) ?? []), Number(h.meta.day)]);
 
-  const url = await appUrl("/provider/onboarding");
+  // Turned off in Settings → Email notifications.
+  const optedOut = await optedOutOf("onboarding_reminders", drafts.map((d) => d.userId));
+  const [url, settingsUrl] = await Promise.all([appUrl("/provider/onboarding"), appUrl("/provider/settings")]);
   let sent = 0;
   for (const draft of drafts) {
+    if (optedOut.has(draft.userId)) continue;
     // Raw SQL results come back as strings on some drivers.
     const day = reminderDue(new Date(draft.lastActivity), now, sentDays.get(draft.id) ?? []);
     if (!day) continue;
     try {
       const didSend = await doOnce(
         { action: "onboarding.reminder", targetType: "provider_profile", targetId: draft.id, meta: { day } },
-        () => sendEmail(onboardingReminderEmail(draft.email, day, url)),
+        () => sendEmail(onboardingReminderEmail(draft.email, day, url, settingsUrl)),
       );
       if (didSend) sent++;
     } catch (err) {

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { practiceSchema, type PracticeInput } from "@/lib/provider/schema";
 import { GENDERS } from "@/lib/taxonomy";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, errorAt, useSectionForm } from "./shared";
 
 const toNumber = (v: unknown) => (v === "" || v == null || Number.isNaN(Number(v)) ? null : Number(v));
@@ -54,6 +55,7 @@ export function PracticeForm({ state, mode, onPreview, backHref, nextHref }: Sec
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      <FormErrorSummary control={form.control} />
       <Controller
         control={control}
         name="gender"

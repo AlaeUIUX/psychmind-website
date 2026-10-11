@@ -13,6 +13,7 @@ import {
   recoveryOwnerAlertEmail,
   recoveryReceivedEmail,
 } from "@/server/emails";
+import { optedOutOf } from "@/server/notifications";
 import { deleteFile } from "@/server/storage";
 import { appUrl } from "@/server/url";
 import { applyEmailChange, checkNewEmail } from "./email-change";
@@ -57,12 +58,14 @@ export async function createRecoveryRequest(input: RecoveryInput) {
     })
     .returning({ id: accountRecoveryRequest.id });
 
-  const admins = await db.select({ email: user.email }).from(user).where(eq(user.role, "admin"));
-  const [reviewUrl, helpUrl] = await Promise.all([appUrl(`/admin/recovery/${row.id}`), appUrl("/contact")]);
+  const allAdmins = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.role, "admin"));
+  const optedOut = await optedOutOf("admin_recovery", allAdmins.map((a) => a.id));
+  const admins = allAdmins.filter((a) => !optedOut.has(a.id));
+  const [reviewUrl, helpUrl, settingsUrl] = await Promise.all([appUrl(`/admin/recovery/${row.id}`), appUrl("/contact"), appUrl("/admin/settings")]);
   const results = await Promise.allSettled([
     sendEmail(recoveryReceivedEmail(input.contactEmail)),
     owner ? sendEmail(recoveryOwnerAlertEmail(owner.email, helpUrl)) : null,
-    ...admins.map((a) => sendEmail(adminRecoveryRequestEmail(a.email, reviewUrl))),
+    ...admins.map((a) => sendEmail(adminRecoveryRequestEmail(a.email, reviewUrl, settingsUrl))),
   ]);
   results.forEach((r) => r.status === "rejected" && console.error("recovery email failed", r.reason));
   return row.id;

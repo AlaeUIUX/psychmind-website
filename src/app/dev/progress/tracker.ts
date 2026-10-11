@@ -26,7 +26,7 @@ export type TrackerGroup = {
   items: TrackerItem[];
 };
 
-export const REVIEWED = "2026-10-11";
+export const REVIEWED = "2026-10-12";
 
 export const TRACKER: TrackerGroup[] = [
   {
@@ -59,13 +59,13 @@ export const TRACKER: TrackerGroup[] = [
       { status: "done", owner: "build", title: "Hold \"Save and continue\" while a file is uploading", detail: "Save, Save & exit and the keyboard shortcut wait with \"Uploading…\" until the photo or license lands." },
       { status: "done", owner: "build", title: "Clean up uploads that are never saved", detail: "The daily job deletes uploads older than a day that no profile or license uses.", where: "src/app/api/cron/daily/route.ts" },
       { status: "done", owner: "build", title: "Abandoned-onboarding reminders", detail: "Emails at 1, 3 and 7 days from the daily job, each sent once; drafts untouched for 14+ days get none.", where: "src/server/onboarding/reminders.ts" },
-      { status: "todo", owner: "build", title: "Unsaved-changes warning", detail: "Build plan, slice 4: warn before leaving a wizard step or the profile editor with changes that aren't saved." },
-      { status: "todo", owner: "build", title: "Fill in city and state from the ZIP", detail: "Build plan, slice 4: the practice address step looks up the ZIP. The street address stays private either way." },
-      { status: "todo", owner: "build", title: "Error summary on long forms", detail: "Build plan, slice 4: a list of what to fix at the top of a step, linking to each field, as well as the inline errors." },
+      { status: "done", owner: "build", title: "Unsaved-changes warning", detail: "Leaving a wizard step or the profile editor with unsaved changes asks first: stay, leave without saving, or save and leave. Covers links, Save & exit, the browser's Back button and closing the tab.", where: "src/components/app/unsaved-changes-guard.tsx" },
+      { status: "done", owner: "build", title: "Fill in city and state from the ZIP", detail: "Optional: a known ZIP fills an empty city and state (looked up on our server, so browsers still contact no other host). If the lookup fails or disagrees, nothing is overwritten and the fields stay typeable.", where: "src/server/zip.ts" },
+      { status: "done", owner: "build", title: "Error summary on long forms", detail: "A failed save lists what to fix at the top of the step, scrolls to it, and each line jumps to its field (opening a collapsed location or license card). Before, steps with choice chips left focus on the button and nothing scrolled.", where: "src/components/forms/form-error-summary.tsx" },
       // Profiles
       { status: "done", owner: "build", title: "Profile editor", detail: "Uses the wizard's sections with a live preview.", where: "/provider/profile" },
       { status: "done", owner: "build", title: "Public provider profile", detail: "With share, save, request, and a dedicated not-found page.", where: "/providers/{name}-{id}" },
-      { status: "todo", owner: "build", title: "Provider notification settings", detail: "Choose which emails they get (new requests, reminders). Account and billing emails always go out." },
+      { status: "done", owner: "build", title: "Email notification settings", detail: "Every account chooses its optional emails in Settings. Providers: new session requests (they still land under Requests), profile reminders. Admins: providers to verify, account recovery requests. Everyone: news and tips (the same opt-out as unsubscribe links). Account, security, billing and verification emails always go out.", where: "src/lib/notifications.ts" },
       // Billing
       { status: "done", owner: "build", title: "Stripe listing subscription (code)", detail: "Better Auth Stripe plugin, the 3-day grace rule, billing page and customer portal. Off until the keys are set.", where: "/provider/billing" },
       { status: "done", owner: "build", title: "Billing emails", detail: "Payment failed, profile paused, payment recovered, cancellation confirmed, each sent once (webhooks, plus the daily job for \"paused\"). Unit-tested; still to try with Stripe test mode.", where: "src/server/billing/notices.ts" },
@@ -128,7 +128,7 @@ export const TRACKER: TrackerGroup[] = [
     title: "Testing, bug fixing and launch",
     amount: 2000,
     items: [
-      { status: "doing", owner: "build", title: "Automated tests", detail: "Unit tests (12 files, 85 passing) and Playwright journeys at desktop and 375px for accounts, email and password changes, account recovery, onboarding, directory, analytics and admin accounts. Still missing: billing, requests from the provider's side, and the blog.", where: "tests/" },
+      { status: "doing", owner: "build", title: "Automated tests", detail: "Unit tests (13 files, 93 passing) and Playwright journeys at desktop and 375px for accounts, email and password changes, account recovery, onboarding, directory, analytics and admin accounts. Still missing: billing, requests from the provider's side, and the blog.", where: "tests/" },
       { status: "todo", owner: "build", title: "Security review", detail: "Every role's access rules tried from a second account, private documents, and the security headers." },
       { status: "todo", owner: "build", title: "Accessibility and performance checks", detail: "Keyboard and screen reader sweep, and Lighthouse on the main pages." },
       { status: "todo", owner: "build", title: "Error monitoring and CI", detail: "Sentry with no personal data, and tests on every push. Neither is set up." },

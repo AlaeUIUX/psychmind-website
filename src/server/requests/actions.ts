@@ -11,6 +11,7 @@ import { formatLabel, requestSchema, sessionTypeLabel, type RequestInput } from 
 import { getSession, requireRole } from "@/server/auth/session";
 import { sendEmail } from "@/server/email";
 import { sessionRequestEmail, sessionRequestSentEmail } from "@/server/emails";
+import { wantsEmail } from "@/server/notifications";
 import { appUrl } from "@/server/url";
 import { recentRequest, requestRecipient, requestTarget } from "./data";
 
@@ -75,7 +76,10 @@ export async function sendSessionRequest(input: RequestInput): Promise<SendResul
     })
     .returning({ id: sessionRequest.id });
 
-  if (!target.isSample) {
+  // A provider can turn request emails off (Settings): the request still
+  // lands under Requests, and the patient still gets their confirmation.
+  const emailProvider = !target.isSample && (await wantsEmail("session_requests", recipient.userId));
+  if (emailProvider) {
     try {
       await sendEmail(
         sessionRequestEmail(
@@ -83,6 +87,7 @@ export async function sendSessionRequest(input: RequestInput): Promise<SendResul
           target.first,
           { name: v.name, email, phone: v.phone, sessionType: sessionTypeLabel(v.sessionType), format: formatLabel(v.format), note: v.note },
           await appUrl("/provider/requests"),
+          await appUrl("/provider/settings"),
         ),
       );
     } catch (err) {
@@ -91,6 +96,8 @@ export async function sendSessionRequest(input: RequestInput): Promise<SendResul
       await db.delete(sessionRequest).where(eq(sessionRequest.id, row.id));
       return { ok: false, error: "We couldn't send your request just now. Please try again in a moment." };
     }
+  }
+  if (!target.isSample) {
     const cta = patient ? { label: "See your requests", url: await appUrl("/account") } : { label: "Back to search", url: await appUrl("/providers") };
     await sendEmail(sessionRequestSentEmail(email, target.name, cta)).catch((err) => console.error("request confirmation email failed", err));
   }

@@ -86,3 +86,21 @@ export async function isUnsubscribed(token: string) {
     .where(eq(emailPreference.token, token));
   return row ? Boolean(row.optedOut) : null;
 }
+
+/** Settings → Email notifications reads and sets the same opt-out as the
+ *  unsubscribe links, by address. */
+export async function marketingOptedOut(address: string) {
+  const [row] = await db
+    .select({ at: emailPreference.marketingOptOutAt })
+    .from(emailPreference)
+    .where(eq(emailPreference.email, address.trim().toLowerCase()));
+  return Boolean(row?.at);
+}
+
+export async function setMarketingOptOut(address: string, optedOut: boolean) {
+  await tokenFor(address);
+  await db
+    .update(emailPreference)
+    .set({ marketingOptOutAt: optedOut ? sql`coalesce(${emailPreference.marketingOptOutAt}, now())` : null })
+    .where(eq(emailPreference.email, address.trim().toLowerCase()));
+}

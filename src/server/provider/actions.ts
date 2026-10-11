@@ -22,6 +22,7 @@ import type { ActionResult } from "@/lib/provider/state";
 import { furthest, nextStep, type StepKey } from "@/lib/provider/steps";
 import { requireRole } from "@/server/auth/session";
 import { sendEmail } from "@/server/email";
+import { optedOutOf } from "@/server/notifications";
 import { deleteFile } from "@/server/storage";
 import { adminNewSubmissionEmail, providerSubmittedEmail } from "@/server/emails";
 import { appUrl } from "@/server/url";
@@ -233,11 +234,13 @@ export async function submitForVerification(input: unknown): Promise<ActionResul
   await db.insert(auditLog).values({ actorId: me.id, action: "provider.submitted", targetType: "provider_profile", targetId: state.id });
 
   // Emails are best-effort: a mail outage mustn't undo the submission.
-  const admins = await db.select({ email: user.email }).from(user).where(eq(user.role, "admin"));
-  const [dashboardUrl, reviewUrl] = await Promise.all([appUrl("/provider"), appUrl(`/admin/providers/${state.id}`)]);
+  const allAdmins = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.role, "admin"));
+  const optedOut = await optedOutOf("admin_submissions", allAdmins.map((a) => a.id));
+  const admins = allAdmins.filter((a) => !optedOut.has(a.id));
+  const [dashboardUrl, reviewUrl, settingsUrl] = await Promise.all([appUrl("/provider"), appUrl(`/admin/providers/${state.id}`), appUrl("/admin/settings")]);
   await Promise.allSettled([
     sendEmail(providerSubmittedEmail(me.email, dashboardUrl)),
-    ...admins.map((a) => sendEmail(adminNewSubmissionEmail(a.email, reviewUrl))),
+    ...admins.map((a) => sendEmail(adminNewSubmissionEmail(a.email, reviewUrl, settingsUrl))),
   ]);
 
   revalidatePath("/provider", "layout");

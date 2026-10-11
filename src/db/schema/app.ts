@@ -341,3 +341,19 @@ export const accountRecoveryRequest = pgTable(
   },
   (t) => [index("account_recovery_status_idx").on(t.status, t.createdAt), index("account_recovery_email_idx").on(t.accountEmail)],
 );
+
+/** Optional emails someone turned off in Settings → Email notifications (a
+ *  row means off; see lib/notifications.ts for the kinds). Account, security,
+ *  billing and verification emails can't be turned off. Marketing consent
+ *  lives in email_preference, by address, so an opt-out outlives the account. */
+export const notificationOptOut = pgTable(
+  "notification_opt_out",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind] }), index("notification_opt_out_kind_idx").on(t.kind)],
+);

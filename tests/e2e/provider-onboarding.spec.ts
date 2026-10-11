@@ -61,7 +61,9 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
 
   await test.step("1 identity — validation, then save", async () => {
     await page.getByRole("button", { name: "Save and continue" }).click();
-    await expect(page.getByText("Title / credentials is required.")).toBeVisible();
+    // Inline under the field (the summary at the top repeats it).
+    await expect(page.getByText("Title / credentials is required.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "to fix before saving" })).toBeVisible();
     await page.getByLabel(/Title \/ credentials/).fill("Counselor, LMHC, M.S.");
     await page.getByLabel("Pronouns").fill("she/her");
     // Live preview updates as you type.
@@ -119,7 +121,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
   await test.step("8 credentials with license upload", async () => {
     await page.getByLabel(/NPI number/).fill("12345");
     await page.getByRole("button", { name: "Save and continue" }).click();
-    await expect(page.getByText("An NPI number is 10 digits.")).toBeVisible();
+    await expect(page.getByText("An NPI number is 10 digits.", { exact: true })).toBeVisible();
     await page.getByLabel(/NPI number/).fill("1234567893");
     // Hold the upload briefly: saving waits for it ("Uploading…", disabled).
     await page.route("**/api/uploads", async (route) => {
@@ -227,6 +229,39 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await expect(page.getByRole("tabpanel").getByRole("switch", { name: "Mark Guest Patient as contacted" })).toBeChecked();
   });
 
+  await test.step("with request emails turned off, requests still reach the inbox", async () => {
+    await page.goto("/provider/settings");
+    await page.getByRole("switch", { name: "New session requests" }).click();
+    await expect(page.getByText("Turned off")).toBeVisible();
+
+    const quietEmail = uniqueEmail("quiet");
+    const guest = await browser.newContext();
+    const g = await guest.newPage();
+    await g.goto("/providers");
+    const href = await g.getByTestId("provider-card").filter({ hasText: `Sara ${last}` }).getByRole("link", { name: /See profile/ }).getAttribute("href");
+    await g.goto(href!.replace("/providers/", "/request/"));
+    await g.getByRole("button", { name: "Confirm" }).click();
+    await g.getByRole("button", { name: "Continue" }).click();
+    await g.getByRole("button", { name: "Skip for now" }).click();
+    await g.getByRole("radio", { name: /Continue as guest/ }).click();
+    await g.getByLabel("Your name").fill("Quiet Patient");
+    await g.getByLabel("Email").fill(quietEmail);
+    await g.getByRole("button", { name: "Confirm", exact: true }).click();
+    await g.getByRole("button", { name: "Confirm request" }).click();
+    await expect(g.getByText("We sent an email on your behalf!")).toBeVisible({ timeout: 15_000 });
+    await guest.close();
+
+    await page.goto("/provider/requests");
+    await expect(page.getByTestId("provider-request").filter({ hasText: "Quiet Patient" })).toBeVisible();
+    await page.goto("/dev/mail");
+    await expect(page.getByTestId("dev-mail").filter({ hasText: "Your request was sent" }).filter({ hasText: quietEmail })).toHaveCount(1);
+    await expect(page.getByTestId("dev-mail").filter({ hasText: "New session request" }).filter({ hasText: quietEmail })).toHaveCount(0);
+
+    await page.goto("/provider/settings");
+    await page.getByRole("switch", { name: "New session requests" }).click();
+    await expect(page.getByText("Turned on")).toBeVisible();
+  });
+
   await test.step("analytics count patients finding the provider, never the provider", async () => {
     const stat = (name: string) => page.getByRole("group", { name }).locator('[data-slot="stat-value"]');
     // The provider looks at their own public profile: not counted.
@@ -248,17 +283,17 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await g.goto(profileHref!);
     await expect(g.getByRole("heading", { level: 1, name: new RegExp(`Sara ${last}`) })).toBeVisible();
 
-    // One quick look plus one full profile; the guest's request from earlier.
+    // One quick look plus one full profile; the two guests' requests from earlier.
     await expect(async () => {
       await page.reload();
       await expect(stat("Profile views")).toHaveText("2", { timeout: 1000 });
     }).toPass({ timeout: 30_000 });
-    await expect(stat("Session requests")).toHaveText("1");
+    await expect(stat("Session requests")).toHaveText("2");
     expect(Number(await stat("Impressions").textContent())).toBeGreaterThanOrEqual(1);
-    await expect(stat("Conversion rate")).toHaveText("50%");
+    await expect(stat("Conversion rate")).toHaveText("100%");
     const recent = page.getByRole("region", { name: "Recent session requests" });
     await expect(recent).toContainText("Guest P.");
-    await expect(recent.getByRole("link", { name: "1 total" })).toHaveAttribute("href", "/provider/requests");
+    await expect(recent.getByRole("link", { name: "2 total" })).toHaveAttribute("href", "/provider/requests");
 
     // Another range keeps the page and updates the address.
     await page.getByRole("radio", { name: "Last 30 days" }).click();

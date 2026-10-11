@@ -9,6 +9,7 @@ import { stripeConfigured } from "@/lib/billing";
 import { auth } from "@/server/auth";
 import { isAdminEmail } from "@/server/auth/admin-emails";
 import { sendEmail } from "@/server/email";
+import { marketingOptedOut, setMarketingOptOut } from "@/server/marketing";
 import { emailChangeConfirmEmail, emailChangedNoticeEmail, emailChangeStartEmail } from "@/server/emails";
 import { appUrl } from "@/server/url";
 import { consumeToken, issueToken, readToken } from "./tokens";
@@ -106,6 +107,8 @@ export async function applyEmailChange(userId: string, newEmail: string, actorId
     });
   });
   await Promise.allSettled([
+    // "News and tips" consent is kept by address: carry an opt-out over.
+    marketingOptedOut(before.email).then((off) => (off ? setMarketingOptOut(newEmail, true) : undefined)),
     sendEmail(emailChangedNoticeEmail(before.email, newEmail, await appUrl("/contact"), bySupport)),
     // Receipts and Stripe's own emails follow the account.
     before.stripeCustomerId && stripeConfigured()

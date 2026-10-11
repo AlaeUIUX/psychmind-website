@@ -5,6 +5,10 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 
 ## Next
 
+- **Request success copy when a provider turned request emails off.** The
+  patient still sees Figma's "We sent an email on your behalf!", but the
+  request only lands in the provider's Requests inbox. Ask the client whether
+  to keep the wording.
 - **Request copy to confirm with the client** (Figma B6/B7 says things the
   flow doesn't do). "You'll receive a confirmation with the session link and
   a calendar invite": we send a confirmation, but no session link or invite.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
+import { BackGuardBoot } from "@/components/app/back-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -51,6 +52,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${ivarTextHydro.variable} ${ivarDisplayHydro.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-warm-25 text-text-primary font-sans">
+        <BackGuardBoot />
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         <Toaster />
       </body>

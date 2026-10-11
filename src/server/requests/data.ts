@@ -38,11 +38,11 @@ export type RequestTarget = NonNullable<Awaited<ReturnType<typeof requestTarget>
 export async function requestRecipient(publicId: string) {
   await dbReady;
   const [row] = await db
-    .select({ profileId: providerProfile.id, requestEmail: providerProfile.requestEmail, accountEmail: user.email })
+    .select({ profileId: providerProfile.id, userId: user.id, requestEmail: providerProfile.requestEmail, accountEmail: user.email })
     .from(providerProfile)
     .innerJoin(user, eq(user.id, providerProfile.userId))
     .where(eq(providerProfile.publicId, publicId));
-  return row ? { profileId: row.profileId, email: row.requestEmail || row.accountEmail } : null;
+  return row ? { profileId: row.profileId, userId: row.userId, email: row.requestEmail || row.accountEmail } : null;
 }
 
 /** A request from this email to this provider in the last day, if any. */

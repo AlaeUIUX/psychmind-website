@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { expertiseSchema, type ExpertiseInput } from "@/lib/provider/schema";
 import { APPROACHES, LANGUAGES, SPECIALTIES, labelOf, type Option } from "@/lib/taxonomy";
 import { ChipField } from "./clients-form";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 /** Preset chips plus any custom values the provider added ("Add specialty"). */
@@ -141,6 +142,7 @@ export function ExpertiseForm({ state, mode, onPreview, backHref, nextHref }: Se
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-8">
+      <FormErrorSummary control={form.control} />
       <Controller
         control={control}
         name="specialties"

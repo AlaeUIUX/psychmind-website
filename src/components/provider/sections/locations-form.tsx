@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "cn";
-import { BuildingIcon, CheckIcon, MonitorIcon, PencilIcon, PlusIcon, ShieldCheckIcon, SparklesIcon, Trash2Icon } from "lucide-react";
-import { useCallback, useState, type ComponentType } from "react";
+import { BuildingIcon, CheckIcon, LoaderCircleIcon, MonitorIcon, PencilIcon, PlusIcon, ShieldCheckIcon, SparklesIcon, Trash2Icon } from "lucide-react";
+import { useCallback, useRef, useState, type ComponentType } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 import { FormRow } from "@/components/forms/form-row";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,9 @@ import { Switch } from "@/components/ui/switch";
 import { BASE_PLAN } from "@/lib/billing";
 import { locationLimit, locationsSchema, type LocationsInput } from "@/lib/provider/schema";
 import { SESSION_FORMATS, US_STATES, stateName } from "@/lib/taxonomy";
+import { isZip, type ZipPlace } from "@/lib/zip";
 import { formatsLabel } from "../profile-view";
+import { FormErrorSummary, useCardReveal } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, errorAt, hasErrorAt, useSectionForm } from "./shared";
 
 type Location = LocationsInput["locations"][number];
@@ -153,6 +155,106 @@ function FormatCards({ id, value, onChange, invalid }: { id: string; value: Form
   );
 }
 
+type LocationsForm = ReturnType<typeof useSectionForm<typeof locationsSchema>>["form"];
+type ZipStatus = { kind: "idle" } | { kind: "loading" } | { kind: "filled"; place: ZipPlace } | { kind: "suggest"; place: ZipPlace } | { kind: "failed" };
+
+/** ZIP first: a known ZIP fills in an empty city and state (our server asks
+ *  Zippopotam.us). Never required and never in the way: if the lookup fails
+ *  or disagrees, the provider's own city and state stay. ZIP isn't in Figma,
+ *  but the profile shows it and search uses it. TODO(client): copy. */
+function ZipField({ index, form, error }: { index: number; form: LocationsForm; error?: string }) {
+  const [status, setStatus] = useState<ZipStatus>({ kind: "idle" });
+  const asked = useRef("");
+  const cityPath = `locations.${index}.city` as const;
+  const statePath = `locations.${index}.state` as const;
+  const fill = (place: ZipPlace, opts: { city: boolean; state: boolean }) => {
+    if (opts.city) form.setValue(cityPath, place.city, { shouldDirty: true, shouldValidate: true });
+    if (opts.state) form.setValue(statePath, place.state as Location["state"], { shouldDirty: true, shouldValidate: true });
+  };
+
+  const lookup = async (raw: string) => {
+    const zip = raw.trim();
+    if (!isZip(zip)) {
+      asked.current = "";
+      setStatus({ kind: "idle" });
+      return;
+    }
+    if (zip === asked.current) return;
+    asked.current = zip;
+    setStatus({ kind: "loading" });
+    try {
+      const response = await fetch(`/api/zip/${zip}`);
+      if (asked.current !== zip) return; // they kept typing
+      if (!response.ok) throw new Error(String(response.status));
+      const place = ((await response.json()) as { places: ZipPlace[] }).places[0];
+      if (!US_STATES.some((s) => s.value === place.state)) throw new Error("unsupported state");
+      const city = (form.getValues(cityPath) ?? "").trim();
+      const state = form.getValues(statePath) ?? "";
+      const cityFree = !city || city.toLowerCase() === place.city.toLowerCase();
+      const stateFree = !state || state === place.state;
+      if (cityFree && stateFree) {
+        fill(place, { city: !city, state: !state });
+        setStatus(!city || !state ? { kind: "filled", place } : { kind: "idle" });
+      } else {
+        // Something else is typed already: offer, don't overwrite.
+        setStatus({ kind: "suggest", place });
+      }
+    } catch {
+      if (asked.current === zip) setStatus({ kind: "failed" });
+    }
+  };
+
+  const { onChange, ...field } = form.register(`locations.${index}.zip`);
+  const hint =
+    status.kind === "loading" ? (
+      <span className="inline-flex items-center gap-1.5">
+        <LoaderCircleIcon aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" />
+        Looking up this ZIP…
+      </span>
+    ) : status.kind === "filled" ? (
+      <span className="inline-flex items-center gap-1.5 text-emerald-700">
+        <CheckIcon aria-hidden className="size-3.5" />
+        Filled in {status.place.city}, {stateName(status.place.state)}. You can change it.
+      </span>
+    ) : status.kind === "suggest" ? (
+      <span>
+        This ZIP is in {status.place.city}, {stateName(status.place.state)}.{" "}
+        <button
+          type="button"
+          className="font-medium text-text-primary underline underline-offset-2"
+          onClick={() => {
+            fill(status.place, { city: true, state: true });
+            setStatus({ kind: "filled", place: status.place });
+          }}
+        >
+          Use that
+        </button>
+      </span>
+    ) : status.kind === "failed" ? (
+      "We couldn't look up this ZIP. Enter the city and state below."
+    ) : (
+      "We'll fill in the city and state for you."
+    );
+
+  return (
+    <FormRow id={`loc-${index}-zip`} label="ZIP code" optional error={error} hint={<span aria-live="polite">{hint}</span>}>
+      <Input
+        id={`loc-${index}-zip`}
+        inputMode="numeric"
+        autoComplete="postal-code"
+        maxLength={5}
+        placeholder="10001"
+        className="sm:max-w-[200px]"
+        {...field}
+        onChange={(e) => {
+          void onChange(e);
+          void lookup(e.target.value);
+        }}
+      />
+    </FormRow>
+  );
+}
+
 // Figma P5 "Practice locations": a list of licensed states. Each location is a
 // compact card; one at a time opens to edit. The address only matters (and
 // only shows publicly) for in-person sessions, so it appears once In-person is
@@ -190,11 +292,14 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
   const firstError = fields.findIndex((_, i) => hasErrorAt(e, `locations.${i}`));
   const expandedIndex = open ?? (firstError >= 0 ? firstError : null);
 
+  const revealRef = useCardReveal(setOpen);
+
   const makePrimary = (index: number) =>
     values.forEach((_, i) => setValue(`locations.${i}.isPrimary`, i === index, { shouldDirty: true }));
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+      <FormErrorSummary control={form.control} />
       <LicenseComplianceCard />
 
       {atLimit && (
@@ -226,7 +331,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
         </div>
       </div>
 
-      <ul className="flex flex-col gap-3">
+      <ul ref={revealRef} className="flex flex-col gap-3">
         {fields.map((f, i) => {
           const v = values[i] ?? f;
           const expanded = expandedIndex === i;
@@ -238,6 +343,8 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
           return (
             <li
               key={f.id}
+              data-card-index={i}
+              data-error-scope={title}
               className={cn(
                 "overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] duration-200",
                 hasError ? "border-red-300" : expanded ? "border-warm-300 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.12)]" : "border-warm-200",
@@ -252,7 +359,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
                     {/* TODO(client): copy */}
                     {v.isPrimary && <span className="shrink-0 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">Primary</span>}
                   </p>
-                  <p className={cn("truncate type-ui-caption", hasError ? "text-red-700" : "text-warm-500")}>
+                  <p className={cn("truncate type-ui-caption", hasError ? "text-red-700" : "text-warm-500")} data-card-error={hasError && !expanded ? "" : undefined}>
                     {/* TODO(client): copy */}
                     {hasError ? "Some details are missing" : details || "Fill the form with the details"}
                   </p>
@@ -266,6 +373,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
               </div>
 
               <div hidden={!expanded} className="flex animate-ui-enter flex-col gap-5 border-t border-warm-200 p-4 sm:p-5">
+                <ZipField index={i} form={form} error={errorAt(e, `locations.${i}.zip`)} />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Controller
                     control={control}
@@ -291,15 +399,9 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
                     <Input id={`loc-${i}-city`} placeholder="New York" {...register(`locations.${i}.city`)} />
                   </FormRow>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-[1fr_128px]">
-                  <FormRow id={`loc-${i}-practice`} label="Practice name" optional>
-                    <Input id={`loc-${i}-practice`} placeholder="e.g: Manhattan Mind Clinic" {...register(`locations.${i}.practiceName`)} />
-                  </FormRow>
-                  {/* ZIP isn't in Figma but the profile shows it and search needs it. TODO(client) */}
-                  <FormRow id={`loc-${i}-zip`} label="ZIP code" optional error={errorAt(e, `locations.${i}.zip`)}>
-                    <Input id={`loc-${i}-zip`} inputMode="numeric" maxLength={5} placeholder="10001" {...register(`locations.${i}.zip`)} />
-                  </FormRow>
-                </div>
+                <FormRow id={`loc-${i}-practice`} label="Practice name" optional>
+                  <Input id={`loc-${i}-practice`} placeholder="e.g: Manhattan Mind Clinic" {...register(`locations.${i}.practiceName`)} />
+                </FormRow>
 
                 <Controller
                   control={control}

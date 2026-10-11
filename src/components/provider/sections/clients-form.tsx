@@ -5,6 +5,7 @@ import { Controller } from "react-hook-form";
 import { ChoiceChips } from "@/components/app/choice-chips";
 import { clientsSchema, type ClientsInput } from "@/lib/provider/schema";
 import { AGE_GROUPS, SESSION_PARTICIPANTS } from "@/lib/taxonomy";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 function ChipField({ label, hint, error, field, children }: { label: string; hint: string; error?: string; field?: string; children: React.ReactNode }) {
@@ -46,6 +47,7 @@ export function ClientsForm({ state, mode, onPreview, backHref, nextHref }: Sect
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-8">
+      <FormErrorSummary control={form.control} />
       <Controller
         control={form.control}
         name="sessionParticipants"

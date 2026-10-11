@@ -74,6 +74,7 @@ export function layout({
   preheader,
   reason = "You're receiving this email because of your PsychMind account.",
   unsubscribeUrl,
+  settingsUrl,
 }: {
   heading: string;
   body: string;
@@ -87,6 +88,8 @@ export function layout({
   reason?: string;
   /** Marketing email only (server/marketing.ts): the one-click way out. */
   unsubscribeUrl?: string;
+  /** Optional emails (lib/notifications.ts): where to turn them off. */
+  settingsUrl?: string;
 }) {
   const { app } = origins();
   const detailRows = details?.length
@@ -142,7 +145,7 @@ export function layout({
         unsubscribeUrl
           ? ` <a href="${escape(unsubscribeUrl)}" style="color:#57534e;text-decoration:underline">Unsubscribe from PsychMind marketing emails</a>.`
           : ""
-      }</td></tr>
+      }${settingsUrl ? ` <a href="${escape(settingsUrl)}" style="color:#57534e;text-decoration:underline">Choose which emails you get</a>.` : ""}</td></tr>
     </table>
   </td></tr>
 </table>
@@ -163,6 +166,7 @@ export function layout({
     "",
     reason,
     unsubscribeUrl ? `Unsubscribe from PsychMind marketing emails: ${unsubscribeUrl}` : "",
+    settingsUrl ? `Choose which emails you get: ${settingsUrl}` : "",
   ]
     .join("\n")
     .trimEnd();
@@ -251,7 +255,7 @@ export function providerDecisionEmail(
   return { to, subject: copy.subject, ...layout({ heading: copy.heading, body: copy.body, cta: { label: copy.cta, url: dashboardUrl } }) };
 }
 
-export function adminNewSubmissionEmail(to: string, reviewUrl: string): Email {
+export function adminNewSubmissionEmail(to: string, reviewUrl: string, settingsUrl?: string): Email {
   return {
     to,
     subject: "New provider waiting for verification",
@@ -259,6 +263,7 @@ export function adminNewSubmissionEmail(to: string, reviewUrl: string): Email {
       heading: "A provider is waiting for review",
       body: "A provider just submitted their profile for verification.",
       cta: { label: "Open the verification queue", url: reviewUrl },
+      settingsUrl,
     }),
   };
 }
@@ -324,7 +329,7 @@ export type RequestDetails = {
 
 /** A session request, forwarded to the provider's requests address. Replying
  *  answers the patient directly (Reply-To). */
-export function sessionRequestEmail(to: string, providerFirst: string, r: RequestDetails, requestsUrl: string): Email {
+export function sessionRequestEmail(to: string, providerFirst: string, r: RequestDetails, requestsUrl: string, settingsUrl?: string): Email {
   return {
     to,
     replyTo: r.email,
@@ -344,6 +349,7 @@ export function sessionRequestEmail(to: string, providerFirst: string, r: Reques
       cta: { label: "See all requests", url: requestsUrl },
       footnote: "These details were shared with you so you can respond to this request. Please don't use them for anything else.",
       reason: "You're receiving this email because session requests for your PsychMind profile are sent to this address.",
+      settingsUrl,
     }),
   };
 }
@@ -459,7 +465,7 @@ export function recoveryOwnerAlertEmail(to: string, helpUrl: string): Email {
   };
 }
 
-export function adminRecoveryRequestEmail(to: string, reviewUrl: string): Email {
+export function adminRecoveryRequestEmail(to: string, reviewUrl: string, settingsUrl?: string): Email {
   return {
     to,
     subject: "New account recovery request",
@@ -468,6 +474,7 @@ export function adminRecoveryRequestEmail(to: string, reviewUrl: string): Email 
       body: "A new account recovery request is waiting. Check who they are before moving the account.",
       cta: { label: "Open account recovery", url: reviewUrl },
       reason: "You're receiving this email because you're a PsychMind admin.",
+      settingsUrl,
     }),
   };
 }

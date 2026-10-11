@@ -25,7 +25,7 @@ const COPY: Record<ReminderDay, { subject: string; heading: string; body: string
   },
 };
 
-export function onboardingReminderEmail(to: string, day: ReminderDay, onboardingUrl: string): Email {
+export function onboardingReminderEmail(to: string, day: ReminderDay, onboardingUrl: string, settingsUrl?: string): Email {
   const copy = COPY[day];
   return {
     to,
@@ -36,6 +36,7 @@ export function onboardingReminderEmail(to: string, day: ReminderDay, onboarding
       cta: { label: "Continue your profile", url: onboardingUrl },
       footnote: day === 7 ? "This is the last reminder we'll send about your draft." : undefined,
       reason: "You're receiving this email because you started a provider profile on PsychMind.",
+      settingsUrl,
     }),
   };
 }

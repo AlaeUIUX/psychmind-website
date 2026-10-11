@@ -8,6 +8,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { storySchema, type StoryInput } from "@/lib/provider/schema";
+import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 const MAX_WORDS = 1600;
@@ -111,6 +112,7 @@ export function StoryForm({ state, mode, onPreview, backHref, nextHref }: Sectio
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-7">
+      <FormErrorSummary control={form.control} />
       <StoryField id="whoYouWorkWith" label="Who you work with" error={e.whoYouWorkWith?.message} value={watch("whoYouWorkWith")} register={register("whoYouWorkWith")} />
       <StoryField id="about" label="About you" error={e.about?.message} value={watch("about")} register={register("about")} />
       <SectionFooter mode={mode} backHref={backHref} pending={pending} dirty={formState.isDirty} />

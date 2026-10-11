@@ -92,6 +92,13 @@
       "when": 1791754477926,
       "tag": "0012_account_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791760983717,
+      "tag": "0013_notification_settings",
+      "breakpoints": true
     }
   ]
 }
