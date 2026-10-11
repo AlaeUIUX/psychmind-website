@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SplitHeading } from "@/components/motion/split-heading";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { CircleArrowIcon } from "@/components/ui/icons";
@@ -72,23 +73,28 @@ export function SiteFooter() {
 
         <div className="relative z-10 flex w-full max-w-[900px] flex-col items-center gap-16 pb-8">
           <div className="relative w-full px-6 pt-16 pb-8 sm:px-16 md:min-h-[416px] lg:min-h-[480px]">
-            <Reveal
-              stagger
-              className="relative z-10 mx-auto flex max-w-[380px] flex-col items-center text-center md:mx-0 md:items-start md:text-left"
-            >
-              <h2 className="type-h2 font-display-alt! leading-8! text-text-primary">Ready to find help?</h2>
-              <p className="type-lead leading-8! translate-y-[5px] text-text-secondary">
-                It takes less than two minutes. No referral needed
-              </p>
-              <div className="mt-8 flex h-16 items-center">
+            {/* Same heading and subtitle styles as every landing section
+                (SectionHeader). From sm up the 44px heading plus the 20px gap
+                spans two rules, so the subtitle's 32px lines rest on them. */}
+            <div className="relative z-10 mx-auto flex max-w-[400px] flex-col items-center gap-4 text-center sm:gap-5 md:mx-0 md:items-start md:text-left">
+              <SplitHeading delay={0.1} className="type-h2 text-text-primary">
+                Ready to find help?
+              </SplitHeading>
+              {/* Widths sized so the line breaks after "minutes." */}
+              <Reveal delay={260}>
+                <p className="max-w-[264px] type-lead text-text-tertiary sm:max-w-[320px] sm:translate-y-[5px]">
+                  It takes less than two minutes. No referral needed
+                </p>
+              </Reveal>
+              <Reveal delay={360} className="mt-4 flex h-16 items-center sm:mt-3">
                 <Button asChild size="lg">
                   <Link href="/providers">
                     Browse all
                     <CircleArrowIcon />
                   </Link>
                 </Button>
-              </div>
-            </Reveal>
+              </Reveal>
+            </div>
             {/* Exported directly from the illustration's own Figma layer
                 (146:9033) at its native 700x466 ratio. */}
             <Reveal

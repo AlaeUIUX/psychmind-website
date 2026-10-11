@@ -20,7 +20,7 @@ import { afterAccountDeleted, beforeAccountDeleted } from "@/server/account/clea
 import { isAdminEmail } from "./admin-emails";
 import { isValidAgeOkToken, readCookie } from "./age";
 import { sendEmail } from "@/server/email";
-import { resetPasswordEmail, verifyEmail } from "@/server/emails";
+import { existingAccountEmail, resetPasswordEmail, verifyEmail } from "@/server/emails";
 import { planPrice } from "@/server/billing/price";
 import { onSubscriptionChange, sendSubscriptionConfirmation } from "@/server/billing/sync";
 
@@ -91,6 +91,16 @@ export const auth = betterAuth({
     // Sent after the response (so response time doesn't reveal whether an account exists).
     sendResetPassword: async ({ user, url }) => {
       after(() => sendEmail(resetPasswordEmail(user.email, url)).catch((err) => console.error("reset email failed", err)));
+    },
+    // Signing up with a taken address looks like any sign-up (no account is
+    // revealed); the owner gets a note to log in or reset instead.
+    onExistingUserSignUp: async ({ user }) => {
+      const origin = (process.env.BETTER_AUTH_URL || defaultOrigin() || "").replace(/\/$/, "");
+      after(() =>
+        sendEmail(existingAccountEmail(user.email, `${origin}/login`, `${origin}/forgot-password`)).catch((err) =>
+          console.error("existing account email failed", err),
+        ),
+      );
     },
     // A reset link proves the inbox and sets a password they chose, so a
     // temporary admin password is replaced (the authenticator is still required).

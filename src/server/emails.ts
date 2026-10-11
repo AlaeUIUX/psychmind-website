@@ -182,6 +182,22 @@ export function verifyEmail(to: string, url: string): Email {
   };
 }
 
+/** Someone signed up with an address that already has an account. The form
+ *  answers like any sign-up (so it reveals nothing); the owner learns here.
+ *  TODO(client): copy. */
+export function existingAccountEmail(to: string, loginUrl: string, resetUrl: string): Email {
+  return {
+    to,
+    subject: "You already have a PsychMind account",
+    ...layout({
+      heading: "You already have an account",
+      body: `Someone just tried to create a PsychMind account with this email, but you already have one. Log in instead, or <a href="${escape(resetUrl)}" style="color:#1c1917">reset your password</a> if you've forgotten it.`,
+      cta: { label: "Log in", url: loginUrl },
+      footnote: "If this wasn't you, you can ignore this email. Nothing about your account changed.",
+    }),
+  };
+}
+
 export function resetPasswordEmail(to: string, url: string): Email {
   return {
     to,

@@ -42,7 +42,10 @@ export const TRACKER: TrackerGroup[] = [
       // Accounts
       { status: "done", owner: "build", title: "Patient and provider sign-up, email verification, log in", where: "/signup" },
       { status: "done", owner: "build", title: "Password reset", where: "/forgot-password" },
+      { status: "done", owner: "build", title: "Sign-up and log-in errors, tested", detail: "Wrong password and unknown email (same message), email already registered (the form reveals nothing; the owner is emailed to log in or reset), logging in before confirming (confirm screen with resend), reset link used twice, under-18, and each role kept to its own area, all in Playwright. Too many attempts is covered by the rate-limit unit tests.", where: "tests/e2e/auth-flows.spec.ts" },
+      { status: "done", owner: "build", title: "Admin log-in", detail: "Accounts made from ADMIN_EMAILS with a temporary password, a forced new password, a required authenticator and their own log-in page; Forgot password, Settings (email and password), and Reset access for each other.", where: "/admin/login" },
       { status: "done", owner: "build", title: "Google sign-in (code)", detail: "Ready and tested locally. It shows only when its keys are set.", where: "docs/live-testing.md" },
+      { status: "todo", owner: "accounts", title: "Google sign-in in production", detail: "\"Continue with Google\" goes live once this is done. Production URLs on the Google client, and the consent screen published." },
       { status: "done", owner: "build", title: "Two-step login", detail: "Authenticator app plus 10 backup codes; any user can turn it on in Settings.", where: "/two-factor/setup" },
       { status: "done", owner: "build", title: "Download your data, delete your account", where: "/account/settings" },
       { status: "done", owner: "build", title: "Legal safeguards (six risks)", detail: "Migration 0011: 18+ age screen on sign-up, Google and the raw endpoint; no third-party fonts, images or session replay (CSP-enforced); postal address and unsubscribe for marketing email; renewal terms with consent beside Activate and in Stripe Checkout; /copyright DMCA page.", where: "docs/legal/README.md" },
@@ -56,13 +59,16 @@ export const TRACKER: TrackerGroup[] = [
       { status: "done", owner: "build", title: "Hold \"Save and continue\" while a file is uploading", detail: "Save, Save & exit and the keyboard shortcut wait with \"Uploading…\" until the photo or license lands." },
       { status: "done", owner: "build", title: "Clean up uploads that are never saved", detail: "The daily job deletes uploads older than a day that no profile or license uses.", where: "src/app/api/cron/daily/route.ts" },
       { status: "done", owner: "build", title: "Abandoned-onboarding reminders", detail: "Emails at 1, 3 and 7 days from the daily job, each sent once; drafts untouched for 14+ days get none.", where: "src/server/onboarding/reminders.ts" },
+      { status: "todo", owner: "build", title: "Unsaved-changes warning", detail: "Build plan, slice 4: warn before leaving a wizard step or the profile editor with changes that aren't saved." },
+      { status: "todo", owner: "build", title: "Fill in city and state from the ZIP", detail: "Build plan, slice 4: the practice address step looks up the ZIP. The street address stays private either way." },
+      { status: "todo", owner: "build", title: "Error summary on long forms", detail: "Build plan, slice 4: a list of what to fix at the top of a step, linking to each field, as well as the inline errors." },
       // Profiles
       { status: "done", owner: "build", title: "Profile editor", detail: "Uses the wizard's sections with a live preview.", where: "/provider/profile" },
       { status: "done", owner: "build", title: "Public provider profile", detail: "With share, save, request, and a dedicated not-found page.", where: "/providers/{name}-{id}" },
+      { status: "todo", owner: "build", title: "Provider notification settings", detail: "Choose which emails they get (new requests, reminders). Account and billing emails always go out." },
       // Billing
       { status: "done", owner: "build", title: "Stripe listing subscription (code)", detail: "Better Auth Stripe plugin, the 3-day grace rule, billing page and customer portal. Off until the keys are set.", where: "/provider/billing" },
       { status: "done", owner: "build", title: "Billing emails", detail: "Payment failed, profile paused, payment recovered, cancellation confirmed, each sent once (webhooks, plus the daily job for \"paused\"). Unit-tested; still to try with Stripe test mode.", where: "src/server/billing/notices.ts" },
-      { status: "todo", owner: "client", title: "Price, trial and extra-location fee (D9)", detail: "Figma shows $10/month on desktop and $39 on mobile, plus $5 per extra location. The Stripe price waits on this.", where: "src/lib/billing.ts" },
       // Emails
       { status: "done", owner: "build", title: "Branded account and provider emails", detail: "Verify email, password reset, submitted, approved, changes requested, rejected, and the staff alert for new submissions.", where: "src/server/emails.ts" },
     ],
@@ -131,11 +137,11 @@ export const TRACKER: TrackerGroup[] = [
       { status: "todo", owner: "accounts", title: "Daily job secret", detail: "Set CRON_SECRET on Vercel (production) so the daily job (upload cleanup, onboarding reminders, billing check) can run.", where: "vercel.json" },
       { status: "todo", owner: "accounts", title: "Portal domain", detail: "Point app.psychmind.org at the Vercel project." },
       { status: "todo", owner: "accounts", title: "Email sending domain", detail: "Verify psychmind.org in Resend so EMAIL_FROM can be hello@psychmind.org." },
-      { status: "todo", owner: "accounts", title: "Google sign-in in production", detail: "Production URLs on the Google client, and the consent screen published." },
       { status: "todo", owner: "build", title: "Remove the sample providers, or load the client's real ones", detail: "Admin → All providers → Remove samples." },
       { status: "todo", owner: "client", title: "Final copy review", detail: "The roughly 50 copy and consistency issues from the Figma audit (D27), and \"thousands of verified psychologists\" (D26).", where: "docs/build-plan/BUILD-PLAN.md §4" },
       { status: "todo", owner: "client", title: "Privacy policy: in-house analytics", detail: "What's collected and what isn't, written up in docs/TODO.md for the client.", where: "docs/TODO.md" },
       { status: "todo", owner: "build", title: "Launch, then 30 days of bug fixes" },
+      { status: "todo", owner: "client", title: "Price, trial and extra-location fee (D9)", detail: "Moved from Milestone 1 so the client has time to decide. Figma shows $10/month on desktop and $39 on mobile, plus $5 per extra location. The Stripe price waits on this.", where: "src/lib/billing.ts" },
     ],
   },
   {
