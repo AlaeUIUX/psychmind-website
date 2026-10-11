@@ -72,7 +72,19 @@ export function SiteFooter() {
         />
 
         <div className="relative z-10 flex w-full max-w-[900px] flex-col items-center gap-16 pb-8">
-          <div className="relative w-full px-6 pt-16 pb-8 sm:px-16 md:min-h-[416px] lg:min-h-[480px]">
+          <div className="relative w-full px-6 pt-8 pb-8 sm:px-16 md:min-h-[416px] md:pt-16 lg:min-h-[480px]">
+            {/* Phones and small tablets: the illustration sits centred above the
+                heading (beside it from md up, below). 240x160 keeps its ratio
+                and spans five rules, so the heading still starts on a line. */}
+            <Reveal className="pointer-events-none relative mx-auto mb-8 h-[160px] w-[240px] md:hidden">
+              <Image
+                src="/images/home/footer-illustration-clean.png"
+                alt=""
+                fill
+                sizes="240px"
+                className="animate-float object-contain"
+              />
+            </Reveal>
             {/* Same heading and subtitle styles as every landing section
                 (SectionHeader). From sm up the 44px heading plus the 20px gap
                 spans two rules, so the subtitle's 32px lines rest on them. */}

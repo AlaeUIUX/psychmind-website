@@ -1,8 +1,12 @@
 "use client";
 
 import { cn } from "cn";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ArrowUpRightIcon, GlobeIcon, HeartIcon, MapPinIcon, MonitorIcon, SendIcon as LucideSendIcon } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { SearchIcon, SendIcon } from "@/components/ui/icons";
+import { toggleVariants } from "@/components/ui/toggle";
+import { formatLabel, sessionTypeLabel } from "@/lib/requests";
 import { SessionModeSwitch } from "./session-mode-switch";
 import { providerPhoto } from "@/lib/photos";
 
@@ -480,5 +484,283 @@ export function PrivacyPreview() {
         ))}
       </ul>
     </Shell>
+  );
+}
+
+/* ============================================================ full size */
+/* One-to-one copies of the live screens, at their real size, for the
+   "how it works" process panel. They mirror the directory's result card
+   (components/directory/provider-card.tsx) and the session request wizard
+   (components/requests/request-wizard.tsx); keep them in step when those change. */
+
+const liveProviders = [
+  { ...providers[0], first: "Sara", place: "Miami, FL", online: false, specialties: ["Trauma", "Anxiety", "Mindfulness"], languages: ["English", "Spanish"], type: "Individual one-on-one therapy" },
+  { ...providers[1], first: "Shatiria", place: "Online · Florida", online: true, specialties: ["Trauma", "Mood", "Psychodynamic"], languages: ["English"], type: "Individual & Couples therapy" },
+  { ...providers[2], first: "Monica", place: "Miami, FL", online: false, specialties: ["Trauma", "Self-esteem", "Teens"], languages: ["English"], type: "Individual one-on-one therapy" },
+];
+
+const liveChip = "inline-flex items-center gap-1 rounded-tag border px-2.5 py-1 text-sm font-medium shadow-control";
+
+function LiveResultCard({ p, matched, delayMs }: { p: (typeof liveProviders)[number]; matched: string; delayMs: number }) {
+  const place = (
+    <span className={cn(liveChip, "w-fit shrink-0 border-warm-300 bg-white text-text-secondary")}>
+      {p.online ? <MonitorIcon className="size-3.5" /> : <MapPinIcon className="size-3.5" />}
+      {p.place}
+    </span>
+  );
+  return (
+    <article style={at(delayMs)} className="flex animate-rise-in flex-col gap-3 rounded-card border border-warm-200 bg-white p-3">
+      <div className="flex gap-3">
+        <span className="flex size-20 shrink-0 rounded-2xl border border-black/[0.08] bg-white p-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={p.photo} alt="" className="size-full rounded-xl object-cover" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <p className="pt-0.5 type-title-lg font-semibold text-text-primary">{p.name}</p>
+          <p className="flex min-w-0 items-start gap-2 type-small text-text-tertiary">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="mt-0.5 size-4 shrink-0" />
+            <span>{p.title}</span>
+          </p>
+          <span className="mt-1">{place}</span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5 rounded-2xl bg-warm-100 p-4">
+        <p className="type-small font-medium text-text-primary">About {p.first}</p>
+        <p className="line-clamp-3 type-small text-text-secondary">{p.about}</p>
+        <span className="w-fit type-small text-text-primary underline underline-offset-2">View more</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {p.specialties.map((t) => (
+          <span key={t} className={cn(liveChip, t === matched ? "border-warm-800 bg-warm-800 text-white" : "border-warm-300 bg-white text-text-secondary")}>
+            {t}
+          </span>
+        ))}
+        <span className={cn(liveChip, "border-warm-300 bg-white text-text-secondary")}>
+          <GlobeIcon className="size-3.5" />
+          {p.languages.join(", ")}
+        </span>
+      </div>
+      <div className="flex flex-col gap-4 rounded-2xl bg-warm-100 p-4">
+        <dl className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1">
+            <dt className="type-small text-text-primary">Price per session</dt>
+            <dd className="type-small text-text-secondary">
+              From <span className="font-medium text-text-primary">{p.price} USD</span>
+            </dd>
+          </div>
+          <div className="flex flex-col gap-1">
+            <dt className="type-small text-text-primary">Therapy type</dt>
+            <dd className="type-small text-text-secondary">{p.type}</dd>
+          </div>
+        </dl>
+        <div className="flex gap-2">
+          <span className={cn(buttonVariants({ variant: "brand" }), "h-10 flex-1 text-sm")}>
+            See profile
+            <ArrowUpRightIcon />
+          </span>
+          <span className={cn(buttonVariants({ variant: "secondary", fullWidth: true }), "h-10 flex-1 text-sm")}>
+            <HeartIcon />
+            Save
+          </span>
+        </div>
+        <div className="flex flex-col gap-2.5 border-t border-warm-200 pt-4 type-small text-text-secondary">
+          <p className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/how-it-works/shield-icon.svg" alt="" className="size-4" />
+            Your info is never shared
+          </p>
+          <p className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-4" />
+            Credentials manually verified
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/** Search results as the directory shows them: active filters, the count, then real-size result cards. */
+export function ResultsPreview() {
+  // Each card is taller than the panel, so once they're in, the list pages
+  // down to the next card's top (offsets measured, so it lands exactly).
+  const list = useRef<HTMLDivElement>(null);
+  const [browse, setBrowse] = useState<CSSProperties | null>(null);
+  useEffect(() => {
+    const el = list.current;
+    if (!el || reducedMotion()) return;
+    const cards = el.querySelectorAll<HTMLElement>("article");
+    // layout offsets (not rects), so cards still rising in don't skew them;
+    // each card lands at the top of the preview
+    const top = (i: number) => `${cards[i].offsetTop - el.offsetTop}px`;
+    const t = setTimeout(
+      () =>
+        setBrowse({
+          "--b1": top(1),
+          "--b2": top(2),
+          animation: "results-browse 8s var(--ease-out-soft) both",
+        } as CSSProperties),
+      1100,
+    );
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <Shell>
+      {/* filters, count and cards move together, so nothing peeks out behind a card */}
+      <div ref={list} style={browse ?? undefined} className="flex flex-col gap-3 @sm:gap-4">
+        <div className="flex flex-wrap gap-1.5">
+          {filters.map((f, i) => (
+            <Chip key={f} dark className="animate-pop-in pr-1.5" style={at(i * 70)}>
+              {f}
+              <span className="text-white/60">×</span>
+            </Chip>
+          ))}
+        </div>
+        <p className="animate-fade-in type-small text-text-tertiary" style={at(300)}>
+          <span className="font-semibold text-text-primary">132</span> providers found
+        </p>
+        <div className="flex flex-col gap-3">
+          {liveProviders.map((p, i) => (
+            <LiveResultCard key={p.name} p={p} matched="Trauma" delayMs={380 + i * 120} />
+          ))}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+/** True once `ms` has passed since mount (immediately with reduced motion). */
+function useAfter(ms: number) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOn(true), reducedMotion() ? 0 : ms);
+    return () => clearTimeout(t);
+  }, [ms]);
+  return on;
+}
+
+function WizardDashes({ step }: { step: number }) {
+  return (
+    <div className="flex gap-1.5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <span key={i} className={cn("h-1 w-6 rounded-full transition-colors duration-300", i < step ? "bg-blue-600" : "bg-warm-200")} />
+      ))}
+    </div>
+  );
+}
+
+function WizardTitle({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+  return (
+    <div className="flex animate-rise-in flex-col gap-2">
+      <p className="type-ui-label text-warm-500">{eyebrow}</p>
+      <p className="type-ui-headline text-warm-900">{title}</p>
+      <p className="type-ui-body text-warm-600">{description}</p>
+    </div>
+  );
+}
+
+function WizardProvider() {
+  const p = liveProviders[0];
+  return (
+    <div className="flex animate-rise-in items-center gap-3 rounded-xl border border-warm-200 bg-warm-50 p-3" style={at(90)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={p.photo} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate type-ui-heading text-warm-900">{p.name}</span>
+        <span className="truncate type-ui-small text-warm-600">{p.title}</span>
+      </div>
+    </div>
+  );
+}
+
+function WizardButton({ children, delayMs }: { children: ReactNode; delayMs: number }) {
+  return (
+    <span style={at(delayMs)} className={cn(buttonVariants({ fullWidth: true }), "h-10 animate-rise-in text-[14px]")}>
+      {children}
+    </span>
+  );
+}
+
+function WizardChip({ on, children }: { on: boolean; children: ReactNode }) {
+  return (
+    <span data-state={on ? "on" : "off"} className={cn(toggleVariants({ variant: "chip", size: "chip" }), "transition-colors duration-300")}>
+      {children}
+    </span>
+  );
+}
+
+function SessionDetailsScreen() {
+  const type = useAfter(500);
+  const format = useAfter(900);
+  return (
+    <div className="flex flex-col gap-6">
+      <WizardDashes step={2} />
+      <WizardTitle eyebrow="Step 2 of 5" title="Session details" description="Two quick questions so Sara knows how to prepare." />
+      <div className="flex animate-rise-in flex-col gap-2.5" style={at(120)}>
+        <p className="type-ui-caption tracking-wide text-warm-500 uppercase">Session type</p>
+        <div className="flex flex-wrap gap-2">
+          <WizardChip on={type}>{sessionTypeLabel("individuals")}</WizardChip>
+          <WizardChip on={false}>{sessionTypeLabel("couples")}</WizardChip>
+        </div>
+      </div>
+      <div className="flex animate-rise-in flex-col gap-2.5" style={at(180)}>
+        <p className="type-ui-caption tracking-wide text-warm-500 uppercase">Format</p>
+        <div className="flex flex-wrap gap-2">
+          <WizardChip on={format}>
+            <MonitorIcon className="size-4" />
+            {formatLabel("online")}
+          </WizardChip>
+          <WizardChip on={false}>
+            <MapPinIcon className="size-4" />
+            {formatLabel("in_person")}
+          </WizardChip>
+        </div>
+      </div>
+      <WizardButton delayMs={240}>Continue</WizardButton>
+    </div>
+  );
+}
+
+const wizardScreens = [
+  () => (
+    <div className="flex flex-col gap-6">
+      <WizardDashes step={1} />
+      <WizardTitle eyebrow="Step 1 of 5" title="Confirm your request" description="You selected Sara Oliisi" />
+      <WizardProvider />
+      <WizardButton delayMs={180}>Confirm</WizardButton>
+    </div>
+  ),
+  () => <SessionDetailsScreen />,
+  () => (
+    <div className="flex flex-col gap-6">
+      <WizardTitle
+        eyebrow="Request confirmed"
+        title="You're all set"
+        description="Sara has received your request and will reach out to you directly within 48 hours."
+      />
+      <div className="flex animate-rise-in items-start gap-4 rounded-xl border border-warm-200 bg-warm-50 p-4" style={at(120)}>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="type-ui-heading text-warm-900">We sent an email on your behalf!</p>
+          <p className="truncate type-ui-body font-medium text-blue-700">
+            j<span className="tracking-[0.12em]">••••••</span>@gmail.com
+          </p>
+          <p className="type-ui-small text-warm-600">You’ll be contacted directly by email or phone to confirm everything.</p>
+        </div>
+        <LucideSendIcon className="mt-1 size-6 shrink-0 text-warm-400" />
+      </div>
+      <WizardButton delayMs={240}>Back to search</WizardButton>
+    </div>
+  ),
+];
+
+/** The session request wizard as patients see it, in the portal's own styles, stepping through on its own. */
+export function RequestWizardPreview({ every = 2600, loop = false }: { every?: number; loop?: boolean }) {
+  const step = useCycle(wizardScreens.length, every, loop);
+  const Screen = wizardScreens[step];
+  return (
+    <div aria-hidden className="app-ui w-full select-none">
+      <Screen key={step} />
+    </div>
   );
 }

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { AuthPanelProvider } from "./auth-context";
 import { AuthTopLink } from "./auth-top-link";
+import { marketingHome } from "@/lib/hosts";
 import { PortalPanel } from "./portal-panel";
 
 // The portal's front door. A calm form column on the left and a living panel
@@ -15,7 +17,12 @@ export async function AuthShell({ children }: { children: ReactNode }) {
   // Rendered per request so the Content-Security-Policy nonce reaches every
   // script (a pre-built page can't carry one; see lib/csp.ts).
   await connection();
-  const marketing = process.env.NEXT_PUBLIC_MARKETING_URL || "/";
+  // The logo goes back to the marketing homepage, not this host's "/" (log in).
+  const h = await headers();
+  const marketing = marketingHome(
+    h.get("x-forwarded-host") ?? h.get("host"),
+    h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "development" ? "http" : "https"),
+  );
   return (
     <AuthPanelProvider>
       <div className="app-ui flex min-h-svh bg-white text-warm-900 lg:p-3">
@@ -27,11 +34,19 @@ export async function AuthShell({ children }: { children: ReactNode }) {
                 <img src="/images/home/logo.svg" alt="" width={26} height={26} />
                 <span className="font-display text-[19px] text-warm-900">PsychMind</span>
               </Link>
-              <AuthTopLink />
+              {/* On phones it would crowd the logo, so it moves under the form. */}
+              <div className="hidden sm:block">
+                <AuthTopLink />
+              </div>
             </header>
 
             <main className="flex flex-1 items-center justify-center px-6 py-10 sm:px-10">
-              <div className="w-full max-w-[380px]">{children}</div>
+              <div className="w-full max-w-[380px]">
+                {children}
+                <div className="mt-8 flex justify-center border-t border-warm-100 pt-6 empty:hidden sm:hidden">
+                  <AuthTopLink />
+                </div>
+              </div>
             </main>
 
             <footer className="px-6 pb-6 text-[12px] text-warm-500 sm:px-10">

@@ -209,7 +209,7 @@ export function VerifiedProviders() {
                 // a drag shouldn't also count as a click on a card
                 if (dragged.current) e.preventDefault();
               }}
-              className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-5 overflow-x-auto overscroll-x-contain px-4 pt-6 pb-8 select-none sm:-mx-8 sm:scroll-px-8 sm:px-8 max-lg:cursor-grab max-lg:active:cursor-grabbing lg:relative lg:mx-0 lg:h-[560px] lg:overflow-visible lg:p-0"
+              className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-5 overflow-x-auto overscroll-x-contain px-4 pt-6 pb-16 select-none sm:-mx-8 sm:scroll-px-8 sm:px-8 max-lg:cursor-grab max-lg:active:cursor-grabbing lg:relative lg:mx-0 lg:h-[560px] lg:overflow-visible lg:p-0"
             >
               {providers.map((p, i) => (
                 <div
@@ -227,7 +227,8 @@ export function VerifiedProviders() {
             </div>
 
             {/* Phones & tablets: where you are in the row, plus a pencil nudge to swipe. */}
-            <div className="-mt-2 mb-6 flex items-center justify-center gap-4 lg:hidden">
+            {/* -mt-10 takes back the extra room the row leaves under the cards for their shadows */}
+            <div className="-mt-10 mb-6 flex items-center justify-center gap-4 lg:hidden">
               <div className="flex items-center gap-1.5">
                 {providers.map((p, i) => (
                   <button

@@ -4,7 +4,7 @@ import { cn } from "cn";
 import Link from "next/link";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { Reveal } from "@/components/reveal";
-import { RequestPreview, SearchPreview } from "@/components/shared/product-preview";
+import { RequestWizardPreview, ResultsPreview, SearchPreview } from "@/components/shared/product-preview";
 import { Button } from "@/components/ui/button";
 import { CircleArrowIcon } from "@/components/ui/icons";
 import { DoodleHookArrow } from "@/components/ui/doodles";
@@ -22,13 +22,13 @@ const steps = [
     title: "Browse matched profiles",
     description:
       "We surface providers that fit your search. Read their approach, check their availability, and message them directly before committing to anything.",
-    preview: () => <SearchPreview showSearch={false} />,
+    preview: () => <ResultsPreview />,
   },
   {
     title: "Book your first session",
     description:
       "Pick a time that works for you — online or in person. Your first session is a conversation, not a commitment. You can always switch providers.",
-    preview: () => <RequestPreview every={2100} loop={false} />,
+    preview: () => <RequestWizardPreview every={2400} />,
   },
 ];
 
@@ -138,7 +138,7 @@ export function ProcessSteps() {
           {/* Product preview for the chosen step. */}
           <Reveal
             delay={150}
-            className="relative flex h-[460px] w-full flex-1 flex-col overflow-hidden rounded-card border border-warm-200 bg-warm-100 p-3 shadow-card sm:h-[520px] sm:p-5 lg:sticky lg:top-28"
+            className="relative flex h-[580px] w-full flex-col overflow-hidden rounded-card border border-warm-200 bg-warm-100 p-3 shadow-card sm:h-[620px] sm:p-5 lg:sticky lg:top-28 lg:flex-1"
           >
             <p className="px-1 pb-3 text-xs font-medium text-text-tertiary" aria-live="polite">
               Step {active + 1} of {steps.length} · {steps[active].title}

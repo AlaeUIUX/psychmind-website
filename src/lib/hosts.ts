@@ -64,6 +64,19 @@ export function defaultOrigin(): string | undefined {
   return undefined;
 }
 
+/** Where "home" is from a portal page, given the request's Host header.
+ *  On the app host "/" is the portal's own front door (log in), so this
+ *  points at the marketing site: app.localhost:3000 → localhost:3000,
+ *  app.psychmind.org → www.psychmind.org. NEXT_PUBLIC_MARKETING_URL wins. */
+export function marketingHome(requestHost: string | null, proto = "https"): string {
+  if (process.env.NEXT_PUBLIC_MARKETING_URL) return process.env.NEXT_PUBLIC_MARKETING_URL;
+  const app = appHost();
+  if (!app || !requestHost) return "/";
+  const [hostname, port] = requestHost.split(":");
+  if (hostname !== app) return "/";
+  return `${proto}://${marketingHost(app)}${port ? `:${port}` : ""}/`;
+}
+
 /** The marketing host for a given app host (app.psychmind.org → www.psychmind.org). */
 export function marketingHost(app: string): string {
   if (process.env.MARKETING_HOST) return process.env.MARKETING_HOST;

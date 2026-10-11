@@ -24,8 +24,9 @@ const items = [
 
 export function EditorialNote({ className }: { className?: string }) {
   return (
+    // Reveals as one card: staggering the cells slid them up inside the gray,
+    // clipped frame, which showed through until they settled.
     <Reveal
-      stagger
       className={cn(
         "grid grid-cols-1 gap-px overflow-hidden rounded-card border border-warm-200 bg-warm-200 sm:grid-cols-3",
         className,

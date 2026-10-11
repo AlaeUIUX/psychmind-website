@@ -160,6 +160,23 @@
   --animate-caret: caret 1s steps(1) infinite;
 }
 
+/* The full-size results preview pages from card to card, like someone
+   browsing. --b1 / --b2 are the second and third cards' offsets, measured. */
+@keyframes results-browse {
+  0%,
+  22% {
+    transform: none;
+  }
+  42%,
+  64% {
+    transform: translate3d(0, calc(-1 * var(--b1, 0px)), 0);
+  }
+  84%,
+  100% {
+    transform: translate3d(0, calc(-1 * var(--b2, 0px)), 0);
+  }
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
