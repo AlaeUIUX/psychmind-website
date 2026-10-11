@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
   // only error, so they're "not found" until both are set.
   const appConfigured = !process.env.VERCEL || Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET);
   if (!appConfigured) {
-    if (/^\/api\/(auth|uploads|files|account)(\/|$)/.test(path)) return NextResponse.json({ error: "Not available." }, { status: 404 });
+    if (/^\/api\/(auth|uploads|files|account|account-recovery|admin)(\/|$)/.test(path)) return NextResponse.json({ error: "Not available." }, { status: 404 });
     if (isAppPath(path)) return NextResponse.rewrite(new URL("/_app-not-configured", request.url));
   }
 
