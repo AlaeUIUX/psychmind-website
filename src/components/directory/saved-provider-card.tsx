@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowUpRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { displayName, feeFrom, locationLabel, shortName, therapyType } from "@/lib/provider/display";
 import type { DirectoryProvider } from "@/server/directory/data";
 import { ProviderPhoto, VerifiedMark } from "./provider-card";
 import { SaveButton } from "./save-button";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 // A saved provider on the patient's account page (Figma V1, "Saved" variant):
 // the profile opens in a new tab; "Saved" un-saves, with Undo.
@@ -54,7 +54,7 @@ export function SavedProviderCard({ p }: { p: DirectoryProvider }) {
           <Button asChild variant="secondary" className="h-10 flex-1">
             <a href={p.href} target="_blank" rel="noopener">
               See profile
-              <ArrowUpRightIcon />
+              <CtaArrowIcon />
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           </Button>

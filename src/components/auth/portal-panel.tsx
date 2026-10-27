@@ -11,7 +11,7 @@ import {
   SearchIcon,
   ShieldCheckIcon,
   SparklesIcon,
-} from "lucide-react";
+} from "@/components/ui/hugeicons";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { ProfileBanner } from "@/components/provider/profile-view";

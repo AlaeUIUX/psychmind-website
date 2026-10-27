@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { GlobeIcon, HashIcon, SearchIcon, UserRoundIcon } from "lucide-react";
+import { GlobeIcon, HashIcon, SearchIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import { useMemo } from "react";
 import { MapPinIcon, PlusIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

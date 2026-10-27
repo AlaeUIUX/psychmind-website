@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, XIcon } from "@/components/ui/hugeicons";
 import { useCallback, useState } from "react";
 import { Controller } from "react-hook-form";
 import { ChoiceChips } from "@/components/app/choice-chips";

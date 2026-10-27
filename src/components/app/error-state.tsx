@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { RotateCwIcon } from "lucide-react";
+import { RotateCwIcon } from "@/components/ui/hugeicons";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 

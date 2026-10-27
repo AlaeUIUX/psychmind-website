@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { BuildingIcon, CheckIcon, LoaderCircleIcon, MonitorIcon, PencilIcon, PlusIcon, ShieldCheckIcon, SparklesIcon, Trash2Icon } from "lucide-react";
+import { BuildingIcon, CheckIcon, LoaderCircleIcon, MonitorIcon, PencilIcon, PlusIcon, ShieldCheckIcon, SparklesIcon, Trash2Icon } from "@/components/ui/hugeicons";
 import { useCallback, useRef, useState, type ComponentType } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 import { FormRow } from "@/components/forms/form-row";

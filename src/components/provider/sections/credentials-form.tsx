@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon, LockIcon, PencilIcon, ScaleIcon } from "lucide-react";
+import { CheckIcon, LockIcon, PencilIcon, ScaleIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { UploadDropzone, type UploadItem } from "@/components/app/upload-dropzone";

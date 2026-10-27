@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowLeftIcon, BadgeCheckIcon, FileIcon, LoaderCircleIcon, MailCheckIcon, SearchIcon, UploadIcon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, BadgeCheckIcon, FileIcon, LoaderCircleIcon, MailCheckIcon, SearchIcon, UploadIcon, XIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { useRef, useState } from "react";

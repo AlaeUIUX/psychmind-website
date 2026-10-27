@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { MenuIcon } from "lucide-react";
+import { MenuIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";

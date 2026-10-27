@@ -1,6 +1,6 @@
 "use client";
 
-import { UserRoundIcon } from "lucide-react";
+import { UserRoundIcon } from "@/components/ui/hugeicons";
 import { useState } from "react";
 import { UploadDropzone, type UploadItem } from "@/components/app/upload-dropzone";
 import { pictureSchema } from "@/lib/provider/schema";

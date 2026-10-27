@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CircleAlertIcon } from "lucide-react";
+import { CircleAlertIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import type { SectionStatus } from "@/lib/provider/completeness";

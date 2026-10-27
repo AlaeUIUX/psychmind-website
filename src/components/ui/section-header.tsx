@@ -16,9 +16,11 @@ type SectionHeaderProps = {
   className?: string;
 };
 
-// Badge → H2 → subtitle, the opening of every content section. The badge
-// fades up, the title rises line by line from behind a mask, then the
-// subtitle follows.
+// Badge → H2 → subtitle, the opening of every content section, in the home
+// hero's language a step down (as the bento's "Discovery" first did): the
+// status pill, the serif at 34px to the hero's 40, and the hero's grey Inter
+// line under it. The badge fades up, the title rises line by line from behind
+// a mask, then the subtitle follows.
 export function SectionHeader({
   badge,
   title,
@@ -31,7 +33,7 @@ export function SectionHeader({
   const centered = align === "center";
 
   const text = (
-    <div className={cn("flex flex-col gap-4 sm:gap-5", centered ? "items-center text-center" : "items-start")}>
+    <div className={cn("flex flex-col gap-4", centered ? "items-center text-center" : "items-start")}>
       {badge && (
         <Reveal>
           <SectionBadge icon={badge.icon}>{badge.label}</SectionBadge>
@@ -39,17 +41,18 @@ export function SectionHeader({
       )}
       <SplitHeading
         delay={0.1}
-        className={cn(
-          "type-h2",
-          inverted ? "text-warm-25" : "text-text-primary",
-          centered ? "max-w-[768px]" : "max-w-[720px]",
-        )}
+        className={cn(inverted ? "type-h2 text-warm-25" : "type-hero-h2", centered ? "max-w-[640px]" : "max-w-[720px]")}
       >
         {title}
       </SplitHeading>
       {subtitle && (
         <Reveal delay={260}>
-          <p className={cn("type-lead max-w-[624px]", inverted ? "text-warm-300" : "text-text-tertiary")}>
+          <p
+            className={cn(
+              inverted ? "type-sub text-warm-300" : "type-hero-sub",
+              centered ? "max-w-[480px] text-balance" : "max-w-[560px]",
+            )}
+          >
             {subtitle}
           </p>
         </Reveal>

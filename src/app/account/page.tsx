@@ -1,4 +1,4 @@
-import { HeartIcon, InboxIcon } from "lucide-react";
+import { HeartIcon, InboxIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CrisisStrip } from "@/components/app/crisis-strip";

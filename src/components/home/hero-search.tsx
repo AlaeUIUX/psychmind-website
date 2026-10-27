@@ -1,37 +1,71 @@
 "use client";
 
 import { cn } from "cn";
-import { GlobeIcon, UserRoundIcon, XCircleIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import { SessionModeSwitch, type SessionMode } from "@/components/shared/session-mode-switch";
-import { PlusIcon, SearchIcon } from "@/components/ui/icons";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { SessionMode } from "@/components/shared/session-mode-switch";
+import { GlobeIcon, UserIcon, XIcon } from "@/components/ui/hugeicons";
+import { MapPinIcon, MonitorIcon, SearchIcon } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTrackView } from "@/lib/analytics/client";
 import { searchHref } from "@/lib/search/filters";
-import { GENDERS, labelOf } from "@/lib/taxonomy";
+import { stateForZip, whereForZip } from "@/lib/search/location";
+import { suggestSpecialties } from "@/lib/search/text";
+import { GENDERS, labelOf, stateName } from "@/lib/taxonomy";
+import { isZip, type ZipPlace } from "@/lib/zip";
+import {
+  panelHeading,
+  searchLift,
+  searchPanel,
+  searchSurface,
+  segmentFrost,
+  segmentLabel,
+  segmentLift,
+  segmentValue,
+  SUGGESTIONS,
+  topicChip,
+  topicChipOff,
+  topicChipOn,
+} from "./search-styles";
 
-// The home page search tool, wired to the results: format, "What's on your
-// mind?" (Figma Assets 656:2889: typing completes a suggestion, chosen text
-// becomes a pill) and "Who feels right" preferences. Search opens /providers
-// with those filters; the results page asks for a location when it's needed.
+// The home page search tool, wired to the results: format and ZIP, "What's on
+// your mind?" and "Who feels right" preferences. Search opens /providers with
+// those filters; the results page asks for a location when it's still needed.
+//
+// The ZIP sits with the format because it matters either way: in person it finds
+// practices nearby, and online it decides who can see you at all (providers can
+// only work with clients in states where they're licensed). A full ZIP names its
+// place in the panel: the state at once, from the ZIP table, then the city once
+// our server has looked it up (/api/place; nothing leaves the browser for any
+// other host).
+//
+// It behaves like Airbnb's search bar, with a frosted focus pull instead of
+// Airbnb's grey: opening a segment lifts it as a white pill, frosts the other
+// segments over and drops one big rounded panel under the bar;
+// the search button grows into "Search". A value is only cleared from inside
+// the open segment (its round ✕), never from the closed bar. Every panel has
+// the same shape: small headings over chips, or Airbnb's two-way toggle for
+// the format.
 
-/** Figma's "What's on your mind?" suggestions. */
-const SUGGESTIONS = ["Anxiety", "Trauma", "PTSD", "Depression", "Family issues", "Cultural changes"];
 /** Most-asked session languages first. TODO(client): confirm the list. */
 const LANGUAGES = ["English", "Spanish", "French", "Arabic", "Mandarin", "Portuguese", "Russian", "Hindi"];
 const GENDER_OPTIONS = GENDERS.filter((g) => g.value !== "undisclosed");
-
-// Shared surface for the search: white, hairline ring, soft lift — sits on the
-// paper like everything else instead of a grey slab.
-const searchSurface =
-  "bg-white ring-1 ring-warm-200 shadow-[0_1px_2px_rgb(28_25_23/0.04),0_24px_56px_-28px_rgb(28_25_23/0.22)]";
+const FORMATS: { value: SessionMode; label: string; Icon: typeof MonitorIcon }[] = [
+  { value: "online", label: "Online", Icon: MonitorIcon },
+  { value: "in-person", label: "In-person", Icon: MapPinIcon },
+];
 
 type Prefs = { gender: string[]; language: string[] };
+type Segment = "format" | "mind" | "prefs";
 
-function go(mode: SessionMode, q: string, prefs: Prefs, openFilters = false) {
+// The bar's measurements and why (Airbnb's, with concentric corners) are with
+// the shared styles in search-styles.ts.
+
+function go(mode: SessionMode, q: string, prefs: Prefs, where = "", openFilters = false) {
   const href = searchHref("/providers", {
     format: mode === "in-person" ? "in_person" : "online",
+    where: where || null,
     q: q || null,
     gender: prefs.gender.length ? prefs.gender : null,
     language: prefs.language.length ? prefs.language : null,
@@ -40,230 +74,469 @@ function go(mode: SessionMode, q: string, prefs: Prefs, openFilters = false) {
   window.location.assign(openFilters ? `${href}${href.includes("?") ? "&" : "?"}open=filters` : href);
 }
 
-function Divider() {
-  return <div aria-hidden className="my-5 w-px self-stretch bg-warm-200" />;
-}
-
-function MindField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const input = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState("");
-  const [open, setOpen] = useState(false);
-  const typed = text.trim().toLowerCase();
-  const match = typed ? SUGGESTIONS.find((s) => s.toLowerCase().startsWith(typed)) : undefined;
-  const ghost = match && text.length < match.length ? match.slice(text.length) : "";
-
-  const commit = (v: string) => {
-    onChange(v.trim());
-    setText("");
-    setOpen(false);
-  };
-
+/** One segment of the bar. Closed bar: white, a soft grey hover. Open bar: the
+ *  open segment lifts as a white pill and the others frost over (a soft blur
+ *  and fade, a focus pull rather than greying them), clearing when hovered. */
+function Segment({
+  active,
+  barOpen,
+  className,
+  onClear,
+  children,
+  after,
+}: {
+  active: boolean;
+  barOpen: boolean;
+  className?: string;
+  /** Shown as a round ✕ only while this segment is open and has a value. */
+  onClear?: () => void;
+  children: ReactNode;
+  /** Sits after the ✕ (the search button, in the last segment). */
+  after?: ReactNode;
+}) {
   return (
     <div
-      className="relative flex min-w-0 flex-1 cursor-text flex-col justify-center gap-1 self-stretch rounded-[32px] px-7 py-5 transition-colors duration-300 hover:bg-warm-50"
-      onClick={() => input.current?.focus()}
+      className={cn(
+        "group/seg relative flex h-full min-w-0 items-center rounded-[24px] transition-[background-color,box-shadow] duration-200",
+        active ? segmentLift : "hover:bg-warm-100",
+        className,
+      )}
     >
-      <label htmlFor="hero-mind" className="text-lg font-medium text-text-primary">
-        What&apos;s on your mind?
-      </label>
-      {value ? (
-        <span className="inline-flex w-fit max-w-full items-center gap-2 rounded-tag border border-warm-300 bg-white py-1 pr-1.5 pl-3 text-md font-medium text-text-primary shadow-control">
-          <span className="truncate">{value}</span>
-          <button
-            type="button"
-            aria-label={`Clear “${value}”`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onChange("");
-              requestAnimationFrame(() => input.current?.focus());
-            }}
-            className="flex size-6 shrink-0 items-center justify-center rounded-full"
-          >
-            <XCircleIcon className="size-4 fill-warm-900 text-white" />
-          </button>
-        </span>
-      ) : (
-        <div className="relative">
-          <input
-            id="hero-mind"
-            ref={input}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setOpen(false)}
-            onKeyDown={(e) => {
-              if ((e.key === "Tab" || e.key === "ArrowRight") && ghost) {
-                e.preventDefault();
-                setText(match!);
-              } else if (e.key === "Enter") {
-                e.preventDefault();
-                if (match || text.trim()) commit(match && ghost ? match : text);
-              } else if (e.key === "Escape") {
-                setOpen(false);
-              }
-            }}
-            placeholder="What would you like to work on?"
-            autoComplete="off"
-            aria-describedby={open ? "hero-mind-suggestions" : undefined}
-            className="w-full bg-transparent text-lg text-text-primary outline-none placeholder:text-text-placeholder"
-          />
-          {ghost && (
-            <span aria-hidden className="pointer-events-none absolute inset-0 truncate text-lg whitespace-pre">
-              <span className="invisible">{text}</span>
-              <span className="text-text-placeholder">{ghost}</span>
-            </span>
-          )}
-        </div>
-      )}
-      {open && !value && (
-        <div
-          id="hero-mind-suggestions"
-          className={cn("absolute top-[calc(100%+10px)] left-0 z-30 flex w-[min(440px,100%)] flex-col gap-3 rounded-[24px] p-5", searchSurface)}
-        >
-          <p className="type-small text-text-tertiary">Popular searches</p>
-          <div className="flex flex-wrap gap-1.5">
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => commit(s)}
-                className={cn(
-                  "inline-flex h-8 items-center rounded-tag border px-3 text-sm font-medium shadow-control transition-colors",
-                  s === match ? "border-warm-900 bg-warm-900 text-white" : "border-warm-300 bg-white text-text-secondary hover:border-warm-600 hover:text-text-primary",
-                )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Preferences({ prefs, onChange }: { prefs: Prefs; onChange: (p: Prefs) => void }) {
-  const chosen = [
-    ...prefs.gender.map((g) => ({ key: g, label: labelOf("genders", g), icon: <UserRoundIcon className="size-3.5" /> })),
-    ...prefs.language.map((l) => ({ key: l, label: l, icon: <GlobeIcon className="size-3.5" /> })),
-  ];
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {chosen.slice(0, 2).map((c) => (
-        <span key={c.key} className="inline-flex h-9 items-center gap-1.5 rounded-tag border border-warm-300 bg-white px-3 text-sm font-medium text-text-secondary shadow-control">
-          {c.icon}
-          {c.label}
-        </span>
-      ))}
-      {chosen.length > 2 && <span className="type-small text-text-tertiary">+{chosen.length - 2}</span>}
-      <Popover>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="inline-flex h-9 w-fit items-center gap-1.5 rounded-pill border border-dashed border-warm-300 px-3.5 text-md font-medium text-text-secondary transition-colors hover:border-warm-600/50 hover:bg-white hover:text-text-primary"
-          >
-            <PlusIcon className="size-4" />
-            {chosen.length ? "Edit" : "Add preferences"}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="flex w-[340px] flex-col gap-4 p-4">
-          <div className="flex flex-col gap-2">
-            <p className="type-overline text-text-secondary">Provider gender</p>
-            <ToggleGroup type="multiple" variant="chip" size="chip" spacing={1.5} aria-label="Provider gender" value={prefs.gender} onValueChange={(gender) => onChange({ ...prefs, gender })} className="flex-wrap">
-              {GENDER_OPTIONS.map((g) => (
-                <ToggleGroupItem key={g.value} value={g.value} className="h-8 px-3 text-[13px]">
-                  {g.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="type-overline text-text-secondary">Language</p>
-            <ToggleGroup type="multiple" variant="chip" size="chip" spacing={1.5} aria-label="Language" value={prefs.language} onValueChange={(language) => onChange({ ...prefs, language })} className="flex-wrap">
-              {LANGUAGES.map((l) => (
-                <ToggleGroupItem key={l} value={l} className="h-8 px-3 text-[13px]">
-                  {l}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
-function MobileSearchTrigger({ mode, setMode }: { mode: SessionMode; setMode: (m: SessionMode) => void }) {
-  return (
-    <div className={`w-full max-w-[440px] rounded-[30px] p-2 xl:hidden ${searchSurface}`}>
-      <div className="flex justify-center px-2 pt-1.5 pb-2">
-        <SessionModeSwitch size="sm" value={mode} onChange={setMode} />
-      </div>
-      <button
-        type="button"
-        onClick={() => go(mode, "", { gender: [], language: [] }, true)}
-        className="group flex w-full items-center justify-between gap-3 rounded-[24px] bg-warm-50 py-3.5 pr-3 pl-5 text-left ring-1 ring-warm-200/70 ring-inset transition-colors duration-300 hover:bg-warm-100/70"
+      <div
+        className={cn(
+          "flex h-full min-w-0 flex-1 transition-[filter,opacity] duration-300 ease-out-soft",
+          barOpen && !active && cn(segmentFrost, "group-hover/seg:opacity-100 group-hover/seg:blur-[0px]"),
+        )}
       >
-        <span className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-2 type-body font-medium text-text-primary">
-            <SearchIcon className="size-4 text-text-secondary" />
-            Start search
-          </span>
-          <span className="type-body text-text-placeholder">Press to get started</span>
-        </span>
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white shadow-control transition-[scale,background-color] duration-300 ease-out-soft group-hover:scale-105 group-hover:bg-brand-primary-hover">
-          <SearchIcon className="size-[18px]" />
-        </span>
-      </button>
+        {children}
+      </div>
+      {active && onClear && (
+        <button
+          type="button"
+          aria-label="Clear"
+          onClick={onClear}
+          className={cn(
+            "flex size-6 shrink-0 animate-in items-center justify-center rounded-full bg-warm-200 text-warm-900 duration-200 zoom-in-50 hover:bg-warm-300",
+            after ? "mr-2" : "mr-4",
+          )}
+        >
+          <XIcon className="size-3" strokeWidth={2.5} />
+        </button>
+      )}
+      {after}
     </div>
+  );
+}
+
+/** One block of a panel: a small heading (with an icon) over its choices. */
+function PanelSection({ icon, title, children, className }: { icon?: ReactNode; title: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={cn("flex flex-col gap-3", className)}>
+      <p className={panelHeading}>
+        {icon}
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function Divider({ hidden }: { hidden: boolean }) {
+  return <div aria-hidden className={cn("h-8 w-px shrink-0 bg-warm-200 transition-opacity duration-200", hidden && "opacity-0")} />;
+}
+
+function DesktopSearch() {
+  const [mode, setMode] = useState<SessionMode>("online");
+  const [mind, setMind] = useState("");
+  const [prefs, setPrefs] = useState<Prefs>({ gender: [], language: [] });
+  const [open, setOpenState] = useState<Segment | null>(null);
+  // A separator fades while either segment beside it is hovered or open, so
+  // the segment's rounded highlight never runs into a line (as on Airbnb).
+  const [hovered, setHovered] = useState<Segment | null>(null);
+  const touches = (...pair: Segment[]) => [open, hovered].some((s) => s !== null && pair.includes(s));
+  const hover = (segment: Segment) => ({
+    onMouseEnter: () => setHovered(segment),
+    onMouseLeave: () => setHovered((h) => (h === segment ? null : h)),
+  });
+  // The panel hangs from the whole bar: under the open segment's left edge,
+  // and from the right edge for the last one (as Airbnb's "Who").
+  const [anchorOffset, setAnchorOffset] = useState(0);
+  const form = useRef<HTMLFormElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const zipField = useRef<HTMLInputElement>(null);
+  const segments = useRef<Record<Segment, HTMLDivElement | null>>({ format: null, mind: null, prefs: null });
+
+  // The ZIP, and our server's answer for it (kept with the ZIP it's for, so an
+  // answer for an older ZIP is never shown against a newer one).
+  const [zip, setZip] = useState("");
+  const [reply, setReply] = useState<{ zip: string; place: ZipPlace | null; status: "found" | "unknown" | "unavailable" } | null>(null);
+  useEffect(() => {
+    if (!isZip(zip) || !stateForZip(zip)) return;
+    const ask = new AbortController();
+    const wait = window.setTimeout(() => {
+      fetch(`/api/place/${zip}`, { signal: ask.signal })
+        .then(async (r) => {
+          if (!r.ok) return setReply({ zip, place: null, status: r.status === 404 ? "unknown" : "unavailable" });
+          const { places } = (await r.json()) as { places?: ZipPlace[] };
+          setReply({ zip, place: places?.[0] ?? null, status: "found" });
+        })
+        .catch(() => {}); // typed on, or offline: the state from the ZIP table stands
+    }, 200);
+    return () => {
+      window.clearTimeout(wait);
+      ask.abort();
+    };
+  }, [zip]);
+  const fullZip = isZip(zip);
+  const zipState = fullZip ? stateForZip(zip) : undefined;
+  const answer = reply?.zip === zip ? reply : null;
+  const place = answer?.place ?? null;
+  const unknownZip = fullZip && (!zipState || answer?.status === "unknown");
+  const where = unknownZip ? "" : whereForZip(mode === "in-person" ? "in_person" : "online", zip, place);
+  /** "Brooklyn, NY", or the state until the city is known. */
+  const placeLabel = place ? `${place.city}, ${place.state}` : zipState ? stateName(zipState) : "";
+
+  // Popular topics until someone types; then the specialties that match,
+  // from the taxonomy the results page searches (labels and synonyms).
+  const typed = mind.trim();
+  const topics = typed ? suggestSpecialties(typed, 8).map((s) => s.label) : SUGGESTIONS;
+  const chosen = [...prefs.gender.map((g) => labelOf("genders", g)), ...prefs.language];
+  const summary = chosen.length > 2 ? `${chosen.slice(0, 2).join(", ")} +${chosen.length - 2}` : chosen.join(", ");
+  const FormatIcon = mode === "online" ? MonitorIcon : MapPinIcon;
+  const barOpen = open !== null;
+
+  const setOpen = (segment: Segment | null) => {
+    setOpenState(segment);
+    setAnchorOffset(segment && segment !== "prefs" ? (segments.current[segment]?.offsetLeft ?? 0) : 0);
+  };
+
+  const openMind = () => {
+    setOpen("mind");
+    requestAnimationFrame(() => input.current?.focus());
+  };
+  // Opening the format lands in the ZIP field, ready to type (it autofocuses as
+  // the panel mounts: the panel's portal arrives a step after the click).
+  const openFormat = () => setOpen("format");
+
+  return (
+    <Popover open={barOpen} onOpenChange={(o) => !o && setOpen(null)}>
+      <PopoverAnchor asChild>
+        <form
+          ref={form}
+          role="search"
+          aria-label="Find a provider"
+          onSubmit={(e) => {
+            e.preventDefault();
+            go(mode, mind.trim(), prefs, where);
+          }}
+          className={cn(
+            "relative hidden h-[66px] w-full max-w-[850px] items-center rounded-[25px] transition-[background-color,box-shadow] duration-200 @3xl:flex",
+            searchSurface,
+            barOpen && searchLift,
+          )}
+        >
+          <div ref={(el) => void (segments.current.format = el)} {...hover("format")} className="h-full w-[200px] shrink-0">
+            <Segment
+              active={open === "format"}
+              barOpen={barOpen}
+              className="w-full"
+              onClear={
+                zip
+                  ? () => {
+                      setZip("");
+                      zipField.current?.focus();
+                    }
+                  : undefined
+              }
+            >
+              <button
+                type="button"
+                aria-expanded={open === "format"}
+                onClick={openFormat}
+                className="flex h-full min-w-0 flex-1 flex-col justify-center pr-6 pl-8 text-left"
+              >
+                <span className={segmentLabel}>Session format</span>
+                <span className={cn(segmentValue, "flex items-center gap-1.5 font-medium text-warm-900")}>
+                  <FormatIcon className="size-3.5 shrink-0 text-brand-primary" />
+                  {/* the format, then where once there's a ZIP, short enough for the
+                      segment ("Online · Brooklyn"); the panel names it in full */}
+                  <span className="truncate">
+                    {mode === "online" ? "Online" : "In-person"}
+                    {fullZip && !unknownZip && ` · ${place?.city ?? zipState}`}
+                  </span>
+                </span>
+              </button>
+            </Segment>
+          </div>
+
+          <Divider hidden={touches("format", "mind")} />
+
+          <div ref={(el) => void (segments.current.mind = el)} {...hover("mind")} className="h-full min-w-0 flex-1">
+            <Segment
+              active={open === "mind"}
+              barOpen={barOpen}
+              className="w-full cursor-text"
+              onClear={
+                mind
+                  ? () => {
+                      setMind("");
+                      input.current?.focus();
+                    }
+                  : undefined
+              }
+            >
+              <div className="flex h-full min-w-0 flex-1 flex-col justify-center px-6" onClick={openMind}>
+                <label htmlFor="hero-mind" className={segmentLabel}>
+                  What&apos;s on your mind?
+                </label>
+                <input
+                  id="hero-mind"
+                  ref={input}
+                  value={mind}
+                  onChange={(e) => setMind(e.target.value)}
+                  onFocus={() => setOpen("mind")}
+                  placeholder="What would you like to work on?"
+                  autoComplete="off"
+                  className={cn(
+                    segmentValue,
+                    "w-full bg-transparent font-medium text-warm-900 outline-none placeholder:font-normal placeholder:text-warm-500",
+                  )}
+                />
+              </div>
+            </Segment>
+          </div>
+
+          <Divider hidden={touches("mind", "prefs")} />
+
+          <div ref={(el) => void (segments.current.prefs = el)} {...hover("prefs")} className="h-full w-[290px] shrink-0">
+            <Segment
+              active={open === "prefs"}
+              barOpen={barOpen}
+              className="w-full pr-2"
+              onClear={chosen.length ? () => setPrefs({ gender: [], language: [] }) : undefined}
+              after={
+                // Grows into a labelled pill while the bar is open, as on Airbnb.
+                <button
+                  type="submit"
+                  aria-label="Search"
+                  className={cn(
+                    "flex h-12 shrink-0 items-center justify-center gap-2 overflow-hidden rounded-[16px] bg-brand-primary text-sm font-medium text-white transition-[width,background-color] duration-300 ease-out-soft hover:bg-brand-primary-hover",
+                    barOpen ? "w-[100px]" : "w-12",
+                  )}
+                >
+                  <SearchIcon className="size-4 shrink-0" />
+                  {barOpen && <span aria-hidden>Search</span>}
+                </button>
+              }
+            >
+              <button
+                type="button"
+                aria-expanded={open === "prefs"}
+                onClick={() => setOpen("prefs")}
+                className="flex h-full min-w-0 flex-1 flex-col justify-center pr-2 pl-6 text-left"
+              >
+                <span className={segmentLabel}>Who feels right</span>
+                <span className={cn(segmentValue, chosen.length ? "font-medium text-warm-900" : "text-warm-500")}>
+                  {chosen.length ? summary : "Add preferences"}
+                </span>
+              </button>
+            </Segment>
+          </div>
+        </form>
+      </PopoverAnchor>
+
+      <PopoverContent
+        align={open === "prefs" ? "end" : "start"}
+        alignOffset={anchorOffset}
+        sideOffset={12}
+        // Keep typing in the field; the bar itself isn't "outside".
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          if (form.current?.contains(e.target as Node)) e.preventDefault();
+        }}
+        // Portalled out of the hero, so it takes the hero's Inter itself.
+        className={cn(searchPanel, "font-[family-name:var(--font-inter)]")}
+      >
+        {open === "format" && (
+          <PanelSection title="Session format">
+            {/* Airbnb's two-way toggle (its Dates / Flexible): a grey 44px
+                track, the chosen side a white 36px pill with a hairline. */}
+            <div role="radiogroup" aria-label="Session format" className="flex h-11 rounded-[16px] bg-warm-200/70 p-1">
+              {FORMATS.map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === value}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setMode(value);
+                    // on to the ZIP until there is one, then to "What's on your mind?"
+                    if (fullZip) openMind();
+                    else zipField.current?.focus();
+                  }}
+                  className={cn(
+                    "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[12px] border text-sm font-medium transition-[background-color,border-color,box-shadow,color] duration-200",
+                    mode === value
+                      ? "border-warm-300 bg-white text-warm-900 shadow-[0_1px_2px_rgb(0_0_0/0.06)]"
+                      : "border-transparent text-warm-600 hover:text-warm-900",
+                  )}
+                >
+                  <Icon className={cn("size-3.5", mode === value && "text-brand-primary")} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </PanelSection>
+        )}
+
+        {open === "format" && (
+          // TODO(client): new copy: "ZIP code", its placeholder, the in-person
+          // note, "Providers licensed in …" and the unknown-ZIP line. The online
+          // note is the results page's own.
+          <PanelSection icon={<MapPinIcon />} title="ZIP code" className="mt-5 border-t border-warm-200 pt-5">
+            <Input
+              ref={zipField}
+              autoFocus // the panel was opened to fill this field in
+              aria-label="ZIP code"
+              aria-describedby="hero-zip-note"
+              aria-invalid={unknownZip || undefined}
+              inputMode="numeric"
+              autoComplete="postal-code"
+              placeholder="e.g. 11201"
+              maxLength={5}
+              value={zip}
+              onChange={(e) => setZip(e.target.value.replace(/\D/g, "").slice(0, 5))}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                openMind();
+              }}
+              className="text-sm"
+            />
+            <p id="hero-zip-note" aria-live="polite" className="flex min-h-4 items-center gap-1.5 text-xs leading-4 text-warm-500">
+              {unknownZip ? (
+                <span className="text-red-700">We couldn&apos;t find that ZIP code.</span>
+              ) : fullZip && zipState ? (
+                <>
+                  <MapPinIcon className="size-3.5 shrink-0 text-brand-primary" />
+                  <span className="font-medium text-warm-900">{placeLabel}</span>
+                  {mode === "online" && <span>· Providers licensed in {stateName(zipState)}</span>}
+                </>
+              ) : mode === "online" ? (
+                "Providers can only see clients in states where they're licensed."
+              ) : (
+                "We'll look for practices near you."
+              )}
+            </p>
+          </PanelSection>
+        )}
+
+        {open === "mind" && (
+          // TODO(client): new heading "Specialties" while typing, and the no-match line.
+          <PanelSection title={typed ? "Specialties" : "Popular searches"}>
+            {topics.length ? (
+              <div className="flex flex-wrap gap-1.5">
+                {topics.map((t) => {
+                  const on = t.toLowerCase() === typed.toLowerCase();
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setMind(t);
+                        setOpen("prefs");
+                      }}
+                      className={cn(topicChip, on ? topicChipOn : topicChipOff)}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-warm-500">Press Enter to search “{typed}”</p>
+            )}
+          </PanelSection>
+        )}
+
+        {open === "prefs" && (
+          <div className="flex flex-col">
+            <PanelSection icon={<UserIcon />} title="Provider gender" className="pb-5">
+              <ToggleGroup
+                type="multiple"
+                variant="chip"
+                size="chip"
+                spacing={1.5}
+                aria-label="Provider gender"
+                value={prefs.gender}
+                onValueChange={(gender) => setPrefs({ ...prefs, gender })}
+                className="flex-wrap"
+              >
+                {GENDER_OPTIONS.map((g) => (
+                  <ToggleGroupItem key={g.value} value={g.value} className="h-8 px-3 text-[13px]">
+                    {g.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </PanelSection>
+            <PanelSection icon={<GlobeIcon />} title="Language" className="border-t border-warm-200 pt-5">
+              <ToggleGroup
+                type="multiple"
+                variant="chip"
+                size="chip"
+                spacing={1.5}
+                aria-label="Language"
+                value={prefs.language}
+                onValueChange={(language) => setPrefs({ ...prefs, language })}
+                className="flex-wrap"
+              >
+                {LANGUAGES.map((l) => (
+                  <ToggleGroupItem key={l} value={l} className="h-8 px-3 text-[13px]">
+                    {l}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </PanelSection>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** Phones: one 56px pill (Airbnb's mobile search), opening the results with
+ *  the filters drawer, where format and the rest are chosen. */
+function MobileSearchTrigger() {
+  return (
+    <button
+      type="button"
+      onClick={() => go("online", "", { gender: [], language: [] }, "", true)}
+      className={cn(
+        "group flex h-14 w-full max-w-[440px] items-center gap-3 rounded-[21px] pr-2 pl-5 text-left transition-colors hover:bg-warm-50 @3xl:hidden",
+        searchSurface,
+      )}
+    >
+      <SearchIcon className="size-4 shrink-0 text-warm-900" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-sm leading-[18px] font-medium text-warm-900">Start search</span>
+        <span className="text-xs leading-4 text-warm-500">Press to get started</span>
+      </span>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-[13px] bg-brand-primary text-white transition-colors group-hover:bg-brand-primary-hover">
+        <SearchIcon className="size-4" />
+      </span>
+    </button>
   );
 }
 
 export function HeroSearch() {
   useTrackView("home");
-  const [mode, setMode] = useState<SessionMode>("online");
-  const [mind, setMind] = useState("");
-  const [prefs, setPrefs] = useState<Prefs>({ gender: [], language: [] });
-
   return (
     <>
-      <MobileSearchTrigger mode={mode} setMode={setMode} />
-      {/* The row layout needs genuinely wide viewports. Below xl the compact
-          trigger covers the whole range instead. */}
-      <form
-        role="search"
-        aria-label="Find a provider"
-        onSubmit={(e) => {
-          e.preventDefault();
-          go(mode, mind, prefs);
-        }}
-        className={`hidden w-full max-w-[1180px] items-center gap-2 rounded-[40px] p-2.5 xl:flex ${searchSurface}`}
-      >
-        <div className="flex shrink-0 items-center self-stretch rounded-[32px] px-5">
-          <SessionModeSwitch value={mode} onChange={setMode} />
-        </div>
-
-        <Divider />
-        <MindField value={mind} onChange={setMind} />
-        <Divider />
-
-        <div className="flex shrink-0 flex-col justify-center gap-2 self-stretch rounded-[32px] px-7 py-5 transition-colors duration-300 hover:bg-warm-50">
-          <p className="text-lg font-medium text-text-primary">Who feels right</p>
-          <Preferences prefs={prefs} onChange={setPrefs} />
-        </div>
-
-        <button
-          type="submit"
-          aria-label="Search"
-          className="ml-2 flex size-[84px] shrink-0 items-center justify-center rounded-full bg-brand-primary text-white shadow-[0_10px_24px_-10px_rgb(192_16_72/0.6)] transition-[scale,background-color] duration-300 ease-out-soft hover:scale-[1.04] hover:bg-brand-primary-hover active:scale-[0.97]"
-        >
-          <SearchIcon className="size-7" />
-        </button>
-      </form>
+      <MobileSearchTrigger />
+      {/* The row needs a wide container; below @3xl the pill above covers it. */}
+      <DesktopSearch />
     </>
   );
 }

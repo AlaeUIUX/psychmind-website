@@ -9,8 +9,8 @@ import { Slot } from "radix-ui"
 // - Sizes step down on small screens, so CTAs never balloon on phones:
 //   lg is 48px tall on mobile and 56px from `sm` up.
 // - Icons are inline SVGs sized by the button (`[&_svg]`), so icon and label
-//   always scale together. The circle-arrow CTA icon turns to point forward
-//   on hover (see CircleArrowIcon).
+//   always scale together. The CTA arrow nudges forward on hover (see
+//   CtaArrowIcon).
 const buttonVariants = cva(
   [
     "group/button relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-(--radius-button) font-medium select-none",
@@ -84,8 +84,9 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      data-variant={variant}
-      data-size={size}
+      // always set (the defaults too), for scope rules such as .site-ui's
+      data-variant={variant ?? "primary"}
+      data-size={size ?? "md"}
       className={cn(buttonVariants({ variant, size, fullWidth, className }))}
       {...props}
     />

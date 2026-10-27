@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, DownloadIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { renderSVG } from "uqr";

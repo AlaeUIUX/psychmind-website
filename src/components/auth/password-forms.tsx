@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, ArrowUpRightIcon, KeyRoundIcon, MailCheckIcon } from "lucide-react";
+import { ArrowLeftIcon, CtaArrowIcon, KeyRoundIcon, MailCheckIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
@@ -42,7 +42,7 @@ export function SentTo({ email, what, expires }: { email: string; what: string; 
         <Button asChild variant="secondary" size="sm" className="h-9 w-fit shadow-none">
           <a href={inbox.href} target="_blank" rel="noopener noreferrer">
             {inbox.label}
-            <ArrowUpRightIcon />
+            <CtaArrowIcon />
           </a>
         </Button>
       )}

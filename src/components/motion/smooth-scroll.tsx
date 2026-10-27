@@ -6,6 +6,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
+// The running Lenis, for code that needs to scroll the page itself (it would fight a
+// native smooth scroll). Null with reduced motion, and off the marketing site.
+let current: Lenis | null = null;
+export const getLenis = () => current;
+
 // Inertial smooth scrolling for the marketing site, driven by GSAP's ticker so
 // Lenis and every ScrollTrigger read the same frame. Touch devices keep native
 // scrolling (Lenis default), and reduced-motion users get plain scrolling.
@@ -18,6 +23,7 @@ export function SmoothScroll() {
 
     const lenis = new Lenis({ lerp: 0.09, anchors: { offset: -96 }, autoRaf: false });
     lenisRef.current = lenis;
+    current = lenis;
 
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => lenis.raf(time * 1000);
@@ -31,6 +37,7 @@ export function SmoothScroll() {
       gsap.ticker.remove(tick);
       lenis.destroy();
       lenisRef.current = null;
+      current = null;
     };
   }, []);
 

@@ -8,7 +8,7 @@ import {
   GraduationCapIcon,
   HashIcon,
   ShieldIcon,
-} from "lucide-react";
+} from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";

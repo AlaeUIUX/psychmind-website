@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { FlaskConicalIcon } from "lucide-react";
+import { FlaskConicalIcon } from "@/components/ui/hugeicons";
 
 // Sample providers are shown on the live site until real providers join, so
 // they're always labelled. TODO(client): copy.

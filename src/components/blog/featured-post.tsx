@@ -3,10 +3,10 @@ import type { Post } from "@/lib/blog";
 import { Reveal } from "@/components/reveal";
 import { SplitHeading } from "@/components/motion/split-heading";
 import { Button } from "@/components/ui/button";
-import { CircleArrowIcon } from "@/components/ui/icons";
 import { SectionBadge } from "@/components/ui/section-badge";
 import { PostMeta } from "./blog-card";
 import { FeaturedArt } from "./featured-art";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 // One responsive layout: stacked and centered on phones, text-left /
 // illustration-right from `sm` up. The whole card is the link target; the
@@ -36,7 +36,7 @@ export function FeaturedPost({ post }: { post: Post }) {
           <Button asChild size="lg">
             <span>
               Read more
-              <CircleArrowIcon className="transition-[rotate] duration-500 ease-out-soft group-hover:rotate-45" />
+              <CtaArrowIcon className="transition-[translate] duration-500 ease-out-soft group-hover:translate-x-0.5" />
             </span>
           </Button>
         </div>

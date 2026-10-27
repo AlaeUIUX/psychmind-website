@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircleIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
+import { LoaderCircleIcon, ZoomInIcon, ZoomOutIcon } from "@/components/ui/hugeicons";
 import { useEffect, useId, useState } from "react";
 import Cropper, { type Area, type Point } from "react-easy-crop";
 import { Button } from "@/components/ui/button";

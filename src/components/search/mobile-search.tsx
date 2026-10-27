@@ -1,6 +1,6 @@
 "use client";
 
-import { SlidersHorizontalIcon } from "lucide-react";
+import { SlidersHorizontalIcon } from "@/components/ui/hugeicons";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchIcon } from "@/components/ui/icons";
@@ -163,8 +163,9 @@ export function MobileSearch({ count, facets, price, cities }: { count: number; 
           </span>
           <span className="truncate type-small text-text-placeholder">{current ?? "Press to get started"}</span>
         </span>
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white shadow-control transition-[scale,background-color] duration-300 ease-out-soft group-hover:scale-105 group-hover:bg-brand-primary-hover">
-          <SearchIcon className="size-[18px]" />
+        {/* the hero bar's search button: 48px, 16px corners */}
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-[16px] bg-brand-primary text-white transition-colors duration-200 group-hover:bg-brand-primary-hover">
+          <SearchIcon className="size-4" />
         </span>
       </button>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { HeartIcon } from "lucide-react";
+import { HeartIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";

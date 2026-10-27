@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CircleArrowIcon } from "@/components/ui/icons";
 import { PageHero } from "@/components/ui/page-hero";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 export function Hero() {
   return (
@@ -39,7 +39,7 @@ export function Hero() {
       <Button asChild variant="brand" size="lg">
         <Link href="/providers">
           Start your search
-          <CircleArrowIcon />
+          <CtaArrowIcon />
         </Link>
       </Button>
       <p className="type-small text-text-tertiary sm:type-body">Takes less than 2 minutes. Free to browse.</p>

@@ -1,4 +1,4 @@
-import { ExternalLinkIcon, FileTextIcon } from "lucide-react";
+import { ExternalLinkIcon, FileTextIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DecisionPanel } from "@/components/admin/decision-panel";

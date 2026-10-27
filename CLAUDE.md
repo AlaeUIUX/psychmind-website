@@ -148,6 +148,7 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
   - `EmptyState` and `ErrorState`.
   - `StatTile`, `StepProgress`, `ChoiceChips` (ToggleGroup `chip` variant), `UploadDropzone`.
   - `CrisisStrip`: compact 988.
+- **Icons:** Hugeicons Stroke Rounded (free) through `@/components/ui/hugeicons`, which exports them under the Lucide names the code uses (`CheckIcon`, `XIcon`…). Add a missing icon there; ESLint blocks `lucide-react` (shadcn adds still write it, so swap the import). Calls to action end in `CtaArrowIcon` (Hugeicons' plain arrow right, which nudges forward on hover). The site's own drawn icons (search, phone, send…) stay in `ui/icons.tsx`.
 - **Keyboard shortcuts** use `Kbd` (`components/ui/kbd.tsx`, Geist-style): `<Kbd meta>↵</Kbd>` shows ⌘ on Apple devices and Ctrl elsewhere.
 - **Emails** (`server/emails.ts`) share one layout in the landing page's look: serif headline, ink pill button, notepad footer. Images are PNGs in `public/images/email`, since Gmail doesn't show SVG. No tracking pixels.
 - **Status colours** use Tailwind's sky (info), emerald (success), amber (warning) and red (danger), always paired with an icon or text. `Badge` has matching variants: `neutral`, `info`, `success`, `warning`, `danger`, `brand`.

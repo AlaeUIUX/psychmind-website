@@ -6,10 +6,10 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { Reveal } from "@/components/reveal";
 import { RequestWizardPreview, ResultsPreview, SearchPreview } from "@/components/shared/product-preview";
 import { Button } from "@/components/ui/button";
-import { CircleArrowIcon } from "@/components/ui/icons";
 import { DoodleHookArrow } from "@/components/ui/doodles";
 import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 const steps = [
   {
@@ -129,7 +129,7 @@ export function ProcessSteps() {
               <Button asChild variant="brand" size="lg" className="w-fit">
                 <Link href="/providers">
                   Start your search
-                  <CircleArrowIcon />
+                  <CtaArrowIcon />
                 </Link>
               </Button>
             </Reveal>

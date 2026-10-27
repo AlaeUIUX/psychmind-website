@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowDownUpIcon, GlobeIcon, InfoIcon, ListFilterIcon, SparklesIcon, UserRoundIcon, XIcon } from "lucide-react";
+import { ArrowDownUpIcon, GlobeIcon, InfoIcon, ListFilterIcon, SparklesIcon, UserRoundIcon, XIcon } from "@/components/ui/hugeicons";
 import { useState, type ReactNode } from "react";
 import { ProviderCard } from "@/components/directory/provider-card";
 import type { Viewer } from "@/components/directory/save-button";

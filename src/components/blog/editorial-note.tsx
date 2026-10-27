@@ -40,7 +40,7 @@ export function EditorialNote({ className }: { className?: string }) {
               <img src={item.icon} alt="" className="size-3.5" />
             </span>
             <span className="flex flex-col gap-1">
-              <span className="type-small font-semibold text-text-primary">{item.title}</span>
+              <span className="type-small font-medium text-text-primary">{item.title}</span>
               <span className="type-small text-text-tertiary">{item.body}</span>
             </span>
           </>

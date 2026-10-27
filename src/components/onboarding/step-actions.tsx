@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, LoaderCircleIcon } from "lucide-react";
+import { ArrowLeftIcon, LoaderCircleIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { HoverArrow } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";

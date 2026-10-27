@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, LifeBuoyIcon, LoaderCircleIcon, MailIcon, ShieldCheckIcon } from "lucide-react";
+import { ArrowLeftIcon, LifeBuoyIcon, LoaderCircleIcon, MailIcon, ShieldCheckIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
 import { toast } from "sonner";

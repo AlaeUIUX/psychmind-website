@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { InboxIcon, MailIcon, PhoneIcon } from "lucide-react";
+import { InboxIcon, MailIcon, PhoneIcon } from "@/components/ui/hugeicons";
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/app/empty-state";

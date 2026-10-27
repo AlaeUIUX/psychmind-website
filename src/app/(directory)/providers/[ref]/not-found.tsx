@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CrisisStrip } from "@/components/app/crisis-strip";
 import { Button } from "@/components/ui/button";
 import { DoodleMagnifier } from "@/components/ui/doodles";
-import { CircleArrowIcon } from "@/components/ui/icons";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 // A profile link that doesn't (or no longer) lead to a listed provider: the
 // link may be mistyped, or the provider may have left or paused their listing.
@@ -18,7 +18,7 @@ export default function ProviderNotFound() {
       <Button asChild size="lg" className="mt-8">
         <Link href="/providers">
           Browse providers
-          <CircleArrowIcon />
+          <CtaArrowIcon />
         </Link>
       </Button>
       <CrisisStrip className="mt-12 max-w-[560px] text-left" />

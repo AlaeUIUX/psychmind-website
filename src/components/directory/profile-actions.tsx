@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CalendarHeartIcon, CheckIcon, Share2Icon, ShieldCheckIcon } from "lucide-react";
+import { CalendarHeartIcon, CheckIcon, Share2Icon, ShieldCheckIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";

@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { PhoneIcon } from "lucide-react";
+import { PhoneIcon } from "@/components/ui/hugeicons";
 
 // Compact 988 line for app screens (search, profile, request form, errors).
 // The full CrisisCard stays on marketing pages; this one is always one tap

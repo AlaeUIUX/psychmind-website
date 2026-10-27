@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { ClockIcon, SparklesIcon } from "lucide-react";
+import { ClockIcon, SparklesIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useId, type ReactNode } from "react";
 import { LocalTime } from "@/components/app/local-time";

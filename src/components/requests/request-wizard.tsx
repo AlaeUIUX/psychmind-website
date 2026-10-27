@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowLeftIcon, LoaderCircleIcon, MapPinIcon, MonitorIcon, SendIcon, UserIcon, UserKeyIcon, UserPlusIcon, UserRoundIcon } from "lucide-react";
+import { ArrowLeftIcon, LoaderCircleIcon, MapPinIcon, MonitorIcon, SendIcon, UserIcon, UserKeyIcon, UserPlusIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";

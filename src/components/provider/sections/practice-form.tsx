@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "@/components/ui/hugeicons";
 import { useCallback } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 import { FormRow, describedBy } from "@/components/forms/form-row";

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";

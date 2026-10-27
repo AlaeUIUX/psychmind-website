@@ -2,7 +2,7 @@
 
 import { Command as CommandPrimitive } from "cmdk";
 import { cn } from "cn";
-import { XCircleIcon } from "lucide-react";
+import { XCircleIcon } from "@/components/ui/hugeicons";
 import { useState, type ReactNode } from "react";
 import { CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 

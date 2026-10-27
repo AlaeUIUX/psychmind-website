@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { DoodleMagnifier } from "@/components/ui/doodles";
-import { CircleArrowIcon } from "@/components/ui/icons";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 export const metadata: Metadata = { title: "Page not found — PsychMind" };
 
@@ -14,7 +14,8 @@ export const metadata: Metadata = { title: "Page not found — PsychMind" };
 // TODO(client): copy.
 export default function NotFound() {
   return (
-    <>
+    // the public site's type and buttons, as in the (site) layout
+    <div className="type-scope-sort site-ui contents">
       <SiteHeader />
       <main className="flex flex-1 flex-col items-center px-4 pt-10 pb-16 text-center sm:pt-16">
         <DoodleMagnifier aria-hidden className="size-40 animate-float text-warm-800 sm:size-48" />
@@ -27,7 +28,7 @@ export default function NotFound() {
           <Button asChild size="lg">
             <Link href="/">
               Back to home
-              <CircleArrowIcon />
+              <CtaArrowIcon />
             </Link>
           </Button>
           <Button asChild variant="secondary" size="lg">
@@ -37,6 +38,6 @@ export default function NotFound() {
         <CrisisStrip className="mt-12 max-w-[560px] text-left" />
       </main>
       <SiteFooter />
-    </>
+    </div>
   );
 }

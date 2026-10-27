@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowUpRightIcon, GlobeIcon, MapPinIcon, MonitorIcon, SparklesIcon, UserRoundIcon } from "lucide-react";
+import { CtaArrowIcon, GlobeIcon, MapPinIcon, MonitorIcon, SparklesIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import { Button } from "@/components/ui/button";
 import { displayName, feeFrom, locationLabel, shortName, therapyType } from "@/lib/provider/display";
 import { useImpression } from "@/lib/analytics/client";
@@ -195,7 +195,7 @@ export function ProviderCard({
             <Button asChild variant="brand" className="h-10 flex-1 text-sm @3xl:flex-none">
               <a href={p.href} target="_blank" rel="noopener">
                 See profile
-                <ArrowUpRightIcon />
+                <CtaArrowIcon />
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
             </Button>

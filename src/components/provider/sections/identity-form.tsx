@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@/components/ui/hugeicons";
 import { useCallback } from "react";
 import { Controller } from "react-hook-form";
 import { FormRow, describedBy } from "@/components/forms/form-row";

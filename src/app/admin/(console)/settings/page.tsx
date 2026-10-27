@@ -1,4 +1,4 @@
-import { ShieldCheckIcon } from "lucide-react";
+import { ShieldCheckIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import { LoginSettings } from "@/components/app/login-settings";
 import { NotificationSettings } from "@/components/app/notification-settings";

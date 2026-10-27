@@ -1,5 +1,5 @@
 ---
-title: "How to know when you're ready to start therapy — and what to expect"
+title: "How to know when you're ready to start therapy, and what to expect"
 excerpt: "8 min read · March 2025"
 category: "Mental health"
 author: "Dr. Danny Schwelberg"

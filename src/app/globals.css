@@ -158,6 +158,28 @@
   --animate-pop-in: pop-in 520ms var(--ease-spring) both;
   --animate-fade-in: fade-in 400ms ease-out both;
   --animate-caret: caret 1s steps(1) infinite;
+  /* The "Start a search" shortcut's arrow, rising on a loop while hovered. */
+  --animate-cue-rise: cue-rise 2.2s var(--ease-out-soft) infinite;
+  /* The reviews (components/home/reviews.tsx): each word inks in from the faint
+     grey (delays per word, inline), and the active reviewer's line fills while
+     their quote is up. */
+  --animate-ink-in: ink-in 480ms ease-out both;
+  --animate-tab-fill: tab-fill 8s linear both;
+}
+
+@keyframes ink-in {
+  from {
+    color: var(--color-warm-300);
+  }
+}
+
+@keyframes tab-fill {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
 }
 
 /* The full-size results preview pages from card to card, like someone
@@ -218,44 +240,29 @@
   }
 }
 
-/* The founders' tape strip: drifts left then back while hovered. */
-@keyframes tape-drift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-/* Padlock shackle dropping shut (privacy preview). */
-@keyframes lock-shut {
-  from {
-    transform: translateY(-3px);
-  }
-  to {
-    transform: none;
-  }
-}
-
-/* A strip of tape pressed onto the page. */
-@keyframes tape-stick {
-  from {
-    opacity: 0;
-    scale: 1.15;
-  }
-  to {
-    opacity: 1;
-    scale: 1;
-  }
-}
-
 @keyframes float {
   from {
     translate: 0 -5px;
   }
   to {
     translate: 0 5px;
+  }
+}
+
+/* Comes up from below, holds, and leaves out of the top (the arrow's own circle clips it). */
+@keyframes cue-rise {
+  0% {
+    translate: 0 12px;
+    opacity: 0;
+  }
+  30%,
+  65% {
+    translate: 0 0;
+    opacity: 1;
+  }
+  100% {
+    translate: 0 -12px;
+    opacity: 0;
   }
 }
 
@@ -267,49 +274,137 @@
    the text-* role colors above.
    ------------------------------------------------------------------------ */
 
-/* Page H1 — one per page. */
+/* Page H1 — one per page. The home hero's scale (type-hero-title, sort.to's
+   40px), so every page opens at the same size; a step smaller on phones,
+   where other pages' titles run longer. */
 @utility type-display {
   font-family: var(--font-display);
   font-weight: 400;
   font-size: 36px;
-  line-height: 40px;
-  letter-spacing: -0.02em;
+  line-height: 1.2em;
+  letter-spacing: -0.1px;
   text-wrap: balance;
   @media (width >= 40rem) {
-    font-size: 48px;
-    line-height: 52px;
-  }
-  @media (width >= 48rem) {
-    font-size: 60px;
-    line-height: 64px;
+    font-size: 40px;
   }
 }
 
-/* Section H2. */
+/* Home hero H1 and lede, cloned from sort.to: one size at every width, with
+   their colors (not the text-* roles). */
+@utility type-hero-title {
+  font-family: var(--font-stix);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.2em;
+  letter-spacing: -0.1px;
+  color: #131110;
+}
+
+@utility type-hero-lede {
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.5em;
+  letter-spacing: normal;
+  color: #656360;
+}
+
+/* The hero's type a step down, for the section right after it (the bento's
+   "Everything you need…"): the same serif and colour, 34px to the hero's 40. */
+@utility type-hero-h2 {
+  font-family: var(--font-stix);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.2em;
+  letter-spacing: -0.1px;
+  color: #131110;
+  text-wrap: balance;
+  @media (width >= 40rem) {
+    font-size: 34px;
+  }
+}
+
+/* sort.to's feature-card type (its "No excerpts" cards), for the bento:
+   an 18px medium title over 15px grey text, both a touch tight. */
+@utility type-card-title {
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.4em;
+  letter-spacing: -0.02em;
+  color: #131110;
+}
+
+@utility type-card-body {
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55em;
+  letter-spacing: -0.02em;
+  color: #656360;
+  text-wrap: pretty;
+}
+
+/* Its line underneath: the hero lede a step down. */
+@utility type-hero-sub {
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5em;
+  color: #656360;
+  text-wrap: pretty;
+  @media (width >= 40rem) {
+    font-size: 17px;
+  }
+}
+
+/* A section subtitle's size, without a colour (type-hero-sub carries the
+   hero's grey; dark bands bring their own). */
+@utility type-sub {
+  font-size: 16px;
+  line-height: 1.5em;
+  text-wrap: pretty;
+  @media (width >= 40rem) {
+    font-size: 17px;
+  }
+}
+
+/* sort.to's type: Inter for the UI, STIX Two Text wherever we'd use the
+   display serif. The whole public site sits in it (the (site) and
+   (directory) layouts); the portal keeps Geist. Swapping the font variables,
+   the theme's included, keeps every font-sans / font-display / type-*
+   utility inside it working. */
+@utility type-scope-sort {
+  --font-geist-sans: var(--font-inter);
+  --font-ivar: var(--font-stix);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-stix);
+  font-family: var(--font-inter);
+}
+
+/* Section H2: the hero's scale a step down (type-hero-h2). */
 @utility type-h2 {
   font-family: var(--font-display);
   font-weight: 400;
   font-size: 30px;
-  line-height: 36px;
-  letter-spacing: -0.015em;
+  line-height: 1.2em;
+  letter-spacing: -0.1px;
   text-wrap: balance;
   @media (width >= 40rem) {
-    font-size: 36px;
-    line-height: 44px;
+    font-size: 34px;
   }
 }
 
-/* Serif card / panel heading. */
+/* Serif card / panel heading, under the 34px H2. */
 @utility type-h3 {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 26px;
-  line-height: 32px;
-  letter-spacing: -0.012em;
+  font-size: 24px;
+  line-height: 1.25em;
+  letter-spacing: -0.1px;
   text-wrap: balance;
   @media (width >= 40rem) {
-    font-size: 32px;
-    line-height: 40px;
+    font-size: 28px;
   }
 }
 
@@ -358,14 +453,14 @@
 /* Body roles set size and leading only; weight and family inherit, so they
    combine safely with font-medium etc. */
 
-/* Hero lede and section subtitle. */
+/* A page hero's lede: the home hero's (type-hero-lede, 19px), a step
+   smaller on phones. */
 @utility type-lead {
-  font-size: 18px;
-  line-height: 28px;
+  font-size: 17px;
+  line-height: 1.5em;
   text-wrap: pretty;
   @media (width >= 40rem) {
-    font-size: 22px;
-    line-height: 32px;
+    font-size: 19px;
   }
 }
 
@@ -819,6 +914,290 @@
 }
 
 /* ------------------------------------------------------------------------
+   Menu pill (components/site-header.tsx), ported from Catalyst Design Lab's
+   nav in our warm palette: one frosted pill holding Log in, an ink Create
+   account chip and the menu icon, whose two lines meet in the middle, then
+   turn into a cross. Open, the pill turns white. Light glass on the page,
+   dark glass over [data-header-dark] bands (data-tone). Phones keep only the
+   icon. Timing and curve are Catalyst's.
+   ------------------------------------------------------------------------ */
+.menu-pill {
+  --menu-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 6px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.32);
+  box-shadow: inset 0 0 0 1px rgb(28 25 23 / 0.08);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--color-warm-900);
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  transition:
+    background-color 400ms var(--menu-ease),
+    color 400ms var(--menu-ease);
+}
+
+.menu-pill[data-tone="dark"] {
+  background: rgb(23 20 18 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: #ffffff;
+}
+
+.menu-pill[data-open="true"] {
+  background: #ffffff;
+  color: var(--color-warm-900);
+}
+
+/* The same pill floating over the page (the "Start a search" shortcut,
+   components/home/search-shortcut.tsx): frostier, so its dark text still reads
+   over the dark cards that pass beneath, and lifted with a soft shadow. */
+.menu-pill[data-float] {
+  background: rgb(255 255 255 / 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgb(28 25 23 / 0.08),
+    0 12px 32px -18px rgb(28 25 23 / 0.45);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Everything inside is a 32px block, concentric with the pill (6px inset). */
+.menu-pill-link,
+.menu-pill-chip,
+.menu-pill-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 400ms var(--menu-ease),
+    color 400ms var(--menu-ease);
+}
+
+.menu-pill-link,
+.menu-pill-chip {
+  padding: 0 12px;
+}
+
+.menu-pill-chip {
+  background: var(--color-warm-900);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.menu-pill-toggle {
+  width: 32px;
+  color: inherit;
+}
+
+.menu-pill-link:hover,
+.menu-pill-toggle:hover {
+  background: rgb(28 25 23 / 0.06);
+}
+
+.menu-pill-chip:hover {
+  background: var(--color-warm-800);
+}
+
+.menu-pill[data-tone="dark"] :is(.menu-pill-link, .menu-pill-toggle):hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.menu-pill[data-tone="dark"] .menu-pill-chip {
+  background: var(--color-warm-800);
+}
+
+.menu-pill[data-tone="dark"] .menu-pill-chip:hover {
+  background: rgb(255 255 255 / 0.16);
+}
+
+:is(.menu-pill-link, .menu-pill-chip, .menu-pill-toggle):focus-visible {
+  outline: 2px solid var(--ring-accent);
+  outline-offset: 2px;
+}
+
+/* Phones (below sm): just the icon; Log in and Create account move into the
+   dropdown. */
+@media (width < 40rem) {
+  .menu-pill-link,
+  .menu-pill-chip {
+    display: none;
+  }
+}
+
+/* Drawn at 20px (not Catalyst's 32px) so the lines sit at the scale of the
+   pill's 13px text: 12px wide, 5px apart. The meet-and-cross moves are in
+   viewBox units, so they scale with it. */
+.menu-pill-lines {
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+}
+
+/* Opening, the lines first meet in the middle, then cross; closing undoes it
+   in reverse. Both are transforms, staged with transition delays. */
+.menu-pill-lines line {
+  stroke: currentColor;
+  stroke-width: 1.8; /* 1.5px at 20px */
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    translate 220ms var(--menu-ease) 180ms,
+    rotate 260ms var(--menu-ease) 0ms;
+}
+
+.menu-pill[data-open="true"] .menu-pill-lines line {
+  transition:
+    translate 220ms var(--menu-ease) 0ms,
+    rotate 420ms var(--menu-ease) 160ms;
+}
+
+.menu-pill[data-open="true"] .menu-pill-lines line:first-child {
+  translate: 0 3px;
+  rotate: 45deg;
+}
+
+.menu-pill[data-open="true"] .menu-pill-lines line:last-child {
+  translate: 0 -3px;
+  rotate: -45deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-pill-lines line,
+  .menu-pill[data-open="true"] .menu-pill-lines line {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Buttons on the public site (.site-ui: the (site) and (directory) layouts),
+   in the menu pill's language: a touch tight, smaller text, and rounded
+   rectangles whose corners are about a third of their height (the pill's
+   44px / 14px, the hero search button's 48px / 16px, the 32px chips' 8px),
+   not full pills. Colours stay Button's own: ink is the pill's Create
+   account chip, crimson the hero's Search, and the light one has Log in's
+   dark text. The portal (.app-ui) keeps its own sizes. Unlayered, like the
+   portal's density rules, so it wins over the component's sizes in one place.
+   ------------------------------------------------------------------------ */
+.site-ui [data-slot="button"]:not(.app-ui *, [data-variant="link"]) {
+  letter-spacing: -0.01em;
+
+  &[data-size="sm"] {
+    border-radius: 12px;
+    font-size: 13px;
+    & svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+  &[data-size="default"] {
+    border-radius: 13px;
+    font-size: 14px;
+  }
+  &[data-size="md"] {
+    border-radius: 14px;
+    font-size: 14px;
+    & svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  /* One size at every width, the hero's Search button: no 56px CTAs. */
+  &[data-size="lg"] {
+    height: 48px;
+    gap: 8px;
+    padding-inline: 22px;
+    border-radius: 16px;
+    font-size: 15px;
+    & svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+  &[data-size="icon"] {
+    border-radius: 14px;
+  }
+  &[data-size="icon-sm"] {
+    border-radius: 12px;
+  }
+  &:is([data-variant="secondary"], [data-variant="outline"]) {
+    color: var(--color-warm-900);
+  }
+}
+
+/* Status bead (components/home/trust-row.tsx), ported from Catalyst Design
+   Lab's availability pill in our success green: a soft halo breathes out of
+   the bead while a thin ring ripples past a beat later. Transform and opacity
+   only. */
+.status-bead {
+  position: relative;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0, #34d399 45%, #059669 100%);
+  box-shadow: 0 0 6px rgb(52 211 153 / 0.7);
+}
+
+.status-bead::before,
+.status-bead::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.status-bead::before {
+  background: rgb(52 211 153 / 0.6);
+  filter: blur(3px);
+  animation: bead-halo 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.status-bead::after {
+  border: 1px solid rgb(52 211 153 / 0.75);
+  animation: bead-ring 3s cubic-bezier(0.16, 1, 0.3, 1) 0.35s infinite both;
+}
+
+@keyframes bead-halo {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+@keyframes bead-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  70%,
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-bead::before,
+  .status-bead::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------------
    Reveal motion (see components/reveal.tsx)
    Scroll reveals only hide content when scripting is enabled (the script is
    what shows it again), so the page is never blank for no-JS visitors or
@@ -900,33 +1279,6 @@
     transition-duration: 1ms !important;
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-/* Founders' note (components/home/mission-teaser.tsx) ---------------------
-   The tape strip drifts left and back while the note is hovered, and just
-   drifts slowly on touch screens, which have no hover. */
-.tape-marquee {
-  animation: tape-drift 26s ease-in-out infinite alternate;
-  animation-play-state: paused;
-}
-[data-note]:hover .tape-marquee {
-  animation-play-state: running;
-}
-@media (hover: none) {
-  .tape-marquee {
-    animation-duration: 40s;
-    animation-play-state: running;
-  }
-}
-
-/* Corner tapes press on just after the note itself has landed. */
-@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-  [data-reveal] > .tape {
-    opacity: 0;
-  }
-  [data-reveal][data-revealed] > .tape {
-    animation: tape-stick 500ms var(--ease-out-soft) 550ms both;
   }
 }
 

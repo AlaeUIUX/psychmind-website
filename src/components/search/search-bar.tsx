@@ -90,9 +90,10 @@ export function SearchBar({ cities, facets }: { cities: string[]; facets: Facets
       <button
         type="submit"
         aria-label="Search"
-        className="my-auto mr-1 ml-1 flex size-14 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white shadow-[0_10px_24px_-10px_rgb(192_16_72/0.6)] transition-[scale,background-color] duration-300 ease-out-soft hover:scale-[1.04] hover:bg-brand-primary-hover active:scale-[0.97]"
+        // the hero bar's search button: 48px, 16px corners
+        className="my-auto mr-1 ml-1 flex size-12 shrink-0 items-center justify-center rounded-[16px] bg-brand-primary text-white transition-[scale,background-color] duration-200 ease-out-soft hover:bg-brand-primary-hover active:scale-[0.97]"
       >
-        <SearchIcon className="size-5" />
+        <SearchIcon className="size-4" />
       </button>
     </form>
   );

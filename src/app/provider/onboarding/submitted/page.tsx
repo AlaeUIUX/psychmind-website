@@ -1,4 +1,4 @@
-import { BellIcon, ChevronRightIcon, EyeIcon, PencilLineIcon } from "lucide-react";
+import { BellIcon, ChevronRightIcon, EyeIcon, PencilLineIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";

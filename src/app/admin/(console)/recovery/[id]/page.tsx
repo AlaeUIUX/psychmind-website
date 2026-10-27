@@ -1,4 +1,4 @@
-import { FileTextIcon, ShieldCheckIcon } from "lucide-react";
+import { FileTextIcon, ShieldCheckIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

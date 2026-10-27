@@ -25,7 +25,7 @@ export function ReviewBlock({
 
   return (
     <figure className={cn("flex flex-col items-center text-center", lg ? "gap-6" : "gap-4", className)}>
-      <SectionBadge icon={badgeIcon} size={lg ? "md" : "sm"}>
+      <SectionBadge icon={badgeIcon}>
         Reviews
       </SectionBadge>
       <blockquote

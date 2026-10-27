@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRightIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, CtaArrowIcon, XIcon } from "@/components/ui/hugeicons";
 import { useEffect } from "react";
 import { QuickView } from "@/components/directory/quick-view";
 import { useSavedIds, type Viewer } from "@/components/directory/save-button";
@@ -81,7 +81,7 @@ export function ProviderOverlay({
                 <Button asChild variant="ghost" size="sm" className="h-8 px-2.5 text-[13px]">
                   <a href={p.href} target="_blank" rel="noopener">
                     Full profile
-                    <ArrowUpRightIcon />
+                    <CtaArrowIcon />
                     <span className="sr-only">(opens in a new tab)</span>
                   </a>
                 </Button>
@@ -101,7 +101,7 @@ export function ProviderOverlay({
               <Button asChild fullWidth className="h-11 text-[15px]">
                 <a href={p.href} target="_blank" rel="noopener">
                   See full profile
-                  <ArrowUpRightIcon />
+                  <CtaArrowIcon />
                   <span className="sr-only">(opens in a new tab)</span>
                 </a>
               </Button>

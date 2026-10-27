@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2Icon, LinkIcon } from "lucide-react";
+import { CheckCircle2Icon, LinkIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";

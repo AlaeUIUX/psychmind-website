@@ -83,7 +83,8 @@ export function ProfileShowcase() {
             </div>
             <span
               aria-hidden
-              className="mb-4 inline-flex h-9 items-center gap-1.5 rounded-pill border border-warm-300 bg-white px-3.5 type-small font-medium text-warm-800 shadow-control"
+              // the profile's back button, as a small light button (36px, 12px corners, 13px)
+              className="mb-4 inline-flex h-9 items-center gap-1.5 rounded-[12px] border border-warm-200 bg-white px-3.5 text-[13px] font-medium tracking-[-0.01em] text-warm-900 shadow-control"
             >
               <img src="/images/how-it-works/back-arrow-icon.svg" alt="" width={14} height={14} />
               Go back to results

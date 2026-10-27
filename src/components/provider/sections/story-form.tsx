@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { LightbulbIcon } from "lucide-react";
+import { LightbulbIcon } from "@/components/ui/hugeicons";
 import { useCallback } from "react";
 import { describedBy } from "@/components/forms/form-row";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";

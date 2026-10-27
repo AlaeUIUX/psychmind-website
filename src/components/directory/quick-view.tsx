@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon, FlaskConicalIcon, GlobeIcon, MapPinIcon, MonitorIcon } from "lucide-react";
+import { CheckIcon, FlaskConicalIcon, GlobeIcon, MapPinIcon, MonitorIcon } from "@/components/ui/hugeicons";
 import type { ReactNode } from "react";
 import { formatsLabel, ProfileBanner } from "@/components/provider/profile-view";
 import { displayName, feeFrom, licensedStates, locationLabel, shortName, therapyType } from "@/lib/provider/display";

@@ -6,12 +6,12 @@ export const faqs: Faq[] = [
   {
     question: "Is my search completely private?",
     answer:
-      "Yes. We never share your personal information with anyone — not your provider, not third parties. Your search is yours alone.",
+      "Yes. We never share your personal information with anyone: not your provider, not third parties. Your search is yours alone.",
   },
   {
     question: "What if I pick the wrong person?",
     answer:
-      "That's completely okay — finding the right fit sometimes takes more than one try. You can reach out to a different provider at any time, with no fees or awkward explanations needed. Fit matters more than anything, so we make it easy to keep looking.",
+      "That's completely okay. Finding the right fit sometimes takes more than one try. You can reach out to a different provider at any time, with no fees or awkward explanations needed. Fit matters more than anything, so we make it easy to keep looking.",
   },
   {
     question: "What is your cancellation policy?",
@@ -36,7 +36,7 @@ export const faqs: Faq[] = [
   {
     question: "Is PsychMind a therapy service?",
     answer:
-      "No — PsychMind is a directory that helps you find and contact independent, verified providers. Your care, scheduling and payments are arranged directly between you and the provider you choose.",
+      "No. PsychMind is a directory that helps you find and contact independent, verified providers. Your care, scheduling and payments are arranged directly between you and the provider you choose.",
   },
   {
     question: "What if I need help right now?",

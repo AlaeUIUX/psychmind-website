@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { FileTextIcon, RotateCwIcon, UploadCloudIcon, XIcon } from "lucide-react";
+import { FileTextIcon, RotateCwIcon, UploadCloudIcon, XIcon } from "@/components/ui/hugeicons";
 import { useId, useRef, useState, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

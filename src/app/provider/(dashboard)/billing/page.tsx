@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { CheckIcon, LockIcon } from "lucide-react";
+import { CheckIcon, LockIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/app/page-header";
 import { StatusBanner } from "@/components/app/status-banner";

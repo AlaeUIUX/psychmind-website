@@ -1,6 +1,6 @@
 "use client";
 
-import { DownloadIcon, ShieldCheckIcon } from "lucide-react";
+import { DownloadIcon, ShieldCheckIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";

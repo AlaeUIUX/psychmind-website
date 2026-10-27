@@ -1,6 +1,6 @@
 "use client";
 
-import { DatabaseIcon, LoaderCircleIcon } from "lucide-react";
+import { DatabaseIcon, LoaderCircleIcon } from "@/components/ui/hugeicons";
 import { useActionState } from "react";
 import {
   AlertDialog,

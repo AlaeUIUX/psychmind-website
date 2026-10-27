@@ -6,6 +6,7 @@ import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 
 // The founders' doodle with handwritten name tags: Brenda on the left,
 // Dee (curly hair) on the right. Tags and pencil arrows draw in on scroll.
+// It sits on top of the founders' letter and is pinned with it.
 export function CreatorsIllustration() {
   const root = useRef<HTMLDivElement>(null);
 
@@ -26,7 +27,10 @@ export function CreatorsIllustration() {
   );
 
   return (
-    <div ref={root} className="relative mt-6 w-fit sm:mt-8">
+    // It stands on the founders' letter (founders-letter.tsx), so it's held
+    // still and its foot meets the letter's top edge; the room above is for
+    // the name tags.
+    <div ref={root} className="relative mt-7 w-fit sm:mt-8">
       {/* Figma applies no object-fit override here (defaults to stretch-to-fill on
           the square source), so the illustration is intentionally non-uniformly
           scaled to its 436:347 box rather than letterboxed or cropped. */}
@@ -34,7 +38,7 @@ export function CreatorsIllustration() {
       <img
         src="/images/home/mission-illustration.png"
         alt="Brenda and Dee, the founders of PsychMind"
-        className="h-[143px] w-[180px] animate-float sm:h-[227px] sm:w-[286px]"
+        className="block h-[132px] w-[167px] sm:h-[187px] sm:w-[236px]"
       />
 
       {/* Brenda — above her bun, arrow down to her */}

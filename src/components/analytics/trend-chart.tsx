@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartLineIcon, TableIcon } from "lucide-react";
+import { ChartLineIcon, TableIcon } from "@/components/ui/hugeicons";
 import { useId, useState, useSyncExternalStore } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card } from "@/components/ui/card";

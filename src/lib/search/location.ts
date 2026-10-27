@@ -30,6 +30,19 @@ const ZIP3: [from: number, to: number, state: string][] = [
   [970, 979, "OR"], [980, 994, "WA"], [995, 999, "AK"],
 ];
 
+/**
+ * The "where" a search gets from the ZIP in the home search's Session format.
+ * Online, the state alone: that's what licensing turns on, and it's what the
+ * results page's state picker shows. In person, the place itself: "Brooklyn, NY
+ * 11201" once the ZIP has been looked up, else the bare ZIP (its state comes from
+ * the table above either way). Empty for anything that isn't a ZIP.
+ */
+export function whereForZip(format: "online" | "in_person", zip: string, found?: { city: string; state: string } | null): string {
+  if (!/^\d{5}$/.test(zip)) return "";
+  if (format === "online") return found?.state ?? stateForZip(zip) ?? zip;
+  return found ? `${found.city}, ${found.state} ${zip}` : zip;
+}
+
 export function stateForZip(zip: string): string | undefined {
   const prefix = Number(zip.slice(0, 3));
   if (!/^\d{5}$/.test(zip) || Number.isNaN(prefix)) return undefined;

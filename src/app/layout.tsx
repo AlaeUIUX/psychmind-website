@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter, STIX_Two_Text } from "next/font/google";
 import localFont from "next/font/local";
 import { BackGuardBoot } from "@/components/app/back-guard";
 import { Toaster } from "@/components/ui/sonner";
@@ -14,6 +14,20 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Home hero type, cloned from sort.to: STIX Two Text headline over an Inter
+// lede, and the same pair (Inter 400/500, STIX 400) inside the showcase.
+const stixTwoText = STIX_Two_Text({
+  variable: "--font-stix",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 const ivarTextHydro = localFont({
@@ -49,7 +63,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${ivarTextHydro.variable} ${ivarDisplayHydro.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${ivarTextHydro.variable} ${ivarDisplayHydro.variable} ${stixTwoText.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-warm-25 text-text-primary font-sans">
         <BackGuardBoot />

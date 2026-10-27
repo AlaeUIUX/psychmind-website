@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowRightIcon, EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
+import { ArrowRightIcon, EyeIcon, EyeOffIcon, LoaderCircleIcon } from "@/components/ui/hugeicons";
 import { useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";

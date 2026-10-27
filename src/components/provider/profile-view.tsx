@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { BuildingIcon, HeartIcon, MapPinIcon, MonitorIcon, UserRoundIcon } from "lucide-react";
+import { BuildingIcon, HeartIcon, MapPinIcon, MonitorIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import type { ReactNode } from "react";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
 import { displayName, listJoin } from "@/lib/provider/display";

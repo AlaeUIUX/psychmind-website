@@ -110,14 +110,17 @@ test("the home page search opens the results with what was chosen", async ({ pag
     return;
   }
   await page.goto("/");
-  await page.locator("#hero-mind").fill("Anx");
-  await page.locator("#hero-mind").press("Enter");
-  await expect(page.getByRole("button", { name: "Clear “Anxiety”" })).toBeVisible();
-  await page.getByRole("button", { name: "Add preferences" }).click();
+  // Session format holds the ZIP: online, it's the state that counts (licensing).
+  // The state comes from the ZIP table at once, so this doesn't wait on the lookup.
+  await page.getByRole("button", { name: /Session format/ }).click();
+  await page.getByRole("textbox", { name: "ZIP code" }).fill("33131");
+  await expect(page.locator("#hero-zip-note")).toContainText(/Florida|FL/);
+  await page.locator("#hero-mind").fill("Anxiety");
+  await page.getByRole("button", { name: /Add preferences/ }).click();
   await page.getByRole("button", { name: "Female", exact: true }).click();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(page).toHaveURL(/\/providers\?format=online&q=Anxiety&gender=female/);
+  await expect(page).toHaveURL(/\/providers\?format=online&where=FL&q=Anxiety&gender=female/);
   await expect(count(page)).toHaveText(/[1-9]\d* providers? found/);
   await expect(page.getByRole("button", { name: "Remove Female" })).toBeVisible();
 });

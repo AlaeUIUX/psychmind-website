@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon, FlaskConicalIcon, UserRoundIcon } from "lucide-react";
+import { ArrowRightIcon, FlaskConicalIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import { LocalTime } from "@/components/app/local-time";
 import { Badge } from "@/components/ui/badge";
 import { formatLabel, sessionTypeLabel } from "@/lib/requests";
@@ -47,7 +47,7 @@ export function MyRequests({ requests }: { requests: MyRequest[] }) {
               className="inline-flex items-center gap-1 type-ui-label text-text-primary underline-offset-4 hover:underline"
             >
               Profile
-              <ArrowUpRightIcon className="size-3.5" />
+              <ArrowRightIcon className="size-3.5" />
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           </div>

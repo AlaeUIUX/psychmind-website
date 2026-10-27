@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CircleCheckIcon, CircleDotIcon, CircleIcon } from "lucide-react";
+import { CircleCheckIcon, CircleDotIcon, CircleIcon } from "@/components/ui/hugeicons";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";

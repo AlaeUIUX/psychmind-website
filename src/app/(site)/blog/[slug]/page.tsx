@@ -10,9 +10,10 @@ import { BlogCard, PostMeta } from "@/components/blog/blog-card";
 import { ReadingProgress } from "@/components/blog/reading-progress";
 import { AuthorBar } from "@/components/shared/author-bar";
 import { Button } from "@/components/ui/button";
-import { ChevronRightIcon, CircleArrowIcon } from "@/components/ui/icons";
+import { ChevronRightIcon } from "@/components/ui/icons";
 import { Container, Section } from "@/components/ui/section";
 import { SectionBadge } from "@/components/ui/section-badge";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }));
@@ -141,7 +142,7 @@ export default async function BlogPostPage({
               <Button asChild size="lg">
                 <Link href="/blog">
                   Blogs
-                  <CircleArrowIcon />
+                  <CtaArrowIcon />
                 </Link>
               </Button>
             </Reveal>

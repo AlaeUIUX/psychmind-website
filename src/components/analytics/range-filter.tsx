@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "@/components/ui/hugeicons";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import type { DateRange } from "react-day-picker";

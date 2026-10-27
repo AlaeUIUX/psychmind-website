@@ -26,7 +26,7 @@ export type TrackerGroup = {
   items: TrackerItem[];
 };
 
-export const REVIEWED = "2026-10-12";
+export const REVIEWED = "2026-10-27";
 
 export const TRACKER: TrackerGroup[] = [
   {
@@ -82,6 +82,7 @@ export const TRACKER: TrackerGroup[] = [
       { status: "done", owner: "build", title: "Search engine", detail: "Specialty, approach, language, gender, age group, price (with sliding scale), format and location. OR within a filter, AND across. Unit-tested.", where: "src/lib/search/engine.ts" },
       { status: "done", owner: "build", title: "Online by state, in person by place", detail: "Online needs a license in the patient's state. In person matches the same ZIP, then city, ZIP area, then state." },
       { status: "done", owner: "build", title: "Ranking, counts per filter, close matches", detail: "Close matches show what each provider misses. Location is never relaxed." },
+      { status: "done", owner: "build", title: "ZIP in the home search", detail: "Session format asks for a ZIP, online too (licensing is by state). It names the place as you type: the state from the ZIP table, then the city from a public, IP-rate-limited lookup on our server (/api/place). Online searches by the state, in person by the place.", where: "src/components/home/hero-search.tsx" },
       { status: "done", owner: "build", title: "Search screens", detail: "Search bar, filters, phone filter drawer, loading skeleton, empty state, and filters in the URL.", where: "/providers" },
       { status: "done", owner: "build", title: "Quick look overlay and full profile in a new tab", where: "/providers?p=" },
       { status: "done", owner: "build", title: "Home page search connected to results" },

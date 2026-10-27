@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircleIcon } from "lucide-react";
+import { LoaderCircleIcon } from "@/components/ui/hugeicons";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {

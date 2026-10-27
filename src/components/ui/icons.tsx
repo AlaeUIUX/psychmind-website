@@ -10,21 +10,6 @@ function base(props: IconProps) {
   return { "aria-hidden": true, focusable: false, ...props } as const;
 }
 
-/** Filled circle with an up-right arrow cut out — the primary CTA icon.
- *  Inside a <Button> it rotates to point forward on hover. */
-export function CircleArrowIcon({ className, ...props }: IconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={`group-hover/button:rotate-45 ${className ?? ""}`}
-      {...base(props)}
-    >
-      <path d="M12 0C18.6275 0 24 5.37258 24 12C24 18.6275 18.6275 24 12 24C5.37258 24 0 18.6275 0 12C0 5.37258 5.37258 0 12 0ZM8.22363 7.31837V9.56837H12.4658L7.22754 14.8066L8.81837 16.3974L14.0566 11.1592V15.4014H16.3067V8.44337C16.3065 7.86101 15.8645 7.38048 15.2973 7.32276L15.1817 7.31837H8.22363Z" />
-    </svg>
-  );
-}
-
 export function SearchIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...base(props)}>
@@ -58,30 +43,6 @@ export function PhoneIcon(props: IconProps) {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-export function ArrowUpRightIcon(props: IconProps) {
-  return (
-    <svg viewBox="-2 -2 16.3 16.3" fill="currentColor" {...base(props)}>
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M4.06066 0H3.31066V1.5H4.06066H9.74995L0.53033 10.7197L0 11.25L1.06066 12.3107L1.59099 11.7803L10.8095 2.56182V8.25V9H12.3095V8.25V1C12.3095 0.44772 11.8618 0 11.3095 0H4.06066Z"
-      />
-    </svg>
-  );
-}
-
-export function ArrowRightIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 18 18" fill="currentColor" {...base(props)}>
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M10.7216 2.49712L10.125 1.9005L8.93176 3.09374L9.52838 3.69036L13.9942 8.15624H1.96875H1.125V9.84374H1.96875H13.9942L9.52838 14.3096L8.93176 14.9062L10.125 16.0995L10.7216 15.5028L16.429 9.79548C16.8684 9.35614 16.8684 8.64383 16.429 8.20449L10.7216 2.49712Z"
       />
     </svg>
   );

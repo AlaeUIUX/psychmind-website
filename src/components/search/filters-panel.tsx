@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ChevronDownIcon, SearchIcon } from "lucide-react";
+import { ChevronDownIcon, SearchIcon } from "@/components/ui/hugeicons";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { MapPinIcon, MonitorIcon } from "@/components/ui/icons";
 import { Checkbox } from "@/components/ui/checkbox";

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { ArrowUpRightIcon, CheckIcon, PencilIcon, UserRoundIcon } from "lucide-react";
+import { CheckIcon, CtaArrowIcon, PencilIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "cn";
@@ -101,7 +101,7 @@ export default async function ProviderHome({ searchParams }: Props) {
               <Button asChild variant="secondary" size="sm">
                 <a href={profilePath(state)} target="_blank" rel="noopener">
                   View public profile
-                  <ArrowUpRightIcon />
+                  <CtaArrowIcon />
                   <span className="sr-only">(opens in a new tab)</span>
                 </a>
               </Button>

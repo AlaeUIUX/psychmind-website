@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { ArrowUpRightIcon, PhoneIcon } from "@/components/ui/icons";
+import { PhoneIcon } from "@/components/ui/icons";
 import { PageHero } from "@/components/ui/page-hero";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 export function Hero() {
   return (
@@ -20,7 +21,7 @@ export function Hero() {
         <Button asChild variant="secondary" size="md" fullWidth="mobile" className="order-1 sm:order-2">
           <a href="https://988lifeline.org" target="_blank" rel="noopener noreferrer">
             988 Suicide &amp; Crisis Lifeline
-            <ArrowUpRightIcon />
+            <CtaArrowIcon />
           </a>
         </Button>
       </div>

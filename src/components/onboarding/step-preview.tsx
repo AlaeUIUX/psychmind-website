@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { EyeIcon, LockIcon, Maximize2Icon, MapPinIcon, SparklesIcon, StarIcon, UserRoundIcon } from "lucide-react";
+import { EyeIcon, LockIcon, Maximize2Icon, MapPinIcon, SparklesIcon, StarIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { formatsLabel, ProfileBanner, ProviderProfileView } from "@/components/provider/profile-view";
 import { Button } from "@/components/ui/button";

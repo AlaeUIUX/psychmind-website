@@ -3,20 +3,25 @@
 import { cn } from "cn";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
-import { CircleArrowIcon } from "@/components/ui/icons";
-import { DoodleArrow, DoodleCheck } from "@/components/ui/doodles";
+import { DoodleArrow } from "@/components/ui/doodles";
+import { ChartColumnIcon, CtaArrowIcon, EyeOffIcon, MessageSquareLockIcon, TwoFactorIcon } from "@/components/ui/hugeicons";
 import { Container, Section } from "@/components/ui/section";
-import { SectionHeader } from "@/components/ui/section-header";
-import { Tag, VerifiedBadge } from "@/components/ui/tag";
+import { VerifiedBadge } from "@/components/ui/tag";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
-import { privacyPromises as promises, verifySteps as steps } from "@/components/shared/trust-content";
+import { privacyIntro, privacyPromises as promises } from "@/components/shared/trust-content";
 import { providerPhotoSource } from "@/lib/photos";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Lock, STILL_REDUCED, useStep } from "./bento-previews";
+import { PrivacyGlobe } from "./privacy-globe";
+import { topicChip, topicChipIdle } from "./search-styles";
 
-// Real people, carefully verified: provider polaroids taped to the page,
-// how verification works, and the privacy promise in plain words.
+// Real people, carefully verified: three provider polaroids taped to the page,
+// centred, and the privacy promise in plain words. It opens as every section
+// does (SectionHeader), and the polaroids' captions use the bento's type and
+// chips: a 14px name over a 12px line, the bar's chips.
 // Providers are the sample profiles from the Figma file.
 // TODO(client): swap in live providers + confirm verification/privacy copy.
 
@@ -51,7 +56,86 @@ const FAN = [
   { x: 206, y: 30, r: 6 },
 ];
 
+// As in the bento's Complete confidentiality card: the lock shuts as the card comes in.
+const PROMISE_AT = [200];
+// Each promise's icon, in privacyPromises' order: no one watching, daily counts, a
+// request under lock, two-step login.
+const PROMISE_ICONS = [EyeOffIcon, ChartColumnIcon, MessageSquareLockIcon, TwoFactorIcon];
 
+/** The privacy promise, built as the bento's Complete confidentiality card is:
+ *  a head (the lock as its lead, then the title), a hairline, the promises
+ *  under it, each with its icon, which slides in only as you hover it, and as
+ *  the second column the girl's boat on top of her planet of sea
+ *  (privacy-globe.tsx). The lock shuts as the card comes into view (and again
+ *  each time it comes back after leaving the screen); reduced motion shows it shut.
+ *  No shadow: it sits in its grey frame. Corners are concentric, each layer
+ *  7px in (a 1px border and 6px): the frame's 20px, this card's 13px, the
+ *  picture's 6px. */
+function PrivacyPromise() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // plays once it's well in view; resets only when it's off the screen
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.intersectionRatio >= 0.4) setInView(true);
+        else if (!e.isIntersecting) setInView(false);
+      },
+      { threshold: [0, 0.4] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const step = useStep(inView, PROMISE_AT, STILL_REDUCED);
+
+  return (
+    // halves on desktop: each promise still fits two lines, and the picture's
+    // column is about as wide as the card is tall
+    <div ref={ref} className="grid rounded-[13px] border border-warm-200 bg-white lg:grid-cols-2">
+      {/* how we're different; under the hairline, how it's done */}
+      <div className="px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
+        <div className="flex items-center gap-3">
+          <Lock shut={step >= 1} />
+          <p className="text-[15px] leading-5 font-medium tracking-[-0.01em] text-warm-900">Our privacy promise</p>
+        </div>
+        {/* a line each; the promises at full ink, the rest at 60% (still AA on white) */}
+        <p className="mt-3 text-sm leading-[22px] tracking-[-0.01em] text-balance text-warm-900/60">
+          {privacyIntro.map((line) => (
+            <span key={line[0].text} className="block">
+              {line.map((s) => (s.strong ? <span key={s.text} className="text-warm-900">{s.text}</span> : s.text))}
+            </span>
+          ))}
+        </p>
+        <ul className="mt-4 border-t border-warm-200 pt-1">
+          {promises.map((p, i) => {
+            const Icon = PROMISE_ICONS[i];
+            return (
+              <li key={p.title} className="group/promise relative border-t border-warm-100 py-3 first:border-t-0">
+                {/* No icon at rest, so the text sits flush; hovered, the icon fades in and the
+                    text steps aside for it. The text always keeps that room free on its right,
+                    so it slides without ever rewrapping. */}
+                <Icon className="absolute top-3.5 left-0 size-4 -translate-x-1 text-warm-900 opacity-0 transition-[opacity,translate] duration-300 ease-out-soft group-hover/promise:translate-x-0 group-hover/promise:opacity-100 motion-reduce:transition-none" />
+                <span className="flex flex-col gap-0.5 pr-7 tracking-[-0.01em] transition-[translate] duration-300 ease-out-soft group-hover/promise:translate-x-7 motion-reduce:transition-none">
+                  <span className="text-sm leading-5 font-medium text-warm-900">{p.title}</span>
+                  <span className="text-[13px] leading-[18px] text-warm-900/60">{p.body}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {/* The picture's own column, the card's full height; the animation in it
+          is always square, centred on the grey it fades into. */}
+      <div data-privacy-slot className="mx-1.5 mb-1.5 flex items-center overflow-hidden rounded-[6px] bg-warm-100 lg:m-1.5">
+        <div className="relative aspect-square w-full">
+          <PrivacyGlobe />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Polaroid({ p, className }: { p: (typeof providers)[number]; className?: string }) {
   return (
@@ -64,22 +148,18 @@ function Polaroid({ p, className }: { p: (typeof providers)[number]; className?:
       <span aria-hidden className={cn("absolute -top-3 left-1/2 z-10 h-7 w-24 -translate-x-1/2", p.tape)} />
       <div className="relative aspect-[4/5] overflow-hidden rounded-[3px] bg-warm-100">
         <Image src={p.photo} alt={`${p.name}, ${p.title}`} fill sizes="260px" className="object-cover object-top" />
-        <span className="absolute top-2 left-2 rounded-lg bg-white/95 p-0.5 shadow-control">
+        <span className="absolute top-2 left-2">
           <VerifiedBadge size="sm" />
         </span>
       </div>
-      <figcaption className="flex flex-col gap-1.5 px-1 pt-3">
-        <span className="font-display text-xl leading-6 text-text-primary">{p.name}</span>
-        <span className="flex items-center gap-1.5 text-xs text-text-secondary">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/how-it-works/check-icon.svg" alt="" className="size-3" />
-          {p.title}
-        </span>
-        <span className="flex gap-1 pt-1">
+      <figcaption className="type-scope-sort flex flex-col gap-0.5 px-1 pt-3">
+        <span className="text-sm leading-[18px] font-medium text-warm-900">{p.name}</span>
+        <span className="text-xs leading-4 text-warm-500">{p.title}</span>
+        <span className="flex gap-1.5 pt-2.5">
           {p.tags.map((t) => (
-            <Tag key={t} className="px-2 py-0.5 text-xs">
+            <span key={t} className={cn(topicChip, topicChipIdle)}>
               {t}
-            </Tag>
+            </span>
           ))}
         </span>
       </figcaption>
@@ -164,16 +244,9 @@ export function VerifiedProviders() {
         });
       });
 
-      // Pencil ticks draw in beside each verification step.
+      // The pencil arrow draws in beside the button.
       mm.add(MOTION_OK, () => {
         const q = gsap.utils.selector(root);
-        gsap.from(q("[data-tick] [data-draw]"), {
-          drawSVG: 0,
-          duration: 0.6,
-          ease: "power2.inOut",
-          stagger: 0.35,
-          scrollTrigger: { trigger: q("[data-steps]")[0], start: "top 75%", once: true },
-        });
         gsap.from(q("[data-more] [data-draw]"), {
           drawSVG: 0,
           duration: 0.9,
@@ -188,16 +261,20 @@ export function VerifiedProviders() {
 
   return (
     <Section spacing="lg" className="overflow-x-clip">
-      <Container ref={root} className="flex flex-col gap-12 sm:gap-16">
+      <Container ref={root} className="flex flex-col gap-10 sm:gap-12">
         <SectionHeader
+          align="center"
           badge={{ icon: "/images/how-it-works/profiles-badge-icon.svg", label: "Verified providers" }}
           title="Real people, carefully verified"
-          subtitle="Every provider on PsychMind is an independent professional — and every credential is checked by our team before they appear in a search."
+          // TODO(client): the owner's shorter line (2026-10-27), replacing
+          // "…checked by our team before they appear in a search."
+          subtitle="Every provider on PsychMind is an independent professional, and every credential is checked by our team."
         />
 
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-8">
-          {/* Polaroids */}
-          <div className="order-first lg:order-last lg:col-span-7">
+        {/* The three providers, centred: stacked as one, they fan out as the
+            section scrolls in (side by side, and swiped, below lg). */}
+        <div>
+          <div>
             <div
               ref={stage}
               onScroll={onStageScroll}
@@ -259,54 +336,22 @@ export function VerifiedProviders() {
               <Button asChild variant="secondary" size="md">
                 <Link href="/providers">
                   Meet 2,400+ verified providers
-                  <CircleArrowIcon />
+                  <CtaArrowIcon />
                 </Link>
               </Button>
             </div>
           </div>
 
-          {/* How we verify + privacy promise */}
-          <div className="flex flex-col gap-4 lg:col-span-5">
-            <Reveal className="paper-bg relative rounded-card p-6 shadow-card sm:p-8">
-              <span aria-hidden className="absolute -top-3 right-10 h-7 w-20 rotate-[6deg] bg-tape-rose/90" />
-              <h3 className="type-h4 text-text-primary">How we verify</h3>
-              <ol data-steps className="mt-5 flex flex-col gap-5">
-                {steps.map((s, i) => (
-                  <li key={s.title} className="flex gap-4">
-                    <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full border border-warm-300 bg-warm-25 font-display text-md text-warm-900">
-                      {i + 1}
-                      <span data-tick className="absolute -top-2 -right-3 w-6 text-brand-primary">
-                        <DoodleCheck className="w-full" />
-                      </span>
-                    </span>
-                    <div className="flex flex-col gap-1">
-                      <p className="type-body font-semibold text-text-primary">{s.title}</p>
-                      <p className="type-small text-text-tertiary">{s.body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </Reveal>
-
-            <Reveal delay={120} className="grain rounded-card bg-warm-950 p-6 text-warm-25 shadow-card sm:p-8">
-              <p className="flex items-center gap-2 type-small font-medium tracking-[0.06em] text-warm-300 uppercase">
-                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-                  <path d="M8 11V8a4 4 0 1 1 8 0v3" />
-                  <rect x="5.5" y="11" width="13" height="9" rx="2.5" fill="currentColor" stroke="none" />
-                </svg>
-                Our privacy promise
-              </p>
-              <ul className="mt-4 flex flex-col gap-3">
-                {promises.map((line) => (
-                  <li key={line} className="flex gap-3 type-body text-warm-100">
-                    <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-full bg-brand-primary" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-          </div>
         </div>
+
+        {/* The privacy promise, in the bento's grey: a thin grey frame around
+            one white card, its picture in the second column (2026-10-27). Four
+            fifths of the section's width on tablets; the section's full width on
+            desktop, where the picture's column needs the room (half the card,
+            1.5× its width at four fifths), and on phones. */}
+        <Reveal delay={120} className="rounded-card border border-warm-200 bg-warm-100 p-1.5 sm:w-4/5 sm:self-center lg:w-full">
+          <PrivacyPromise />
+        </Reveal>
       </Container>
     </Section>
   );

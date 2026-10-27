@@ -3,15 +3,15 @@ import { BlogCard } from "@/components/blog/blog-card";
 import { EditorialNote } from "@/components/blog/editorial-note";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
-import { CircleArrowIcon } from "@/components/ui/icons";
 import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 const posts = [
   {
     category: "Mental health",
     author: "Dr. Danny Schwelberg",
-    title: "How to know when you're ready to start therapy — and what to expect",
+    title: "How to know when you're ready to start therapy, and what to expect",
     meta: "8 min read · March 2025",
     image: "/images/home/blog-thumb-1.png",
     slug: "ready-to-start-therapy",
@@ -49,12 +49,12 @@ export function ResourcePreview() {
         <SectionHeader
           badge={{ icon: "/images/home/resource-badge-icon.svg", label: "Resource center" }}
           title="Blogs from our fellow help providers"
-          subtitle="Guides, insights, and perspectives on mental health — written by our experts"
+          subtitle="Guides, insights, and perspectives on mental health, written by our experts"
           action={
-            <Button asChild size="lg">
+            <Button asChild variant="secondary" size="lg">
               <Link href="/blog">
                 Blogs
-                <CircleArrowIcon />
+                <CtaArrowIcon />
               </Link>
             </Button>
           }

@@ -1,6 +1,6 @@
 "use client";
 
-import { InfoIcon } from "lucide-react";
+import { InfoIcon } from "@/components/ui/hugeicons";
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";

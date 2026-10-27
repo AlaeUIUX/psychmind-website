@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon, CircleCheckIcon, EyeIcon, LoaderCircleIcon, LogOutIcon } from "lucide-react";
+import { CheckIcon, CircleCheckIcon, EyeIcon, LoaderCircleIcon, LogOutIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";

@@ -51,7 +51,6 @@ import {
 } from "@/components/ui/dialog";
 import { DoodleCheck, DoodleMagnifier } from "@/components/ui/doodles";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
-import { CircleArrowIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -66,6 +65,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Kbd } from "@/components/ui/kbd";
 import { addDays } from "@/lib/analytics/range";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 // Demo content only — option lists here are samples, not the approved taxonomy.
 const specialties = ["Anxiety", "Depression", "Trauma & PTSD", "Relationships", "Grief", "ADHD", "Stress", "Self-esteem"].map(
@@ -158,7 +158,7 @@ export function KitchenSink() {
         actions={
           <Button variant="brand" size="md">
             Primary action
-            <CircleArrowIcon />
+            <CtaArrowIcon />
           </Button>
         }
       />
@@ -182,7 +182,7 @@ export function KitchenSink() {
           <Button size="md">Medium</Button>
           <Button size="lg">
             Large
-            <CircleArrowIcon />
+            <CtaArrowIcon />
           </Button>
         </Row>
       </Block>

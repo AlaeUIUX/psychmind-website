@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { ArrowDownRightIcon, ArrowUpRightIcon, InfoIcon, MinusIcon } from "lucide-react";
+import { ArrowDownRightIcon, ArrowUpRightIcon, InfoIcon, MinusIcon } from "@/components/ui/hugeicons";
 import { useId, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

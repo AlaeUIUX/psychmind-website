@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { KeyRoundIcon, LoaderCircleIcon } from "lucide-react";
+import { KeyRoundIcon, LoaderCircleIcon } from "@/components/ui/hugeicons";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { LocalTime } from "@/components/app/local-time";

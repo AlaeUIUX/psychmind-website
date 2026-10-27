@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { searchDirectory } from "@/lib/search/engine";
 import { EMPTY_FILTERS, loadSearchFilters, type SearchFilters } from "@/lib/search/filters";
-import { closeness, parsePlace, stateForZip } from "@/lib/search/location";
+import { closeness, parsePlace, stateForZip, whereForZip } from "@/lib/search/location";
 import { parseQuery } from "@/lib/search/text";
 import type { DirectoryProvider } from "@/server/directory/data";
 
@@ -83,6 +83,16 @@ describe("where", () => {
     expect(parsePlace("  ")).toBeNull();
     expect(stateForZip("10001")).toBe("NY");
     expect(stateForZip("94110")).toBe("CA");
+  });
+
+  it("turns the home search's ZIP into a where: the state online, the place in person", () => {
+    const brooklyn = { city: "Brooklyn", state: "NY" };
+    expect(whereForZip("online", "11201", brooklyn)).toBe("NY");
+    expect(whereForZip("online", "33131")).toBe("FL"); // not looked up yet: the ZIP table
+    expect(whereForZip("in_person", "11201", brooklyn)).toBe("Brooklyn, NY 11201");
+    expect(whereForZip("in_person", "11201")).toBe("11201");
+    expect(whereForZip("online", "1120")).toBe("");
+    expect(parsePlace(whereForZip("in_person", "11201", brooklyn))).toMatchObject({ zip: "11201", city: "Brooklyn", state: "NY" });
   });
 
   it("ranks the same ZIP, then city, then ZIP area, then state", () => {

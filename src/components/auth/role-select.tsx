@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { BadgeCheckIcon, SearchIcon } from "lucide-react";
+import { BadgeCheckIcon, SearchIcon } from "@/components/ui/hugeicons";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";

@@ -101,10 +101,13 @@ export function SafetyBand() {
                   Our privacy promise
                 </p>
                 <ul className="flex flex-col divide-y divide-white/10 border-y border-white/10">
-                  {privacyPromises.map((line) => (
-                    <li key={line} data-promise className="flex gap-3 py-4 type-body text-warm-100">
+                  {privacyPromises.map((p) => (
+                    <li key={p.title} data-promise className="flex gap-3 py-4 type-body text-warm-100">
                       <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-full bg-brand-primary" />
-                      {line}
+                      <span className="flex flex-col gap-1">
+                        <span className="font-medium text-warm-25">{p.title}</span>
+                        <span className="text-warm-300">{p.body}</span>
+                      </span>
                     </li>
                   ))}
                 </ul>

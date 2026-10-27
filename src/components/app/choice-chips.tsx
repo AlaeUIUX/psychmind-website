@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@/components/ui/hugeicons";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type Option = { value: string; label: string };
