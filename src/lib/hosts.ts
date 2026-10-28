@@ -6,6 +6,11 @@
 // on (production: "app.psychmind.org"; locally it defaults to "app.localhost",
 // which browsers resolve to this machine). Without it — e.g. Vercel preview
 // URLs — everything is served from one host.
+//
+// The team's own portal can live on a third host: ADMIN_HOST (production:
+// "dev.psychmind.org"; locally, e.g. "dev.localhost"). There the console is served,
+// with "/login" as its front door, and /admin anywhere else moves there. Admins sign
+// in only there (server/auth/actions.ts). Without it, /admin stays where it was.
 
 /** Path prefixes that belong to the portal. */
 const APP_PREFIXES = [
@@ -47,6 +52,30 @@ export const isSharedPath = (path: string) => matches(path, SHARED_PREFIXES) || 
 export const isProtectedPath = (path: string) => matches(path, PROTECTED_PREFIXES) && !matches(path, LOGIN_PAGES);
 /** Where a signed-out visitor to a protected path logs in: the team has its own page. */
 export const loginPathFor = (path: string) => (matches(path, ["/admin"]) ? "/admin/login" : "/login");
+
+/** The team's portal host, when there is one (see the top of this file). */
+export function adminHost(): string | null {
+  const host = process.env.ADMIN_HOST;
+  return host && host !== "off" ? host : null;
+}
+
+/** Served on the admin host: the console, and the steps an admin's sign-in and account
+ *  settings go through. Anything else there moves to the main site. */
+const ADMIN_HOST_PREFIXES = ["/admin", "/two-factor", "/forgot-password", "/reset-password", "/change-email", "/auth"] as const;
+
+export const isAdminPath = (path: string) => matches(path, ["/admin"]);
+export const isAdminHostPath = (path: string) => matches(path, ADMIN_HOST_PREFIXES);
+
+/** The admin host's origin (http for *.localhost), or null without one. */
+export function adminOrigin(): string | null {
+  const host = adminHost();
+  if (!host) return null;
+  const local = host === "localhost" || host.endsWith(".localhost");
+  return local ? `http://${host}:${process.env.PORT ?? 3000}` : `https://${host}`;
+}
+
+/** An admin path as it reads on the admin host: the log-in page is its "/login". */
+export const adminHostPath = (path: string) => path.replace(/^\/admin\/login(?=$|[?#])/, "/login");
 
 export function appHost(): string | null {
   // "off" serves everything from one host — e.g. to test Google sign-in

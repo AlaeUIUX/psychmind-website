@@ -6,7 +6,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, dbReady } from "@/db";
-import { user } from "@/db/schema";
+import { session, user } from "@/db/schema";
+import { adminHost } from "@/lib/hosts";
 import {
   AGE_BLOCK_COOKIE,
   AGE_BLOCK_SECONDS,
@@ -187,6 +188,23 @@ export async function confirmAgeForGoogle(_prev: AgeCheckState, form: FormData):
   return { ok: true };
 }
 
+/** Admins sign in only on the admin host (lib/hosts.ts). Elsewhere a right password for
+ *  an admin account is undone (the new session, or the half-done two-step login) and
+ *  they're sent there: only someone with the password learns it's a team account. */
+async function refuseAdminHere(result: { token?: string | null }) {
+  const store = await cookies();
+  for (const name of ["session_token", "session_data", "two_factor", "dont_remember"])
+    for (const prefix of ["", "__Secure-"]) store.delete(`${prefix}psychmind.${name}`);
+  if (result.token) await db.delete(session).where(eq(session.token, result.token));
+  // TODO(client): new microcopy
+  return `This is a team account. Log in at ${adminHost()}.`;
+}
+
+async function onAdminHost() {
+  const h = await headers();
+  return (h.get("x-forwarded-host") ?? h.get("host") ?? "").split(":")[0] === adminHost();
+}
+
 export async function signIn(_prev: AuthState, form: FormData): Promise<AuthState> {
   const parsed = z.object({ email, password: z.string().min(1, "Enter your password.") }).safeParse(Object.fromEntries(form));
   const values = { email: String(form.get("email") ?? "") };
@@ -196,11 +214,17 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
   let role: string | undefined;
   let needsCode = false;
   const next = safeNext(form.get("next"));
+  // the account's role, read now so an admin off the admin host can be turned back below
+  const teamOnly = adminHost() && !(await onAdminHost());
+  const [account] = teamOnly
+    ? await db.select({ role: user.role }).from(user).where(eq(user.email, parsed.data.email.toLowerCase()))
+    : [];
   try {
     const result = await auth.api.signInEmail({
       body: { email: parsed.data.email, password: parsed.data.password, rememberMe: true },
       headers: await headers(),
     });
+    if (account?.role === "admin") return { error: await refuseAdminHere(result as { token?: string | null }), values };
     // Two-step login on: the password was right, now the authenticator code.
     if ("twoFactorRedirect" in result && result.twoFactorRedirect) needsCode = true;
     else role = (result.user as { role?: string }).role;

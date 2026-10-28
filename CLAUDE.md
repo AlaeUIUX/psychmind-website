@@ -46,7 +46,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - **Two-step login:** the Better Auth `twoFactor` plugin (authenticator app + 10 backup codes). **Required for admins**: `requireRole("admin")` sends them to `/two-factor/setup`, and admins can't sign in with Google. Any user can turn it on in Settings.
 - **Admin accounts** (`server/admin/accounts.ts`): made for people, never signed up for.
   - Every `ADMIN_EMAILS` address without an account gets one, with a temporary password by email (valid 3 days), when `/admin/login` or Admin → Admins is next opened. Signing up with a listed address creates nothing and answers like any sign-up.
-  - The team logs in at `/admin/login` (signed-out `/admin` visits go there). `requireRole("admin")` then requires, in order: a new password (12+ characters, with their name) at `/admin/password`, then two-step login.
+  - The team logs in at `/admin/login` (signed-out `/admin` visits go there). With `ADMIN_HOST` set (production: `dev.psychmind.org`), the console lives on that host with `/login` as its front door, `/admin` anywhere else moves there, and an admin's right password on the regular log-in is undone and pointed there (`server/auth/actions.ts`). `requireRole("admin")` then requires, in order: a new password (12+ characters, with their name) at `/admin/password`, then two-step login.
   - An expired temporary password is refused at sign-in (only someone who knows it is told). A password reset replaces it too.
   - Admin → Admins lists everyone and their setup state; "Reset access" emails a new temporary password and clears their authenticator and sessions. Everything is audit-logged.
 - **Account data:** Settings → "Download your data" (`/api/account/export`, no secrets) and "Delete your account" (password required when the account has one; `server/account/cleanup.ts` cancels billing and deletes files first).
@@ -94,7 +94,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 ## Hosts
 
 - **The portal** is `app.psychmind.org`; marketing stays on `www`. The directory (`/providers`) lives on the portal host too, because the session cookie is host-only and saving needs it.
-- `src/proxy.ts` and `src/lib/hosts.ts` route each request to the right host.
+- `src/proxy.ts` and `src/lib/hosts.ts` route each request to the right host. The admin portal is a third host when `ADMIN_HOST` is set (production `dev.psychmind.org`; locally try `dev.localhost`); `appUrl()` sends `/admin` links there.
 - **Locally**, open the portal at `http://app.localhost:<port>`. `APP_HOST=off` serves it from `localhost` instead, which Google sign-in needs.
 - **Vercel previews** serve everything from one host and use the branch URL as the auth origin (`defaultOrigin()`).
 - **`/dev/setup`** shows what a deployment has configured and the exact Google redirect URI. The guide is `docs/live-testing.md`.

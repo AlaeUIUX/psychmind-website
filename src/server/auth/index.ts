@@ -14,7 +14,7 @@ import * as schema from "@/db/schema";
 import { account, providerProfile, user as userTable } from "@/db/schema";
 import { AGE_OK_COOKIE, isAdult, MIN_AGE, parseIsoDate } from "@/lib/age";
 import { BASE_PLAN, renewalTerms, stripeConfigured } from "@/lib/billing";
-import { defaultOrigin } from "@/lib/hosts";
+import { adminOrigin, defaultOrigin } from "@/lib/hosts";
 import { rateLimit } from "@/lib/rate-limit";
 import { afterAccountDeleted, beforeAccountDeleted } from "@/server/account/cleanup";
 import { isAdminEmail } from "./admin-emails";
@@ -78,8 +78,12 @@ export const auth = betterAuth({
   // host on whatever port the dev server got (PORT). Vercel previews: the
   // branch URL. Email links and the Google redirect URI are built from it.
   baseURL: process.env.BETTER_AUTH_URL || defaultOrigin(),
-  // Locally the dev server may run on any port; production uses BETTER_AUTH_URL.
-  trustedOrigins: process.env.NODE_ENV === "development" ? ["http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*"] : [],
+  // Locally the dev server may run on any port; production uses BETTER_AUTH_URL, and
+  // the admin host (lib/hosts.ts) signs its team in on its own origin.
+  trustedOrigins: [
+    ...(process.env.NODE_ENV === "development" ? ["http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*"] : []),
+    ...(adminOrigin() ? [adminOrigin()!] : []),
+  ],
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: {
     enabled: true,
