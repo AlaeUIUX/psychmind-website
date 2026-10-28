@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
-const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "goingwilson@gmail.com";
+const TO_EMAIL = process.env.CONTACT_TO_EMAIL;
 const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "PsychMind <onboarding@resend.dev>";
 
 function escapeHtml(value: string) {
@@ -16,9 +16,9 @@ function escapeHtml(value: string) {
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  if (!apiKey || !TO_EMAIL) {
     return NextResponse.json(
-      { error: "Missing RESEND_API_KEY environment variable" },
+      { error: "Missing RESEND_API_KEY or CONTACT_TO_EMAIL environment variable" },
       { status: 500 },
     );
   }

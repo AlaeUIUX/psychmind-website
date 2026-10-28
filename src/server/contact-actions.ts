@@ -7,7 +7,9 @@ import { contactMessageEmail } from "@/server/emails";
 
 // The contact page's form: checked field by field (the errors say how to fix each),
 // rate-limited per IP, with a honeypot, then emailed to the team (CONTACT_TO_EMAIL),
-// replies going to the sender. Locally it lands in /dev/mail. Copy: TODO(client).
+// replies going to the sender. Locally it lands in /dev/mail. There's no fallback inbox
+// in the code (the repository is public): without CONTACT_TO_EMAIL nothing is sent.
+// Copy: TODO(client).
 
 export type ContactState = {
   sent?: true;
@@ -19,7 +21,6 @@ export type ContactState = {
 } | null;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TO = process.env.CONTACT_TO_EMAIL || "goingwilson@gmail.com";
 
 export async function sendContactMessage(_prev: ContactState, form: FormData): Promise<ContactState> {
   // a field people never see: bots that fill it are told it worked
@@ -45,8 +46,13 @@ export async function sendContactMessage(_prev: ContactState, form: FormData): P
   const limit = await rateLimit("contact", clientIp(await headers()), 5, "1 h");
   if (!limit.ok) return { error: "Too many messages from here. Please try again in an hour.", values };
 
+  const to = process.env.CONTACT_TO_EMAIL;
+  if (!to) {
+    console.error("contact message not sent: CONTACT_TO_EMAIL is not set");
+    return { error: "We couldn't send your message just now. Please try again.", values };
+  }
   try {
-    await sendEmail(contactMessageEmail(TO, values));
+    await sendEmail(contactMessageEmail(to, values));
   } catch (err) {
     console.error("contact message failed", err instanceof Error ? err.message : err);
     return { error: "We couldn't send your message just now. Please try again.", values };
