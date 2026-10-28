@@ -325,9 +325,12 @@ export function Voyage() {
         className="mx-auto block h-auto w-full max-w-[360px] md:hidden"
       />
       {/* the boat, in 3D, moved along the route */}
+      {/* pixelated: the dots are drawn one per device pixel, and the smooth scroll lands the
+          canvas between pixels, so letting the browser blend it would soften and sharpen the
+          dots frame by frame (a flicker); drawn pixel for pixel they stay crisp and just move */}
       <canvas
         ref={canvasRef}
-        className="pointer-events-none absolute top-0 left-0 h-[110px] w-[150px] opacity-0 transition-opacity duration-500"
+        className="pointer-events-none absolute top-0 left-0 h-[110px] w-[150px] [image-rendering:pixelated] opacity-0 transition-opacity duration-500"
       />
     </div>
   );

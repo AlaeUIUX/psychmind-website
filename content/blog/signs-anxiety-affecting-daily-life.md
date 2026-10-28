@@ -2,6 +2,7 @@
 title: "Five signs that anxiety is affecting your daily life more than you think"
 excerpt: "4 min read · Jan 2025"
 category: "Wellness"
+source: "provider"
 author: "Dr. Sara Olisz"
 date: "January 2025"
 readTime: "4 min read"

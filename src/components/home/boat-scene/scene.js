@@ -23,6 +23,7 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { reloadKeepingScroll } from "@/lib/dev-reload";
 
 // --- Settings (as tuned in the sandbox's panel) -----------------------------------------
 
@@ -108,7 +109,7 @@ const GLOW = "#FFD58E";
  *   view?: { polar: number, azimuth: number, zoom: number },
  *   weather?: "mist" | "sunny",
  *   startAt?: number,
- *   edge?: "cloud" | "top",
+ *   edge?: "cloud" | "top" | "none",
  *   boatX?: number,
  *   boatY?: number,
  *   maxPixelRatio?: number,
@@ -116,8 +117,9 @@ const GLOW = "#FFD58E";
  *   view: the camera's direction (degrees: polar from straight down, azimuth about
  *   the vertical) and zoom, framed to the canvas's height instead of the hero's
  *   fixed scale. weather: hold one spell for good. startAt: where on the voyage
- *   to begin (0..1). edge: "cloud", the hero's ring of cloud, or "top", cloud
- *   along the top only. boatX, boatY: where the boat sits in the frame.
+ *   to begin (0..1). edge: "cloud", the hero's ring of cloud, "top", cloud
+ *   along the top only, or "none", the scene to the canvas's edges. boatX, boatY:
+ *   where the boat sits in the frame.
  *   maxPixelRatio: the drawing resolution's cap (2 by default).
  */
 export function createBoatScene(canvas, options = {}) {
@@ -190,7 +192,7 @@ export function createBoatScene(canvas, options = {}) {
       uDotPx: { value: 1 },
       uWaterColour: { value: 1 },
       uTime: { value: 0 },
-      uEdgeTop: { value: options.edge === "top" ? 1 : 0 },
+      uEdgeTop: { value: options.edge === "top" ? 1 : options.edge === "none" ? 2 : 0 },
     },
     depthTest: false,
     depthWrite: false,
@@ -241,6 +243,7 @@ export function createBoatScene(canvas, options = {}) {
       // The scene sits in an ellipse whose rim is a bank of cloud: round puffs that
       // drift slowly, dissolving into the page in the same dots as the print.
       float cloudMask(vec2 cell) {
+        if (uEdgeTop > 1.5) return 1.0; // no rim: the scene runs to the canvas's edges (the contact page's panel)
         vec2 p = ((cell + 0.5) / uSize - 0.5) * 2.0; // -1..1 across the band
         if (uEdgeTop > 0.5) {
           // the footer's band runs to the page's sides and foot: only its top
@@ -2100,3 +2103,7 @@ export function createBoatScene(canvas, options = {}) {
     },
   };
 }
+
+// In development, an edit here reloads the page, where it was (lib/dev-reload.ts): the
+// scene on screen was built by the old code. (A no-op in builds.)
+import.meta.turbopackHot?.dispose(reloadKeepingScroll);

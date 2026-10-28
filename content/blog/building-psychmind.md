@@ -2,6 +2,7 @@
 title: "Building PsychMind"
 excerpt: "The story behind why we started PsychMind, and what we're building toward."
 category: "Company"
+source: "team"
 author: "PsychMind Team"
 date: "January 2025"
 readTime: "10 min read"

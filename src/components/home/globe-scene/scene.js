@@ -26,6 +26,7 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { makeBoat, makeLights, makePrint, tuneLights } from "./boat";
+import { reloadKeepingScroll } from "@/lib/dev-reload";
 
 // The hero's water as it prints: a pale lavender grey (its colours, mostly given up)
 const DEEP = "#AEB2C8";
@@ -815,3 +816,7 @@ export function createGlobeScene(canvas, options = {}) {
     },
   };
 }
+
+// In development, an edit here reloads the page, where it was (lib/dev-reload.ts): the
+// scene on screen was built by the old code. (A no-op in builds.)
+import.meta.turbopackHot?.dispose(reloadKeepingScroll);

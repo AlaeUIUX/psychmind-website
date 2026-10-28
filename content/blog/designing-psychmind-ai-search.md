@@ -2,6 +2,7 @@
 title: "How we designed PsychMind AI search tool in 6 months"
 excerpt: "12 min read · Jan 2025"
 category: "Design and Dev"
+source: "team"
 author: "PsychMind Team"
 date: "January 2025"
 readTime: "12 min read"

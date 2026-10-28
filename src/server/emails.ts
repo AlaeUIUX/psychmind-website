@@ -395,6 +395,46 @@ export function emailChangeStartEmail(to: string, url: string): Email {
   };
 }
 
+/** Confirming a blog subscription (double opt-in): nothing is sent from the blog
+ *  until this link is used. TODO(client): copy. */
+export function blogSubscribeConfirmEmail(to: string, url: string): Email {
+  return {
+    to,
+    subject: "Confirm your subscription to the PsychMind blog",
+    ...layout({
+      heading: "Confirm your subscription",
+      body: "Confirm below and we'll email you new posts from the PsychMind blog. The link expires in 3 days.",
+      cta: { label: "Confirm subscription", url },
+      footnote: "If you didn't ask for this, ignore this email and you won't hear from us.",
+      reason: "You're receiving this email because this address was entered on the PsychMind blog.",
+    }),
+  };
+}
+
+/** A message from the contact page, to the team (replies go to the sender).
+ *  TODO(client): the copy. */
+export function contactMessageEmail(
+  to: string,
+  m: { firstName: string; lastName: string; email: string; subject: string; message: string },
+): Email {
+  return {
+    to,
+    replyTo: m.email,
+    subject: m.subject ? `[PsychMind Contact] ${m.subject}` : "[PsychMind Contact] New message",
+    ...layout({
+      heading: "New message from the contact page",
+      body: "Reply to this email to answer them directly.",
+      details: [
+        ["Name", `${m.firstName} ${m.lastName}`],
+        ["Email", m.email],
+        ...(m.subject ? ([["Subject", m.subject]] as [string, string][]) : []),
+        ["Message", m.message],
+      ],
+      reason: "You're receiving this email because PsychMind's contact page sends its messages here.",
+    }),
+  };
+}
+
 /** Step 2: proof that the new inbox is theirs too. */
 export function emailChangeConfirmEmail(to: string, url: string): Email {
   return {

@@ -45,7 +45,10 @@ export function PrivacyGlobe({ tune }: { tune?: Partial<GlobeSettings> } = {}) {
     const load = async () => {
       const { createGlobeScene } = await import("./globe-scene/scene");
       if (disposed) return;
-      const scene: Scene = createGlobeScene(canvas, { maxPixelRatio: 2, tune: tuneRef.current });
+      const scene: Scene = createGlobeScene(canvas, {
+        maxPixelRatio: 2,
+        tune: tuneRef.current,
+      });
       sceneRef.current = scene;
       const moving = window.matchMedia(MOTION_OK);
       let onScreen = false;
@@ -96,7 +99,10 @@ export function PrivacyGlobe({ tune }: { tune?: Partial<GlobeSettings> } = {}) {
         if (!entries.some((e) => e.intersectionRatio >= 0.5)) return;
         inView.disconnect();
         setSeen(true);
-        shutting = window.setTimeout(() => setShut(true), window.matchMedia(MOTION_OK).matches ? 700 : 0);
+        shutting = window.setTimeout(
+          () => setShut(true),
+          window.matchMedia(MOTION_OK).matches ? 700 : 0,
+        );
       },
       { threshold: 0.5 },
     );
@@ -119,10 +125,13 @@ export function PrivacyGlobe({ tune }: { tune?: Partial<GlobeSettings> } = {}) {
   return (
     <div ref={box} className="absolute inset-0">
       {/* the planet runs off the foot, fading into the grey under the pill */}
+      {/* pixelated: the dots are drawn one per device pixel, and the smooth scroll lands the
+          canvas between pixels, so letting the browser blend it would soften and sharpen the
+          dots frame by frame (a flicker); drawn pixel for pixel they stay crisp and just move */}
       <canvas
         ref={canvasRef}
         aria-hidden
-        className={`block size-full cursor-grab touch-pan-y transition-opacity duration-1000 ease-out [mask-image:linear-gradient(to_bottom,black_70%,transparent)] active:cursor-grabbing motion-reduce:transition-none ${ready ? "opacity-100" : "opacity-0"}`}
+        className={`block size-full [image-rendering:pixelated] cursor-grab touch-pan-y transition-opacity duration-1000 ease-out [mask-image:linear-gradient(to_bottom,black_70%,transparent)] active:cursor-grabbing motion-reduce:transition-none ${ready ? "opacity-100" : "opacity-0"}`}
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-[13%] flex justify-center px-3">
         <p

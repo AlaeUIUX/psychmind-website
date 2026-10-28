@@ -2,6 +2,7 @@
 title: "CBT vs. psychodynamic therapy: which is right for you?"
 excerpt: "5 min read · Feb 2025"
 category: "Guide"
+source: "team"
 author: "PsychMind Team"
 date: "February 2025"
 readTime: "5 min read"

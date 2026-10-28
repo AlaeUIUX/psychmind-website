@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, SendIcon } from "@/components/ui/icons";
+import { CtaArrowIcon } from "@/components/ui/hugeicons";
+import { PlusIcon } from "@/components/ui/icons";
 import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
-import { faqs } from "./faq-data";
+import { faqs, type Faq } from "./faq-data";
 import { CrisisCard } from "@/components/shared/crisis-card";
 
 
@@ -24,6 +25,15 @@ export function FaqAccordion({ items = faqs }: { items?: typeof faqs }) {
         const open = hasAnswer && openIndex === i;
         const panelId = `${baseId}-panel-${i}`;
         const buttonId = `${baseId}-button-${i}`;
+        // crisis help: always open, the crisis card's content under its question
+        if (faq.crisis) {
+          return (
+            <div key={faq.question} className="border-b border-warm-200">
+              <h3 className="py-5 type-body-lg font-medium text-text-primary sm:py-6">{faq.question}</h3>
+              <CrisisCard inline />
+            </div>
+          );
+        }
         return (
           <div key={faq.question} className="border-b border-warm-200">
             <h3>
@@ -70,47 +80,32 @@ export function FaqAccordion({ items = faqs }: { items?: typeof faqs }) {
   );
 }
 
-export function FaqSection() {
+/** `title` and `items`: How it works for providers asks its own. */
+export function FaqSection({
+  title = "A few things people wonder before starting",
+  items = faqs,
+}: { title?: string; items?: Faq[] } = {}) {
   return (
     <Section spacing="lg" id="faq" className="scroll-mt-24">
       <Container className="flex max-w-[768px] flex-col gap-10 sm:gap-14">
-        <SectionHeader
-          align="center"
-          badge={{ icon: "/images/how-it-works/faq-badge-icon.svg", label: "Common questions" }}
-          title="A few things people wonder before starting"
-        />
-
-        <FaqAccordion />
-
-        <Reveal>
-          <CrisisCard />
-        </Reveal>
-
-        <Reveal className="flex flex-col items-center gap-6 rounded-card bg-warm-100 px-6 pt-8 pb-10 text-center ring-1 ring-warm-200 ring-inset sm:gap-8">
-          <div className="flex -space-x-3">
-            {["avatar-1.png", "avatar-2.png", "avatar-3.png"].map((src, i) => (
-              <img
-                key={src}
-                src={`/images/how-it-works/${src}`}
-                alt=""
-                className="rounded-full border-2 border-white object-cover shadow-control"
-                style={{ width: i === 1 ? 56 : 48, height: i === 1 ? 56 : 48, zIndex: i === 1 ? 1 : 0 }}
-              />
-            ))}
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <h3 className="type-h4 text-text-primary">Still have questions?</h3>
-            <p className="max-w-[358px] type-body text-text-tertiary">
-              Can&apos;t find the answer you&apos;re looking for? Please chat to our friendly team.
-            </p>
-          </div>
-          <Button asChild variant="secondary" size="lg">
+        {/* the way to the team sits under the heading (it was a card with the team's
+            photos at the foot, 2026-10-28) */}
+        <div className="flex flex-col items-center gap-6">
+          <SectionHeader
+            align="center"
+            badge={{ icon: "/images/how-it-works/faq-badge-icon.svg", label: "Common questions" }}
+            title={title}
+            subtitle="Can't find the answer you're looking for? Please chat to our friendly team."
+          />
+          <Button asChild variant="secondary" size="md">
             <Link href="/contact">
               Contact us
-              <SendIcon />
+              <CtaArrowIcon />
             </Link>
           </Button>
-        </Reveal>
+        </div>
+
+        <FaqAccordion items={items} />
       </Container>
     </Section>
   );

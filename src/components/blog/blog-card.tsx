@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRightIcon } from "@/components/ui/icons";
@@ -10,11 +11,19 @@ type BlogCardProps = {
   title: string;
   /** e.g. "8 min read · March 2025" */
   meta: string;
+  /** The home page's smaller card: four to a row, a smaller title, no arrow chip. */
+  compact?: boolean;
 };
 
 /** Category · author row used on cards and article headers. Articles written
  *  by a clinician (a "Dr." byline) are marked as provider-written. */
-export function PostMeta({ category, author }: { category: string; author: string }) {
+export function PostMeta({
+  category,
+  author,
+}: {
+  category: string;
+  author: string;
+}) {
   const byProvider = author.startsWith("Dr.");
   return (
     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 type-small text-text-tertiary">
@@ -32,7 +41,11 @@ export function PostMeta({ category, author }: { category: string; author: strin
       {byProvider && (
         <span className="inline-flex items-center gap-1 rounded-md border border-warm-300 bg-white px-1.5 py-px text-[11px] font-medium text-text-secondary">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-2.5" />
+          <img
+            src="/images/how-it-works/verified-check-icon.svg"
+            alt=""
+            className="size-2.5"
+          />
           Provider
         </span>
       )}
@@ -42,11 +55,22 @@ export function PostMeta({ category, author }: { category: string; author: strin
 
 // One card for every post preview (home + blog index). Hover lifts the card,
 // eases the illustration forward and fills the arrow chip.
-export function BlogCard({ href, image, category, author, title, meta }: BlogCardProps) {
+export function BlogCard({
+  href,
+  image,
+  category,
+  author,
+  title,
+  meta,
+  compact = false,
+}: BlogCardProps) {
   return (
     <Link
       href={href}
-      className="group flex h-full flex-col gap-5 rounded-card surface-soft p-4 transition-[translate,box-shadow] duration-500 ease-out-soft hover:-translate-y-1 hover:shadow-card sm:gap-6 sm:p-6"
+      className={cn(
+        "group flex h-full flex-col rounded-card surface-soft transition-[translate,box-shadow] duration-500 ease-out-soft hover:-translate-y-1 hover:shadow-card",
+        compact ? "gap-4 p-3 sm:p-4" : "gap-5 p-4 sm:gap-6 sm:p-6",
+      )}
     >
       <div className="relative flex aspect-[436/256] w-full items-center justify-center overflow-hidden rounded-field bg-blush-25">
         {image ? (
@@ -54,26 +78,59 @@ export function BlogCard({ href, image, category, author, title, meta }: BlogCar
             src={image}
             alt=""
             fill
-            sizes="(min-width: 768px) 500px, 100vw"
+            sizes={
+              compact
+                ? "(min-width: 1024px) 260px, 50vw"
+                : "(min-width: 768px) 500px, 100vw"
+            }
             className="object-contain transition-[scale] duration-700 ease-out-soft group-hover:scale-[1.03]"
           />
         ) : (
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/blog/psychmind-icon.svg" alt="" width={40} height={40} />
-            <span className="font-display text-2xl text-warm-900">PsychMind</span>
+            <img
+              src="/images/blog/psychmind-icon.svg"
+              alt=""
+              width={40}
+              height={40}
+            />
+            <span className="font-display text-2xl text-warm-900">
+              PsychMind
+            </span>
           </div>
         )}
       </div>
       <div className="flex flex-1 items-start gap-4 sm:gap-6">
-        <div className="flex flex-1 flex-col gap-3">
-          <PostMeta category={category} author={author} />
-          <h3 className="type-title-lg text-text-primary">{title}</h3>
-          <p className="type-small text-text-placeholder">{meta}</p>
+        <div
+          className={cn("flex flex-1 flex-col", compact ? "gap-2" : "gap-3")}
+        >
+          {compact ? (
+            <p className="type-caption text-text-tertiary">{category}</p>
+          ) : (
+            <PostMeta category={category} author={author} />
+          )}
+          <h3
+            className={cn(
+              "text-text-primary",
+              compact ? "type-body font-medium text-balance" : "type-title-lg",
+            )}
+          >
+            {title}
+          </h3>
+          <p
+            className={cn(
+              "text-text-placeholder",
+              compact ? "type-caption" : "type-small",
+            )}
+          >
+            {meta}
+          </p>
         </div>
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-warm-700 transition-colors duration-300 group-hover:bg-warm-900 group-hover:text-white">
-          <ChevronRightIcon className="size-4 transition-[translate] duration-300 ease-out-soft group-hover:translate-x-px" />
-        </span>
+        {!compact && (
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-warm-700 transition-colors duration-300 group-hover:bg-warm-900 group-hover:text-white">
+            <ChevronRightIcon className="size-4 transition-[translate] duration-300 ease-out-soft group-hover:translate-x-px" />
+          </span>
+        )}
       </div>
     </Link>
   );

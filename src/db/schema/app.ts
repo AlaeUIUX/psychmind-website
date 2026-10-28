@@ -307,6 +307,17 @@ export const emailPreference = pgTable("email_preference", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Subscribers to the blog (the Subscribe button on /blog). A row is made when someone
+ *  asks, and confirmed from the link we email them (double opt-in), so no one is
+ *  subscribed by someone else typing their address. Unsubscribing is the marketing
+ *  opt-out in email_preference (every blog email goes through server/marketing.ts);
+ *  confirming again clears it. Not tied to an account. */
+export const blogSubscriber = pgTable("blog_subscriber", {
+  email: text("email").primaryKey(),
+  confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const recoveryStatus = pgEnum("account_recovery_status", ["open", "completed", "declined"]);
 
 /** "Can't access your email?": someone asks the team to move an account to a

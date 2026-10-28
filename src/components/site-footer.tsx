@@ -4,6 +4,7 @@ import { FooterScene } from "@/components/footer-scene";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Container, GUTTER } from "@/components/ui/section";
+import { SocialLinks } from "@/components/shared/social-links";
 import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
 // The site's foot, after Interfere's (interfere.com/product/engineers) on our
@@ -14,13 +15,16 @@ import { CtaArrowIcon } from "@/components/ui/hugeicons";
 // Interfere's measures, in our type: 13px headings and links (the nav's
 // size), 12px for the fine print.
 
-// TODO(client): the column headings and "Follow PsychMind on" are new copy.
+// TODO(client): the column headings and "Follow us on" are new copy ("Follow PsychMind
+// on" ran too long on phones; owner, 2026-10-28), and "For providers" (the provider band's
+// overline, as the link to How it works for providers).
 const columns = [
   {
     title: "Explore",
     links: [
       { href: "/providers", label: "Browse providers" },
       { href: "/how-it-works", label: "How it works" },
+      { href: "/how-it-works/providers", label: "For providers" },
       { href: "/mission", label: "Mission" },
     ],
   },
@@ -50,14 +54,6 @@ const columns = [
   },
 ];
 
-// TODO(client): the accounts' addresses.
-const socials = [
-  { href: "#", label: "Instagram", src: "/images/home/social-instagram.svg" },
-  { href: "#", label: "X (Twitter)", src: "/images/home/social-x.svg" },
-  { href: "#", label: "YouTube", src: "/images/home/social-youtube.svg" },
-  { href: "#", label: "LinkedIn", src: "/images/home/social-linkedin.svg" },
-];
-
 export function SiteFooter() {
   return (
     <footer className={`relative w-full overflow-hidden border-t border-warm-200/70 bg-warm-25 ${GUTTER}`}>
@@ -84,21 +80,8 @@ export function SiteFooter() {
         </div>
 
         <div className="flex items-center gap-3 pb-8">
-          <p className="text-[15px] text-warm-500">Follow PsychMind on</p>
-          <ul className="flex gap-1.5">
-            {socials.map((s) => (
-              <li key={s.label}>
-                <a
-                  href={s.href}
-                  aria-label={s.label}
-                  className="flex size-8 items-center justify-center rounded-[8px] border border-warm-200 bg-white transition-colors duration-200 hover:border-warm-300 hover:bg-warm-50"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.src} alt="" width={16} height={16} className="size-4 opacity-80" />
-                </a>
-              </li>
-            ))}
-          </ul>
+          <p className="text-[15px] text-warm-500">Follow us on</p>
+          <SocialLinks />
         </div>
 
         <div className="flex items-start justify-between gap-10 border-t border-warm-200 pt-12 pb-16 sm:pt-16 sm:pb-24">

@@ -2,6 +2,7 @@
 title: "PsychMind raises an $850K pre-seed round"
 excerpt: "4 min read · Jan 2025"
 category: "Company"
+source: "team"
 author: "PsychMind Team"
 date: "January 2025"
 readTime: "4 min read"

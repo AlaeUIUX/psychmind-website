@@ -7,26 +7,78 @@
 // many are ink. The dress writes half alpha, the print's mark for "colour".
 
 import * as THREE from "three";
+import { reloadKeepingScroll } from "@/lib/dev-reload";
 
 const INK = "#1C1917"; // stone-900, the page's ink
 const PAPER = "#FFFDF8";
 const CRIMSON = "#C01048";
 const GLOW = "#FFD58E";
 
-/** The boat: `hull` rides the water (pitch, roll, heave), `girl` stands at its bow.
- *  Bow toward +z, up +y, one unit about a fifth of its length. */
-export function makeBoat() {
+/** The print's materials: clay (lit, printed in dots), solid (unlit), the paper
+ *  everything is made of, and the dress (its own colour in the print). */
+export function materials() {
   const clay = (color) => new THREE.MeshLambertMaterial({ color });
   const solid = (color) => new THREE.MeshBasicMaterial({ color });
-  const PAPER_FILL = clay(PAPER);
-  const DRESS = new THREE.MeshBasicMaterial({
+  const paper = clay(PAPER);
+  const dress = new THREE.MeshBasicMaterial({
     color: CRIMSON,
     transparent: true,
     opacity: 0.5,
     blending: THREE.NoBlending,
   });
-  const part = (geometry, material = PAPER_FILL) =>
+  const part = (geometry, material = paper) =>
     new THREE.Mesh(geometry, material);
+  return { clay, solid, paper, dress, part };
+}
+
+/** The same materials, marked to print in dots even in a smooth print (alpha 0.875,
+ *  written as is, like the dress's half alpha marks it for colour). */
+export function dotted() {
+  const m = materials();
+  const mark = (material) =>
+    Object.assign(material, {
+      transparent: true,
+      opacity: 0.875,
+      blending: THREE.NoBlending,
+    });
+  const clay = (color) => mark(m.clay(color));
+  const solid = (color) => mark(m.solid(color));
+  const paper = mark(m.paper);
+  const part = (geometry, material = paper) =>
+    new THREE.Mesh(geometry, material);
+  return { clay, solid, paper, dress: m.dress, part };
+}
+
+/** The girl, standing, facing +z, her feet at the origin, about 0.7 units tall.
+ *  `head` (head, hair and bun) can turn on its own. */
+export function makeGirl(m = materials()) {
+  const { part, solid, dress } = m;
+  const girl = new THREE.Group();
+  const legs = part(new THREE.CylinderGeometry(0.05, 0.06, 0.16, 8));
+  legs.position.y = 0.08;
+  const body = part(new THREE.ConeGeometry(0.15, 0.34, 10), dress);
+  body.position.y = 0.32;
+  const head = new THREE.Group();
+  head.position.y = 0.56;
+  const face = part(new THREE.SphereGeometry(0.11, 14, 10));
+  const hair = part(
+    new THREE.SphereGeometry(0.115, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
+    solid(INK),
+  );
+  hair.position.set(0, 0.015, -0.02);
+  hair.rotation.x = -0.5;
+  const bun = part(new THREE.SphereGeometry(0.05, 10, 8), solid(INK));
+  bun.position.set(0, 0.08, -0.13);
+  head.add(face, hair, bun);
+  girl.add(legs, body, head);
+  return { girl, head };
+}
+
+/** The boat: `hull` rides the water (pitch, roll, heave), `girl` stands at its bow.
+ *  Bow toward +z, up +y, one unit about a fifth of its length. */
+export function makeBoat() {
+  const m = materials();
+  const { part, solid } = m;
 
   const hull = new THREE.Group();
   {
@@ -75,34 +127,9 @@ export function makeBoat() {
   }
 
   // The girl at the bow, looking ahead (her size is a setting).
-  const girl = new THREE.Group();
+  const { girl } = makeGirl(m);
   girl.position.set(0, 0.25, 0.95);
   hull.add(girl);
-  {
-    const legs = part(new THREE.CylinderGeometry(0.05, 0.06, 0.16, 8));
-    legs.position.y = 0.08;
-    const body = part(new THREE.ConeGeometry(0.15, 0.34, 10), DRESS);
-    body.position.y = 0.32;
-    const head = part(new THREE.SphereGeometry(0.11, 14, 10));
-    head.position.y = 0.56;
-    const hair = part(
-      new THREE.SphereGeometry(
-        0.115,
-        14,
-        10,
-        0,
-        Math.PI * 2,
-        0,
-        Math.PI * 0.62,
-      ),
-      solid(INK),
-    );
-    hair.position.set(0, 0.575, -0.02);
-    hair.rotation.x = -0.5;
-    const bun = part(new THREE.SphereGeometry(0.05, 10, 8), solid(INK));
-    bun.position.set(0, 0.64, -0.13);
-    girl.add(legs, body, head, hair, bun);
-  }
   return { hull, girl };
 }
 
@@ -147,6 +174,7 @@ export function makePrint() {
       uBrightness: { value: 0 },
       uOutline: { value: 1 },
       uDressColour: { value: 1 },
+      uSmooth: { value: 0 },
     },
     transparent: true,
     depthTest: false,
@@ -165,6 +193,7 @@ export function makePrint() {
       uniform float uBrightness;
       uniform float uOutline;
       uniform float uDressColour;
+      uniform float uSmooth;
       float bayer2(vec2 a) { a = mod(floor(a), 2.0); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
       #define bayer4(a) (bayer2(0.5 * (a)) * 0.25 + bayer2(a))
       #define bayer8(a) (bayer4(0.5 * (a)) * 0.25 + bayer2(a))
@@ -189,7 +218,10 @@ export function makePrint() {
           // the hero's tone: its curve, contrast and brightness
           float tone = pow(max(dot(texel.rgb, vec3(0.2126, 0.7152, 0.0722)), 0.0), uCurve / 2.2);
           tone = (tone - 0.5) * uContrast + 0.5 + uBrightness;
-          gl_FragColor = vec4(tone > bayer8(cell) ? uPaper : uInk, 1.0);
+          // dotted, or (smooth) the same tone as an even grey between ink and paper;
+          // a part drawn at alpha 0.875 (dotted()) is dotted even in a smooth print
+          bool dots = uSmooth < 0.5 || texel.a < 0.95;
+          gl_FragColor = vec4(dots ? (tone > bayer8(cell) ? uPaper : uInk) : mix(uInk, uPaper, clamp(tone, 0.0, 1.0)), 1.0);
         }
         #include <colorspace_fragment>
       }
@@ -220,6 +252,7 @@ export function makePrint() {
       u.uBrightness.value = set.brightness;
       u.uOutline.value = set.outline;
       u.uDressColour.value = set.dressColour ? 1 : 0;
+      u.uSmooth.value = set.smooth ? 1 : 0;
     },
     dispose() {
       target.dispose();
@@ -228,3 +261,7 @@ export function makePrint() {
     },
   };
 }
+
+// In development, an edit here reloads the page, where it was (lib/dev-reload.ts): the
+// scene on screen was built by the old code. (A no-op in builds.)
+import.meta.turbopackHot?.dispose(reloadKeepingScroll);

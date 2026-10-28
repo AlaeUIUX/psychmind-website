@@ -240,6 +240,34 @@
   }
 }
 
+/* The How it works collage (how-it-works/hero-showcase.tsx): a picture drifts left to
+   right from just off the left edge (its -260px start) to just past the right. Held
+   still with reduced motion, where its delay has already placed it. */
+.hero-collage-tile {
+  animation: hero-collage-pan linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation-play-state: paused;
+  }
+}
+@keyframes hero-collage-pan {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: calc(100vw + 520px) 0;
+  }
+}
+
+/* A blog post (components/blog/reader.tsx): the page snaps from one part to the next,
+   each part a screen tall at least (a longer one scrolls freely inside it). */
+html.reader-snap {
+  scroll-snap-type: y mandatory;
+}
+.reader-beat {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 @keyframes float {
   from {
     translate: 0 -5px;
@@ -291,6 +319,15 @@
 
 /* Home hero H1 and lede, cloned from sort.to: one size at every width, with
    their colors (not the text-* roles). */
+/* The blog (after theboringblog.ai): an entry's title in the index. */
+@utility type-reader-entry {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.3em;
+  letter-spacing: -0.01em;
+}
+
 @utility type-hero-title {
   font-family: var(--font-stix);
   font-weight: 400;

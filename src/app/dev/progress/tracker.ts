@@ -26,7 +26,7 @@ export type TrackerGroup = {
   items: TrackerItem[];
 };
 
-export const REVIEWED = "2026-10-27";
+export const REVIEWED = "2026-10-28";
 
 export const TRACKER: TrackerGroup[] = [
   {
@@ -115,6 +115,13 @@ export const TRACKER: TrackerGroup[] = [
       { status: "done", owner: "build", title: "Admin accounts", detail: "Created from ADMIN_EMAILS with a temporary password, forced new password, required authenticator, separate admin log-in, and Reset access.", where: "/admin/admins" },
       { status: "todo", owner: "build", title: "Provider blog editor", detail: "Figma D3 list and D4/D5 editor: draft, in review, changes requested, published, unpublished; autosave, cover image, excerpt and slug; output cleaned of unsafe HTML." },
       { status: "todo", owner: "build", title: "Admin blog moderation", detail: "A queue to approve or send back provider posts, with an email at each status change." },
+      { status: "todo", owner: "build", title: "Blog managed in the admin console", detail: "Owner request, 2026-10-28: the team writes and publishes its own posts in Admin (title, excerpt, category, author, cover image), replacing the Decap editor at /cms, with the same states as the provider editor. The current thumbnails are placeholders until real covers are uploaded there.", where: "/cms" },
+      { status: "todo", owner: "build", title: "Landing page on live data", detail: "Owner request, 2026-10-28: the home page is still all fixed content. Its blog section should show the latest published posts, and its reviews, provider count and figures should come from the app once those exist.", where: "src/app/(site)/page.tsx" },
+      { status: "done", owner: "build", title: "Blog index and reader", detail: "After theboringblog.ai (owner request, 2026-10-28): posts by year with a PsychMind team / Providers switch and category chips, infinite scroll, a rendered shore with the girl at the foot (animation/blog-shore), and posts that snap part to part. The blog header has Go back and Subscribe; no footer.", where: "/blog" },
+      { status: "done", owner: "build", title: "Blog subscriptions", detail: "Subscribe in the blog header: an email, then a confirmation link (double opt-in, 3 days), rate-limited, with a honeypot; the same answer whether or not the address was known. Stored in blog_subscriber; leaving is the marketing opt-out.", where: "src/server/blog/subscribe-actions.ts" },
+      { status: "done", owner: "build", title: "Marketing pages refreshed", detail: "Owner requests, 2026-10-28: How it works (hero and drifting showcase, the steps card, reviews, questions, the voyage to the provider band); How it works for providers (in the footer as \"For providers\"); the mission as the founders' letter; and Contact as one screen, the form in the portal's style beside the hero's voyage, sent through the app's email.", where: "/how-it-works/providers" },
+      { status: "todo", owner: "client", title: "Copy for the refreshed pages", detail: "New wording marked TODO(client): the provider steps and questions, the mission's lede, the contact page's errors and sent view, the footer's \"For providers\". Also: the mission text names Dani and Bri, the letter's doodle and signatures Brenda and Dee." },
+      { status: "todo", owner: "build", title: "Email new posts to blog subscribers", detail: "Nothing is sent to subscribers yet: when a post is published, email the confirmed subscribers through server/marketing.ts (unsubscribe link, postal address)." },
       { status: "todo", owner: "build", title: "Published provider posts on /blog and on profiles", detail: "An \"Articles\" section on the public profile; posts hidden while the provider is suspended." },
       { status: "todo", owner: "build", title: "License expiry tracking", detail: "Licenses store an expiry date, but nothing acts on it yet. Plan: hide the state on expiry, with reminders at 60, 30 and 7 days." },
       { status: "todo", owner: "build", title: "Custom tags report", detail: "Owner request, 2026-10-08: the specialties and approaches providers typed themselves, with counts, so popular ones can join the standard list.", where: "docs/TODO.md" },

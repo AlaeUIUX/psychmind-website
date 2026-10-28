@@ -26,6 +26,12 @@ collections:
         name: "category"
         widget: "select"
         options: ["Mental health", "Guide", "Wellness", "Design and Dev", "Company"]
+      - label: "Written by"
+        name: "source"
+        widget: "select"
+        options: [{ label: "The PsychMind team", value: "team" }, { label: "A provider on PsychMind", value: "provider" }]
+        default: "team"
+        hint: "Which list the post appears in on the blog"
       - { label: "Author", name: "author", widget: "string" }
       - {
           label: "Author title/credentials",

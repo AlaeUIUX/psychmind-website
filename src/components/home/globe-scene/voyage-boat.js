@@ -14,6 +14,7 @@
 import * as THREE from "three";
 import { makeBoat, makeLights, makePrint, tuneLights } from "./boat";
 import { GLOBE_DEFAULTS } from "./scene";
+import { reloadKeepingScroll } from "@/lib/dev-reload";
 
 const LIGHT = new THREE.Vector3(-0.55, 0.75, 0.62).normalize();
 const WATERLINE = 0.62; // where her waterline sits on the canvas, from the top
@@ -175,3 +176,7 @@ export function createVoyageBoat(canvas) {
     },
   };
 }
+
+// In development, an edit here reloads the page, where it was (lib/dev-reload.ts): the
+// scene on screen was built by the old code. (A no-op in builds.)
+import.meta.turbopackHot?.dispose(reloadKeepingScroll);

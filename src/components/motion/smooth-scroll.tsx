@@ -4,6 +4,7 @@ import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { takeKeptScroll } from "@/lib/dev-reload";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 // The running Lenis, for code that needs to scroll the page itself (it would fight a
@@ -42,10 +43,18 @@ export function SmoothScroll() {
   }, []);
 
   // New page: jump to the top immediately (Lenis would otherwise glide there)
-  // and let triggers re-measure against the new layout.
+  // and let triggers re-measure against the new layout. After a scene's reload in
+  // development (lib/dev-reload.ts), back to where the page was instead.
   useEffect(() => {
+    const kept = process.env.NODE_ENV === "development" ? takeKeptScroll() : null;
     lenisRef.current?.scrollTo(0, { immediate: true, force: true });
-    const t = setTimeout(() => ScrollTrigger.refresh(), 120);
+    const t = setTimeout(() => {
+      ScrollTrigger.refresh();
+      if (kept !== null) {
+        if (lenisRef.current) lenisRef.current.scrollTo(kept, { immediate: true, force: true });
+        else window.scrollTo(0, kept);
+      }
+    }, 120);
     return () => clearTimeout(t);
   }, [pathname]);
 

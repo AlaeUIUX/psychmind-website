@@ -25,8 +25,10 @@ const APP_PREFIXES = [
   // requesting a session), and the session cookie belongs to this host.
   "/providers",
   "/request",
-  // Unsubscribe links in marketing email (server/marketing.ts) point at the app host.
+  // Unsubscribe links in marketing email (server/marketing.ts) point at the app host,
+  // and so do the links that confirm a blog subscription.
   "/unsubscribe",
+  "/subscribe",
 ] as const;
 
 /** Served on both hosts. */

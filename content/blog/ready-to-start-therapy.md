@@ -2,6 +2,7 @@
 title: "How to know when you're ready to start therapy, and what to expect"
 excerpt: "8 min read · March 2025"
 category: "Mental health"
+source: "provider"
 author: "Dr. Danny Schwelberg"
 authorTitle: "Pre-Licensed Professional, RMHCI, MS"
 authorAvatar: "/images/blog/post-ready-inline-1.png"

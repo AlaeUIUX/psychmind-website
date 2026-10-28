@@ -2,7 +2,7 @@
 
 import { cn } from "cn";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type MouseEvent } from "react";
 import { AccountMenu, type AppUser } from "@/components/app/account-menu";
 import {
@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getLenis } from "@/components/motion/smooth-scroll";
+import { SubscribeDialog } from "@/components/blog/subscribe-dialog";
+import { ArrowLeftIcon } from "@/components/ui/hugeicons";
 
 /** sort.to's dropdown row: 32px, 8px sides, 14px on a 20px line, 4px corners. */
 const menuItem = "h-8 cursor-pointer rounded-[4px] px-2 py-1.5 text-sm";
@@ -27,9 +29,21 @@ const navLinks = [
 /** `account` (signed-in pages such as the directory) swaps Log in / Create
  *  account for the avatar menu, as in Figma's logged-in results (S3). `home` is
  *  where the logo goes: "/" on the marketing site, the marketing site's address
- *  from the directory (on the app host, "/" is the portal's log-in). */
-export function SiteHeader({ account, onSignOut, home = "/" }: { account?: AppUser; onSignOut?: () => void; home?: string } = {}) {
+ *  from the directory (on the app host, "/" is the portal's log-in).
+ *  `variant="blog"` (the blog and its posts) swaps them for Go back (to wherever you
+ *  came from) and Subscribe (to the blog), and the menu starts with Home. `fixed`
+ *  pins it over the page without its spacer (a post, whose page snaps part to part). */
+export function SiteHeader({
+  account,
+  onSignOut,
+  home = "/",
+  variant = "site",
+  fixed = false,
+}: { account?: AppUser; onSignOut?: () => void; home?: string; variant?: "site" | "blog"; fixed?: boolean } = {}) {
   const [open, setOpen] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const router = useRouter();
+  const blog = variant === "blog";
   const [scrolled, setScrolled] = useState(false);
   const [onDark, setOnDark] = useState(false);
   const pathname = usePathname();
@@ -77,16 +91,26 @@ export function SiteHeader({ account, onSignOut, home = "/" }: { account?: AppUs
     else window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: no-preference)").matches ? "smooth" : "auto" });
   };
 
+  // Back to the page you came from on this site; with nowhere to go back to (opened
+  // from a link elsewhere), up a level: a post to the blog, the blog home.
+  const goBack = () => {
+    setOpen(false);
+    const sameSite = document.referrer && new URL(document.referrer).origin === window.location.origin;
+    if (sameSite && window.history.length > 1) router.back();
+    else router.push(pathname.startsWith("/blog/") ? "/blog" : "/");
+  };
+
   // Spacing cloned from sort.to's header (64px above a 32px row, 40px below,
   // 976px wide). Theirs scrolls away; ours stays, so the 64px splits into a
   // spacer that scrolls off plus the sticky bar's own 16px, and the 40px into
   // the bar's 16px (15px + its 1px border) plus a 24px margin under it.
   return (
     <>
-      <div aria-hidden className="h-12" />
+      {!fixed && <div aria-hidden className="h-12" />}
       <header
         className={cn(
-          "sticky top-0 z-50 mb-6 w-full border-b pt-4 pb-[15px] font-[family-name:var(--font-inter)] transition-[background-color,border-color,backdrop-filter] duration-500",
+          "top-0 z-50 w-full border-b pt-4 pb-[15px] font-[family-name:var(--font-inter)] transition-[background-color,border-color,backdrop-filter] duration-500",
+          fixed ? "fixed inset-x-0" : "sticky mb-6",
           dark
             ? "border-white/10 bg-warm-950/60 backdrop-blur-md"
             : scrolled || open
@@ -120,15 +144,28 @@ export function SiteHeader({ account, onSignOut, home = "/" }: { account?: AppUs
                   menu icon, whose two lines meet in the middle and turn into a
                   cross. 44px, so it hangs 6px past the 32px row on each side. */}
               <div data-open={open} data-tone={dark ? "dark" : "light"} className="menu-pill -my-1.5">
-                {!account && (
+                {blog ? (
+                  // TODO(client): new copy, "Go back" and "Subscribe"
                   <>
-                    <Link href="/login" className="menu-pill-link">
-                      Log in
-                    </Link>
-                    <Link href="/signup" className="menu-pill-chip">
-                      Create account
-                    </Link>
+                    <button type="button" onClick={goBack} className="menu-pill-link gap-1.5">
+                      <ArrowLeftIcon className="size-3.5" />
+                      Go back
+                    </button>
+                    <button type="button" onClick={() => setSubscribing(true)} className="menu-pill-chip">
+                      Subscribe
+                    </button>
                   </>
+                ) : (
+                  !account && (
+                    <>
+                      <Link href="/login" className="menu-pill-link">
+                        Log in
+                      </Link>
+                      <Link href="/signup" className="menu-pill-chip">
+                        Create account
+                      </Link>
+                    </>
+                  )
                 )}
                 <DropdownMenuTrigger className="menu-pill-toggle">
                   <svg className="menu-pill-lines" viewBox="0 0 24 24" aria-hidden>
@@ -145,6 +182,13 @@ export function SiteHeader({ account, onSignOut, home = "/" }: { account?: AppUs
                 sideOffset={10}
                 className="w-56 rounded-[6px]! bg-white font-[family-name:var(--font-inter)] shadow-md!"
               >
+                {blog && (
+                  <DropdownMenuItem asChild className={menuItem}>
+                    <Link href="/" aria-current={pathname === "/" ? "page" : undefined}>
+                      Home
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {navLinks.map((link) => (
                   <DropdownMenuItem key={link.href} asChild className={menuItem}>
                     <Link href={link.href} aria-current={isActive(link.href) ? "page" : undefined}>
@@ -153,7 +197,18 @@ export function SiteHeader({ account, onSignOut, home = "/" }: { account?: AppUs
                   </DropdownMenuItem>
                 ))}
                 {/* Phones: the pill is just the icon, so these live here. */}
-                {!account && (
+                {blog ? (
+                  <>
+                    <DropdownMenuSeparator className="sm:hidden" />
+                    <DropdownMenuItem className={cn(menuItem, "sm:hidden")} onSelect={goBack}>
+                      Go back
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className={cn(menuItem, "sm:hidden")} onSelect={() => setSubscribing(true)}>
+                      Subscribe
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  !account && (
                   <>
                     <DropdownMenuSeparator className="sm:hidden" />
                     <DropdownMenuItem asChild className={cn(menuItem, "sm:hidden")}>
@@ -163,12 +218,14 @@ export function SiteHeader({ account, onSignOut, home = "/" }: { account?: AppUs
                       <Link href="/signup">Create account</Link>
                     </DropdownMenuItem>
                   </>
+                  )
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </header>
+      {blog && <SubscribeDialog open={subscribing} onOpenChange={setSubscribing} />}
     </>
   );
 }

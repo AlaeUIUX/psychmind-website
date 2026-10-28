@@ -1,40 +1,67 @@
 "use client";
 
 import { cn } from "cn";
-import Link from "next/link";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { RequestVisual, SearchVisual } from "@/components/home/bento-previews";
 import { Reveal } from "@/components/reveal";
-import { RequestWizardPreview, ResultsPreview, SearchPreview } from "@/components/shared/product-preview";
-import { Button } from "@/components/ui/button";
-import { DoodleHookArrow } from "@/components/ui/doodles";
+import { CalendarIcon, SearchIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import { Container, Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
-import { CtaArrowIcon } from "@/components/ui/hugeicons";
 
-const steps = [
+// The three steps, built as the home page's privacy promise is (home/verified-
+// providers.tsx): a thin grey frame round one white card, the steps listed down its
+// first column under hairlines, and a grey picture column beside them. Choosing a
+// step (pointing at it, tapping it, or the arrow keys) brings in its icon, as the
+// privacy promises do on hover, and plays its picture of the product: the bento's
+// pictures (bento-previews.tsx), in the hero search bar's look. A step without a
+// picture leaves the column grey, for now (the app's screens are being reworked).
+// How it works for providers passes its own steps, head and title.
+
+export type Step = { title: string; description: string; Icon: typeof SearchIcon; picture?: (active: boolean) => ReactNode };
+export type StepsHead = { title: string; intro: { text: string; strong?: boolean }[][] };
+
+const PEOPLE_STEPS: Step[] = [
   {
     title: "Tell us what you are looking for",
     description:
       "Answer a few simple questions — where you are, what you'd like to work on, and any preferences about your provider. No medical history required. There are no wrong answers.",
-    preview: () => <SearchPreview showResults={false} />,
+    Icon: SearchIcon,
+    picture: (active) => <SearchVisual active={active} />,
   },
   {
     title: "Browse matched profiles",
     description:
       "We surface providers that fit your search. Read their approach, check their availability, and message them directly before committing to anything.",
-    preview: () => <ResultsPreview />,
+    Icon: UserRoundIcon,
+    // TODO: the results, once the app's screens are reworked
   },
   {
     title: "Book your first session",
     description:
       "Pick a time that works for you — online or in person. Your first session is a conversation, not a commitment. You can always switch providers.",
-    preview: () => <RequestWizardPreview every={2400} />,
+    Icon: CalendarIcon,
+    picture: (active) => <RequestVisual active={active} />,
   },
 ];
 
-// Three steps the visitor explores at their own pace: choose a step and the
-// product preview beside it changes to match. Nothing advances on its own.
-export function ProcessSteps() {
+// TODO(client): new copy, the card's head (as the privacy promise's "Our privacy
+// promise" and its two lines).
+const PEOPLE_HEAD: StepsHead = {
+  title: "From first search to first session",
+  intro: [
+    [{ text: "Most directories leave you calling around and waiting to hear back, " }, { text: "we don’t…", strong: true }],
+    [
+      { text: "You search, read and request in one place: " },
+      { text: "no referrals, no phone tag, and nothing shared until you send a request.", strong: true },
+    ],
+  ],
+};
+
+export function ProcessSteps({
+  title = "Three steps to your first session",
+  steps = PEOPLE_STEPS,
+  head = PEOPLE_HEAD,
+}: { title?: string; steps?: Step[]; head?: StepsHead } = {}) {
   const [active, setActive] = useState(0);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -49,110 +76,111 @@ export function ProcessSteps() {
   }
 
   return (
-    <Section>
+    <Section spacing="lg">
       <Container className="flex flex-col gap-10 sm:gap-12">
         <SectionHeader
+          align="center"
           badge={{ icon: "/images/how-it-works/process-badge-icon.svg", label: "The process" }}
-          title="Three steps to your first session"
+          title={title}
         />
 
-        <div className="flex flex-col items-start gap-8 lg:flex-row lg:gap-12">
-          <div className="relative flex w-full flex-1 flex-col gap-3">
-            {/* pencil hint */}
-            <p
-              aria-hidden
-              className="pointer-events-none absolute -top-10 right-4 hidden items-end gap-1 font-display text-[15px] text-warm-600 italic lg:flex"
-            >
-              pick a step
-              <DoodleHookArrow className="h-10 w-6 translate-y-6 -scale-x-100" />
-            </p>
-
-            <Reveal stagger as="ol" className="flex flex-col gap-3">
+        {/* the privacy promise's frame: 20px, then the card's 13px, then the picture's 6px */}
+        <Reveal className="rounded-card border border-warm-200 bg-warm-100 p-1.5 sm:w-4/5 sm:self-center lg:w-full">
+          <div className="grid rounded-[13px] border border-warm-200 bg-white lg:grid-cols-2">
+            {/* as the privacy promise: a head (the chosen step's number as its lead, then
+                the title), a line on how we're different, and the steps under a hairline */}
+            <div className="px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warm-100 font-display text-lg text-warm-900"
+                >
+                  <span key={active} className="animate-fade-in">
+                    {active + 1}
+                  </span>
+                </span>
+                <p className="text-[15px] leading-5 font-medium tracking-[-0.01em] text-warm-900">{head.title}</p>
+              </div>
+              {/* a line each; the point at full ink, the rest at 60% (still AA on white) */}
+              <p className="mt-3 text-sm leading-[22px] tracking-[-0.01em] text-balance text-warm-900/60">
+                {head.intro.map((line) => (
+                  <span key={line[0].text} className="block">
+                    {line.map((s) => (s.strong ? <span key={s.text} className="text-warm-900">{s.text}</span> : s.text))}
+                  </span>
+                ))}
+              </p>
+            <ol className="mt-4 border-t border-warm-200 pt-1">
               {steps.map((step, i) => {
                 const current = i === active;
+                const { Icon } = step;
                 return (
-                  <li key={step.title}>
+                  <li key={step.title} className="border-t border-warm-100 first:border-t-0">
                     <button
                       ref={(el) => {
                         refs.current[i] = el;
                       }}
                       type="button"
                       aria-pressed={current}
-                      aria-controls="process-preview"
+                      aria-controls="process-picture"
                       onClick={() => setActive(i)}
+                      onPointerEnter={(e) => e.pointerType === "mouse" && setActive(i)}
                       onKeyDown={(e) => onKeyDown(e, i)}
-                      className={cn(
-                        "group flex w-full gap-4 rounded-card border p-5 text-left transition-[background-color,border-color,box-shadow,translate] duration-500 ease-out-soft sm:gap-5 sm:p-6",
-                        current
-                          ? "border-warm-200 bg-white shadow-card"
-                          : "border-transparent hover:-translate-y-0.5 hover:border-warm-200 hover:bg-warm-50",
-                      )}
+                      className="relative block w-full py-3 text-left tracking-[-0.01em] outline-none focus-visible:ring-2 focus-visible:ring-warm-300"
                     >
+                      {/* as the privacy promises: no icon at rest; chosen, it fades in and the
+                          text steps aside for it (keeping that room free, so it never rewraps) */}
+                      <Icon
+                        className={cn(
+                          "absolute top-3.5 left-0 size-4 text-warm-900 transition-[opacity,translate] duration-300 ease-out-soft motion-reduce:transition-none",
+                          current ? "translate-x-0 opacity-100" : "-translate-x-1 opacity-0",
+                        )}
+                      />
                       <span
                         className={cn(
-                          "flex size-11 shrink-0 items-center justify-center rounded-full border font-display text-lg transition-colors duration-500",
-                          current
-                            ? "border-brand-primary bg-brand-primary text-white"
-                            : "border-warm-300 bg-warm-100 text-warm-700 group-hover:border-warm-600/40",
+                          "flex flex-col gap-0.5 pr-7 transition-[translate] duration-300 ease-out-soft motion-reduce:transition-none",
+                          current && "translate-x-7",
                         )}
                       >
-                        {i + 1}
-                      </span>
-                      <span className="flex flex-col gap-2 pt-1.5">
                         <span
                           className={cn(
-                            "type-title transition-colors duration-300",
-                            current ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary",
+                            "text-sm leading-5 font-medium transition-colors duration-300",
+                            current ? "text-warm-900" : "text-warm-900/60",
                           )}
                         >
                           {step.title}
                         </span>
-                        {/* the chosen step opens up; on phones the others fold away */}
-                        <span
-                          className={cn(
-                            "grid transition-[grid-template-rows,opacity] duration-500 ease-out-soft",
-                            current
-                              ? "grid-rows-[1fr] opacity-100"
-                              : "grid-rows-[0fr] opacity-0 lg:grid-rows-[1fr] lg:opacity-55",
-                          )}
-                        >
-                          <span className="min-h-0 overflow-hidden type-body-lg text-text-tertiary">{step.description}</span>
-                        </span>
+                        <span className="text-[13px] leading-[18px] text-warm-900/60">{step.description}</span>
                       </span>
                     </button>
                   </li>
                 );
               })}
-            </Reveal>
-
-            <Reveal className="pt-3 pl-5 sm:pl-6">
-              <Button asChild variant="brand" size="lg" className="w-fit">
-                <Link href="/providers">
-                  Start your search
-                  <CtaArrowIcon />
-                </Link>
-              </Button>
-            </Reveal>
-          </div>
-
-          {/* Product preview for the chosen step. */}
-          <Reveal
-            delay={150}
-            className="relative flex h-[580px] w-full flex-col overflow-hidden rounded-card border border-warm-200 bg-warm-100 p-3 shadow-card sm:h-[620px] sm:p-5 lg:sticky lg:top-28 lg:flex-1"
-          >
-            <p className="px-1 pb-3 text-xs font-medium text-text-tertiary" aria-live="polite">
-              Step {active + 1} of {steps.length} · {steps[active].title}
-            </p>
-            <div
-              id="process-preview"
-              key={active}
-              className="flex min-h-0 flex-1 animate-fade-in flex-col justify-center-safe overflow-hidden rounded-4xl bg-white p-3 ring-1 ring-warm-200 sm:p-4"
-            >
-              {steps[active].preview()}
+            </ol>
             </div>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-b from-transparent to-warm-100" />
-          </Reveal>
-        </div>
+
+            {/* the picture's column, as the privacy promise's, on the grey (4:3; on desktop as tall as the steps beside it) */}
+            <div id="process-picture" className="mx-1.5 mb-1.5 overflow-hidden rounded-[6px] bg-warm-100 lg:m-1.5">
+              <div
+                aria-hidden
+                className="type-scope-sort pointer-events-none relative flex aspect-[4/3] w-full justify-center lg:aspect-auto lg:h-full overflow-hidden px-6 pt-10 text-left select-none [mask-image:linear-gradient(to_bottom,black_75%,transparent)] lg:px-10 lg:pt-12"
+              >
+                {steps.map((step, i) =>
+                  step.picture ? (
+                    <div
+                      key={step.title}
+                      className={cn(
+                        "absolute inset-x-6 top-10 mx-auto max-w-[428px] transition-opacity duration-500 ease-out-soft lg:inset-x-10 lg:top-12",
+                        i === active ? "opacity-100" : "opacity-0",
+                      )}
+                    >
+                      {step.picture(i === active)}
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </Container>
     </Section>
   );
