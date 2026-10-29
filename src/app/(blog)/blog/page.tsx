@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { EditorialNote } from "@/components/blog/editorial-note";
 import { PostIndex } from "@/components/blog/post-index";
 import { ShoreScene } from "@/components/blog/shore-scene";
+import { SiteFooter } from "@/components/site-footer";
 import { getPostIndex } from "@/lib/blog";
 
 export const metadata: Metadata = {
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
 // After theboringblog.ai/posts: a plain heading (the home hero's title size), whose
 // posts and which category, the posts by year, growing as you scroll, and the shore
 // along the foot of the screen, the list scrolling over it until it settles at the
-// end. No footer: the menu goes everywhere else.
+// end, with no footer (the menu goes everywhere else). That's on computers; phones
+// end with the site's footer instead (owner, 2026-10-28).
 export default function BlogPage() {
   const posts = getPostIndex();
   return (
@@ -32,6 +34,9 @@ export default function BlogPage() {
         </div>
       </section>
       <ShoreScene />
+      <div className="lg:hidden">
+        <SiteFooter />
+      </div>
     </>
   );
 }

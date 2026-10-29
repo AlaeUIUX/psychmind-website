@@ -15,10 +15,14 @@ import type { createShore, SHORE_DEFAULTS } from "@/components/home/globe-scene/
 // list's end. Kept light: the scene loads after the page and builds in slices (never
 // holding up scrolling), runs only while on screen (only the girl moves, 30 frames a
 // second), and with reduced motion it's one still frame. Without WebGL it's a band of sand.
+// On the blog it's for computers only: below WIDE it isn't shown or loaded (phones end
+// with the site's footer, blog/page.tsx).
 
 type Scene = Awaited<ReturnType<typeof createShore>>;
 export type ShoreSettings = typeof SHORE_DEFAULTS;
 const MOTION_OK = "(prefers-reduced-motion: no-preference)";
+/** Tailwind's lg, where the blog's band (hidden lg:block) shows. */
+const WIDE = "(min-width: 1024px)";
 
 /** The land (sand and sea) as a clip-path, from the scene's skyline. */
 const landClip = (scene: Scene) =>
@@ -89,11 +93,21 @@ export function ShoreScene({ tune, className }: { tune?: Partial<ShoreSettings>;
         scene.dispose();
       };
     };
-    load().catch(() => {});
+    // the blog's band waits for a wide screen (the tuner's previews always load)
+    const wide = className ? null : window.matchMedia(WIDE);
+    const begin = () => {
+      if (wide && !wide.matches) return;
+      wide?.removeEventListener("change", begin);
+      load().catch(() => {});
+    };
+    wide?.addEventListener("change", begin);
+    begin();
     return () => {
       disposed = true;
+      wide?.removeEventListener("change", begin);
       cleanup();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- className only picks the mode, once
   }, []);
 
   useEffect(() => {
@@ -109,7 +123,7 @@ export function ShoreScene({ tune, className }: { tune?: Partial<ShoreSettings>;
       ref={box}
       aria-hidden
       className={cn(
-        className ?? "pointer-events-none sticky bottom-0 z-10 aspect-[1512/840] max-h-[320px] w-full md:aspect-[4/1] md:max-h-[420px]",
+        className ?? "pointer-events-none sticky bottom-0 z-10 hidden aspect-[4/1] max-h-[420px] w-full lg:block",
       )}
     >
       {/* without WebGL (or until it's drawn): a band of sand along the foot */}
