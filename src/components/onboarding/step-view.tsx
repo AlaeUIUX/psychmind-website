@@ -67,7 +67,7 @@ export function StepView({
 
       {state.status === "changes_requested" && state.reviewNote && (
         <div role="alert" className="animate-ui-enter rounded-xl bg-amber-50 p-4 type-ui-small text-amber-950 ring-1 ring-amber-200 ring-inset" style={{ "--i": 1 } as React.CSSProperties}>
-          <p className="font-semibold">Changes requested by our team</p>
+          <p className="font-medium">Changes requested by our team</p>
           <p className="mt-1 whitespace-pre-line">{state.reviewNote}</p>
         </div>
       )}

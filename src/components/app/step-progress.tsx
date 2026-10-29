@@ -15,7 +15,7 @@ export function StepProgress({ current, total, label, className }: StepProgressP
   return (
     <div className={cn("flex flex-col gap-2.5", className)}>
       <p className="type-small text-text-placeholder" aria-live="polite">
-        Step <span className="font-semibold text-text-primary">{current}</span> of {total}
+        Step <span className="font-medium text-text-primary">{current}</span> of {total}
         {label && <span className="sr-only">: {label}</span>}
       </p>
       <div aria-hidden className="flex gap-1">

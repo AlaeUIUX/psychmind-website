@@ -3,8 +3,9 @@
 import { cn } from "cn";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CtaArrowIcon, GlobeIcon, HeartIcon, MapPinIcon, MonitorIcon, SendIcon as LucideSendIcon } from "@/components/ui/hugeicons";
+import { pill, topicChipIdle, topicChipOn } from "@/components/home/search-styles";
 import { buttonVariants } from "@/components/ui/button";
-import { SearchIcon } from "@/components/ui/icons";
+import { SearchIcon, VerifiedSealIcon } from "@/components/ui/icons";
 import { toggleVariants } from "@/components/ui/toggle";
 import { formatLabel, sessionTypeLabel } from "@/lib/requests";
 import { SessionModeSwitch } from "./session-mode-switch";
@@ -193,7 +194,7 @@ function ResultCard({ p, delayMs }: { p: (typeof providers)[number]; delayMs: nu
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <p className="truncate text-sm font-semibold text-text-primary @sm:text-md">{p.name}</p>
+            <p className="truncate text-sm font-medium text-text-primary @sm:text-md">{p.name}</p>
             <Credential>{p.title}</Credential>
           </div>
           <span className="hidden shrink-0 items-center gap-1 rounded-md border border-warm-200 px-1.5 py-0.5 text-[11px] text-text-secondary @md:inline-flex">
@@ -215,7 +216,7 @@ function ResultCard({ p, delayMs }: { p: (typeof providers)[number]; delayMs: nu
         <div className="flex flex-col">
           <span className="text-[11px] text-text-tertiary">Price per session</span>
           <span className="text-xs text-text-primary">
-            From <span className="font-semibold">{p.price} USD</span>
+            From <span className="font-medium">{p.price} USD</span>
           </span>
         </div>
         <PreviewButton brand className="h-7 text-[11px] @sm:h-7 @sm:text-[11px]">
@@ -259,7 +260,7 @@ export function SearchPreview({
       {showResults && (
         <>
           <p className="animate-fade-in text-xs text-text-tertiary @sm:text-sm" style={at(base + 300)}>
-            <span className="font-semibold text-text-primary">132</span> providers found
+            <span className="font-medium text-text-primary">132</span> providers found
           </p>
           <div className="flex flex-col gap-2 @sm:gap-2.5">
             {providers.slice(0, limit).map((p, i) => (
@@ -276,7 +277,7 @@ export function SearchPreview({
                   ))}
                 </span>
                 <span className="text-xs text-text-secondary @sm:text-sm">
-                  and <span className="font-semibold text-text-primary">{132 - limit}</span> more providers match
+                  and <span className="font-medium text-text-primary">{132 - limit}</span> more providers match
                 </span>
               </div>
             )}
@@ -319,11 +320,10 @@ const liveProviders = [
   { ...providers[2], first: "Monica", place: "Miami, FL", online: false, specialties: ["Trauma", "Self-esteem", "Teens"], languages: ["English"], type: "Individual one-on-one therapy" },
 ];
 
-const liveChip = "inline-flex items-center gap-1 rounded-tag border px-2.5 py-1 text-sm font-medium shadow-control";
 
 function LiveResultCard({ p, matched, delayMs }: { p: (typeof liveProviders)[number]; matched: string; delayMs: number }) {
   const place = (
-    <span className={cn(liveChip, "w-fit shrink-0 border-warm-300 bg-white text-text-secondary")}>
+    <span className={cn(pill, "w-fit shrink-0", topicChipIdle)}>
       {p.online ? <MonitorIcon className="size-3.5" /> : <MapPinIcon className="size-3.5" />}
       {p.place}
     </span>
@@ -336,7 +336,11 @@ function LiveResultCard({ p, matched, delayMs }: { p: (typeof liveProviders)[num
           <img src={p.photo} alt="" className="size-full rounded-xl object-cover" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="pt-0.5 type-title-lg font-semibold text-text-primary">{p.name}</p>
+          {/* the result card's name and verified seal */}
+          <p className="flex items-center gap-1.5 pt-0.5 text-base leading-6 font-medium tracking-[-0.01em] text-warm-900">
+            {p.name}
+            <VerifiedSealIcon className="size-4 shrink-0 text-blue-600" />
+          </p>
           <p className="flex min-w-0 items-start gap-2 type-small text-text-tertiary">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="mt-0.5 size-4 shrink-0" />
@@ -352,11 +356,11 @@ function LiveResultCard({ p, matched, delayMs }: { p: (typeof liveProviders)[num
       </div>
       <div className="flex flex-wrap gap-1.5">
         {p.specialties.map((t) => (
-          <span key={t} className={cn(liveChip, t === matched ? "border-warm-800 bg-warm-800 text-white" : "border-warm-300 bg-white text-text-secondary")}>
+          <span key={t} className={cn(pill, t === matched ? topicChipOn : topicChipIdle)}>
             {t}
           </span>
         ))}
-        <span className={cn(liveChip, "border-warm-300 bg-white text-text-secondary")}>
+        <span className={cn(pill, topicChipIdle)}>
           <GlobeIcon className="size-3.5" />
           {p.languages.join(", ")}
         </span>
@@ -438,7 +442,7 @@ export function ResultsPreview() {
           ))}
         </div>
         <p className="animate-fade-in type-small text-text-tertiary" style={at(300)}>
-          <span className="font-semibold text-text-primary">132</span> providers found
+          <span className="font-medium text-text-primary">132</span> providers found
         </p>
         <div className="flex flex-col gap-3">
           {liveProviders.map((p, i) => (

@@ -1,7 +1,12 @@
 import { feeFrom, listJoin } from "@/lib/provider/display";
 import { AGE_GROUPS, labelOf, stateName } from "@/lib/taxonomy";
 import type { DirectoryProvider } from "@/server/directory/data";
-import type { SearchFilters } from "./filters";
+import type { SearchFilters as UrlFilters } from "./filters";
+
+/** The URL's filters, except that the engine can also search either format
+ *  (`format: null`). The pages always pass one; the unit tests use both. */
+type SearchFilters = Omit<UrlFilters, "format"> & { format: UrlFilters["format"] | null };
+export type EngineFilters = SearchFilters;
 import { closeness, parsePlace, type Place } from "./location";
 import { parseQuery, type TextQuery } from "./text";
 

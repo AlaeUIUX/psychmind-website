@@ -40,7 +40,7 @@ export function NotificationSettings({ settings, alwaysSent }: { settings: Notif
           return (
             <div key={s.kind} className="flex items-start justify-between gap-6 py-4 first:pt-0 last:pb-0">
               <div className="flex max-w-[440px] flex-col gap-1">
-                <label htmlFor={id} className="type-small font-semibold text-text-primary">
+                <label htmlFor={id} className="type-small font-medium text-text-primary">
                   {s.label}
                 </label>
                 <p id={`${id}-description`} className="type-small text-text-tertiary">

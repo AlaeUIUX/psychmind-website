@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { CrisisStrip } from "@/components/app/crisis-strip";
 import { EmptyState } from "@/components/app/empty-state";
-import { SampleNotice } from "@/components/directory/sample-notice";
 import type { Viewer } from "@/components/directory/save-button";
 import { SearchApp } from "@/components/search/search-app";
-import { DoodleMagnifier } from "@/components/ui/doodles";
+import { SearchIcon } from "@/components/ui/hugeicons";
 import { Container, Section } from "@/components/ui/section";
 import { searchDirectory } from "@/lib/search/engine";
 import { activeFilterCount, loadSearchFilters } from "@/lib/search/filters";
@@ -58,19 +57,19 @@ export default async function ProvidersPage({ searchParams }: Props) {
     <Section spacing="none" className="pt-4 pb-14 sm:pt-6 sm:pb-20">
       <Container size="wide" className="flex flex-col gap-6">
         <h1 className="sr-only">Browse providers</h1>
-        <div className="flex flex-col gap-5 rounded-card bg-warm-50 p-3 ring-1 ring-warm-200/70 sm:p-5 lg:p-6">
-          {providers.some((p) => p.isSample) && <SampleNotice />}
-          {providers.length ? (
-            <NuqsAdapter>
-              <SearchApp result={result} viewer={{ role }} savedIds={savedIds} cities={practiceCities(providers)} selected={selected} />
-            </NuqsAdapter>
-          ) : (
-            // TODO(client): copy.
-            <EmptyState art={<DoodleMagnifier className="size-10" />} title="Providers are on their way">
-              We&apos;re verifying our first providers now. Please check back soon.
-            </EmptyState>
-          )}
-        </div>
+        {/* Straight on the page: the bar, the filters and the results need no
+            card around them. Sample profiles say so in their quick look and
+            full profile. */}
+        {providers.length ? (
+          <NuqsAdapter>
+            <SearchApp result={result} viewer={{ role }} savedIds={savedIds} cities={practiceCities(providers)} selected={selected} />
+          </NuqsAdapter>
+        ) : (
+          // TODO(client): copy.
+          <EmptyState art={<SearchIcon />} title="Providers are on their way">
+            We&apos;re verifying our first providers now. Please check back soon.
+          </EmptyState>
+        )}
         <CrisisStrip />
       </Container>
     </Section>

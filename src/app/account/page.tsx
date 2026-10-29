@@ -41,7 +41,7 @@ export default async function AccountPage() {
             ))}
           </div>
         ) : (
-          <EmptyState art={<HeartIcon className="size-7" />} title="No saved providers yet" action={<Button asChild><Link href="/providers">Find a provider</Link></Button>}>
+          <EmptyState art={<HeartIcon />} title="No saved providers yet" action={<Button asChild><Link href="/providers">Find a provider</Link></Button>}>
             Tap the heart on a profile to keep it here.
           </EmptyState>
         )}
@@ -53,7 +53,7 @@ export default async function AccountPage() {
         {requests.length ? (
           <MyRequests requests={requests} />
         ) : (
-          <EmptyState art={<InboxIcon className="size-7" />} title="No requests yet">
+          <EmptyState art={<InboxIcon />} title="No requests yet">
             When you request a session, you&apos;ll see its status here.
           </EmptyState>
         )}

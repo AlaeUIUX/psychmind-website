@@ -35,7 +35,7 @@ function StateTile({ code, done, active }: { code: string; done: boolean; active
     <span
       aria-hidden
       className={cn(
-        "relative flex size-10 shrink-0 items-center justify-center rounded-lg font-mono text-[13px] font-semibold tracking-wide transition-colors",
+        "relative flex size-10 shrink-0 items-center justify-center rounded-lg font-mono text-[13px] font-medium tracking-wide transition-colors",
         active ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200 ring-inset" : "bg-warm-100 text-warm-700",
       )}
     >
@@ -127,7 +127,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
     return (
       <div className="flex flex-col gap-4 rounded-field border border-amber-200 bg-amber-50 p-5 type-small text-amber-950">
         Add your practice locations first — you&apos;ll upload a license for each state.
-        <Link href="/provider/onboarding/locations" className="font-semibold underline underline-offset-2">
+        <Link href="/provider/onboarding/locations" className="font-medium underline underline-offset-2">
           Go to practice locations
         </Link>
       </div>

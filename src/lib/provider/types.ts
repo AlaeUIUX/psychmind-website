@@ -1,4 +1,3 @@
-import type { BannerStyle } from "@/lib/taxonomy";
 
 /** Everything the public profile renders. Partial while a provider is still
  *  onboarding — the preview shows placeholders for what's missing. */
@@ -13,7 +12,8 @@ export type ProfileView = {
   displayAsBusiness?: boolean;
   titleCredentials?: string;
   pronouns?: string | null;
-  bannerStyle?: BannerStyle | null;
+  /** An uploaded banner; null shows the default (gray water). */
+  bannerUrl?: string | null;
   photoUrl?: string | null;
   verified?: boolean;
   whoYouWorkWith?: string;

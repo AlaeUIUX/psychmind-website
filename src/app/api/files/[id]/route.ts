@@ -7,8 +7,8 @@ import { getFile } from "@/server/storage";
 
 // Serves an uploaded file after checking who's asking:
 // - license documents: the owner, or an admin (each admin view is audited);
-// - profile photos: anyone once the provider is approved (photos are public
-//   on the profile), otherwise the owner or an admin.
+// - profile photos and banners: anyone once the provider is approved (both
+//   are public on the profile), otherwise the owner or an admin.
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await dbReady;
@@ -20,11 +20,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const isAdmin = session?.user.role === "admin";
 
   let allowed = isOwner || isAdmin;
-  if (!allowed && file.kind === "photo") {
+  if (!allowed && (file.kind === "photo" || file.kind === "banner")) {
     const [profile] = await db
       .select({ status: providerProfile.status })
       .from(providerProfile)
-      .where(and(eq(providerProfile.userId, file.ownerId), eq(providerProfile.photoId, file.id)));
+      .where(and(eq(providerProfile.userId, file.ownerId), eq(file.kind === "photo" ? providerProfile.photoId : providerProfile.bannerId, file.id)));
     allowed = profile?.status === "approved";
   }
   if (!allowed) return new NextResponse("Not found", { status: 404 });

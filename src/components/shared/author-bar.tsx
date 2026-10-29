@@ -15,7 +15,7 @@ export function AuthorBar({ name, role, avatar }: AuthorBarProps) {
       <div className="flex items-center gap-3">
         {avatar}
         <div className="flex flex-col type-body">
-          <span className="font-semibold text-text-primary">{name}</span>
+          <span className="font-medium text-text-primary">{name}</span>
           {role && <span className="text-text-tertiary">{role}</span>}
         </div>
       </div>

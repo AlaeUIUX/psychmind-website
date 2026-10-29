@@ -3,7 +3,6 @@
 import { cn } from "cn";
 import { ChevronDownIcon, SearchIcon } from "@/components/ui/hugeicons";
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { MapPinIcon, MonitorIcon } from "@/components/ui/icons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Facets } from "@/lib/search/engine";
 import type { SearchFilters } from "@/lib/search/filters";
 import { APPROACHES, GENDERS, LANGUAGES, SPECIALTIES } from "@/lib/taxonomy";
+import { FormatSwitch } from "./bar";
+import { fromMode, toMode } from "./search-bar";
 
 // The filters column (Figma S1 "Filters"), also used inside the phone
 // drawer (S6). Headings and options are Figma copy; counts are how many
@@ -52,30 +53,9 @@ function Section({ title, children, className }: { title: string; children: Reac
   );
 }
 
+/** Session format in the filters column and the phone drawer: the bar's own switch. */
 export function FormatToggle({ value, onChange, className }: { value: SearchFilters["format"]; onChange: (v: SearchFilters["format"]) => void; className?: string }) {
-  return (
-    <ToggleGroup
-      type="single"
-      value={value ?? ""}
-      onValueChange={(v) => onChange((v || null) as SearchFilters["format"])}
-      aria-label="Session format"
-      className={cn("grid w-full grid-cols-2 gap-1 rounded-field bg-warm-100 p-1 ring-1 ring-warm-200 ring-inset", className)}
-    >
-      {[
-        { v: "in_person", label: "In-person", Icon: MapPinIcon },
-        { v: "online", label: "Online", Icon: MonitorIcon },
-      ].map(({ v, label, Icon }) => (
-        <ToggleGroupItem
-          key={v}
-          value={v}
-          className="h-9 gap-1.5 rounded-[calc(var(--radius-field)-4px)] text-sm font-medium text-text-tertiary hover:bg-white/60 hover:text-text-primary data-[state=on]:bg-white data-[state=on]:text-text-primary data-[state=on]:shadow-control"
-        >
-          <Icon className="size-4" />
-          {label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
-  );
+  return <FormatSwitch value={toMode(value)} onChange={(m) => onChange(fromMode(m))} className={className} />;
 }
 
 /** Checkbox list with counts, the first few shown and the rest behind "+N more". */
@@ -205,6 +185,9 @@ function Chips({
   );
 }
 
+const priceBox =
+  "inline-flex h-9 min-w-0 items-center justify-between gap-1.5 rounded-field border border-warm-900/10 bg-white px-2.5 text-[13px] whitespace-nowrap shadow-control";
+
 /** Remounted (by key) whenever the applied range changes, e.g. Clear all. */
 function PriceFilter({ initial, update, price }: { initial: [number, number] } & Pick<FilterProps, "update" | "price">) {
   const [range, setRange] = useState<[number, number]>(initial);
@@ -214,14 +197,15 @@ function PriceFilter({ initial, update, price }: { initial: [number, number] } &
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex h-9 items-center gap-1.5 rounded-field border border-warm-200 bg-white px-3 type-small shadow-control">
-          <span className="text-text-tertiary">From</span>
-          <span className="font-medium text-text-primary tabular-nums">{range[0]} USD</span>
+      {/* Two equal halves on one line, whatever the amounts. */}
+      <div className="grid grid-cols-2 gap-2">
+        <span className={priceBox}>
+          <span className="text-warm-900/60">From</span>
+          <span className="font-medium text-warm-900 tabular-nums">{range[0]} USD</span>
         </span>
-        <span className="inline-flex h-9 items-center gap-1.5 rounded-field border border-warm-200 bg-white px-3 type-small shadow-control">
-          <span className="text-text-tertiary">To</span>
-          <span className="font-medium text-text-primary tabular-nums">
+        <span className={priceBox}>
+          <span className="text-warm-900/60">To</span>
+          <span className="font-medium text-warm-900 tabular-nums">
             {range[1]} USD{range[1] >= price.max ? "+" : ""}
           </span>
         </span>

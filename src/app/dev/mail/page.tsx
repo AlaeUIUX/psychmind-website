@@ -28,7 +28,7 @@ export default async function DevMailPage() {
         {outbox.map((mail) => (
           <li key={mail.id} className="flex flex-col gap-3 rounded-card border border-warm-200 bg-white p-5" data-testid="dev-mail">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="type-small font-semibold text-text-primary">{mail.subject}</p>
+              <p className="type-small font-medium text-text-primary">{mail.subject}</p>
               <time className="type-caption text-text-placeholder">{new Date(mail.sentAt).toLocaleString()}</time>
             </div>
             <p className="type-small text-text-tertiary">To: <span data-testid="dev-mail-to">{mail.to}</span></p>

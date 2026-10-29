@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import Link from "next/link";
 import { SplitHeading } from "@/components/motion/split-heading";
 import { FooterScene } from "@/components/footer-scene";
@@ -54,37 +55,43 @@ const columns = [
   },
 ];
 
-export function SiteFooter() {
+/** `quiet`: no call to action and no socials, for pages where you're already
+ *  searching (the directory); the links, copyright and sea stay. */
+export function SiteFooter({ quiet = false }: { quiet?: boolean }) {
   return (
     <footer className={`relative w-full overflow-hidden border-t border-warm-200/70 bg-warm-25 ${GUTTER}`}>
       <Container className="relative">
-        {/* The call to action, in the hero's type. */}
-        <div className="flex flex-col items-center gap-4 pt-24 pb-28 text-center sm:pt-32 sm:pb-36">
-          <SplitHeading delay={0.1} className="type-display text-text-primary">
-            Ready to find help?
-          </SplitHeading>
-          <Reveal delay={260}>
-            <p className="type-hero-lede">It takes less than two minutes. No referral needed</p>
-          </Reveal>
-          <Reveal delay={360} className="mt-4 flex flex-wrap justify-center gap-2">
-            <Button asChild size="lg">
-              <Link href="/providers">
-                Browse all
-                <CtaArrowIcon />
-              </Link>
-            </Button>
-            <Button asChild variant="secondary" size="lg">
-              <Link href="/signup">Create account</Link>
-            </Button>
-          </Reveal>
-        </div>
+        {/* The call to action, in the hero's type, then the socials. */}
+        {!quiet && (
+          <>
+            <div className="flex flex-col items-center gap-4 pt-24 pb-28 text-center sm:pt-32 sm:pb-36">
+              <SplitHeading delay={0.1} className="type-display text-text-primary">
+                Ready to find help?
+              </SplitHeading>
+              <Reveal delay={260}>
+                <p className="type-hero-lede">It takes less than two minutes. No referral needed</p>
+              </Reveal>
+              <Reveal delay={360} className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button asChild size="lg">
+                  <Link href="/providers">
+                    Browse all
+                    <CtaArrowIcon />
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary" size="lg">
+                  <Link href="/signup">Create account</Link>
+                </Button>
+              </Reveal>
+            </div>
 
-        <div className="flex items-center gap-3 pb-8">
-          <p className="text-[15px] text-warm-500">Follow us on</p>
-          <SocialLinks />
-        </div>
+            <div className="flex items-center gap-3 pb-8">
+              <p className="text-[15px] text-warm-500">Follow us on</p>
+              <SocialLinks />
+            </div>
+          </>
+        )}
 
-        <div className="flex items-start justify-between gap-10 border-t border-warm-200 pt-12 pb-16 sm:pt-16 sm:pb-24">
+        <div className={cn("flex items-start justify-between gap-10 pb-16 sm:pb-24", quiet ? "pt-12 sm:pt-16" : "border-t border-warm-200 pt-12 sm:pt-16")}>
           <nav aria-label="Footer" className="grid flex-1 grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
             {columns.map((col) => (
               <div key={col.title}>

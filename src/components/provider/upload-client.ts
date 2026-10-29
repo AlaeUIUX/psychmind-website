@@ -1,11 +1,12 @@
 "use client";
 
 import type { UploadMeta } from "@/lib/provider/state";
+import type { UploadKind } from "@/lib/provider/uploads";
 
 /** Uploads one file to /api/uploads with progress (fetch can't report upload progress). */
 export function uploadFile(
   file: File,
-  kind: "photo" | "license",
+  kind: UploadKind,
   onProgress: (percent: number) => void,
 ): Promise<UploadMeta> {
   return new Promise((resolve, reject) => {

@@ -38,7 +38,7 @@ export function SavedProviderCard({ p }: { p: DirectoryProvider }) {
             <dd className="type-ui-small text-text-primary">
               {fee != null ? (
                 <>
-                  From <span className="font-semibold">{fee} USD</span>
+                  From <span className="font-medium">{fee} USD</span>
                 </>
               ) : (
                 "—"

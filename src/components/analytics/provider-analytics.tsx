@@ -32,6 +32,23 @@ export function Panel({ title, aside, children, className }: { title: string; as
   );
 }
 
+/** A titled group of metric tiles, straight on the page (no card around
+ *  them: each tile is its own card). Charts and lists keep Panel. */
+export function MetricGroup({ title, aside, children, className }: { title: string; aside?: ReactNode; children: ReactNode; className?: string }) {
+  const id = useId();
+  return (
+    <section role="region" aria-labelledby={id} className={cn("flex flex-col gap-3", className)}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 id={id} className="type-ui-heading text-warm-900">
+          {title}
+        </h2>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export function comparedWith(range: DayRange) {
   return `vs the previous ${range.days === 1 ? "day" : `${range.days} days`}`;
 }
@@ -49,7 +66,7 @@ export function ProviderAnalyticsView({ stats, range }: { stats: ProviderAnalyti
 
   return (
     <>
-      <Panel title="Overview" aside={<p className="type-ui-caption text-text-placeholder">Changes are {comparedWith(range)}</p>}>
+      <MetricGroup title="Overview" aside={<p className="type-ui-caption text-warm-900/50">Changes are {comparedWith(range)}</p>}>
         <StatTile
           hero
           label="Conversion rate"
@@ -64,7 +81,7 @@ export function ProviderAnalyticsView({ stats, range }: { stats: ProviderAnalyti
           <CountTile label="Session requests" current={c.requests} previous={p.requests} info="Requests patients sent you through PsychMind." />
           <CountTile label="Saves" current={c.saves} previous={p.saves} info="Times patients saved your profile to come back to." />
         </div>
-      </Panel>
+      </MetricGroup>
 
       <TrendChart
         series={stats.series}

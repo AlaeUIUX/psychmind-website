@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowDownUpIcon, GlobeIcon, InfoIcon, ListFilterIcon, SparklesIcon, UserRoundIcon, XIcon } from "@/components/ui/hugeicons";
+import { ArrowDownUpIcon, GlobeIcon, InfoIcon, ListFilterIcon, SearchIcon, SparklesIcon, UserRoundIcon, XIcon } from "@/components/ui/hugeicons";
 import { useState, type ReactNode } from "react";
+import { EmptyState } from "@/components/app/empty-state";
+import { pill, topicChipOn } from "@/components/home/search-styles";
 import { ProviderCard } from "@/components/directory/provider-card";
 import type { Viewer } from "@/components/directory/save-button";
 import { Button } from "@/components/ui/button";
-import { DoodleMagnifier } from "@/components/ui/doodles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MapPinIcon, MonitorIcon } from "@/components/ui/icons";
+import { MapPinIcon, VerifiedSealIcon } from "@/components/ui/icons";
 import type { TermParts } from "@/lib/analytics/events";
 import type { Ranked, SearchResult } from "@/lib/search/engine";
 import { SORTS, type SearchFilters, type Sort } from "@/lib/search/filters";
@@ -45,12 +46,6 @@ function chipsFor(f: SearchFilters): Chip[] {
   const without = (list: string[], v: string) => list.filter((x) => x !== v);
   const place = parsePlace(f.where);
   return [
-    f.format && {
-      key: "format",
-      label: f.format === "online" ? "Online" : "In-person",
-      icon: f.format === "online" ? <MonitorIcon className="size-3.5" /> : <MapPinIcon className="size-3.5" />,
-      remove: { format: null },
-    },
     place && { key: "where", label: place.label, icon: <MapPinIcon className="size-3.5" />, remove: { where: "" } },
     f.q && { key: "q", label: `“${f.q}”`, remove: { q: "" } },
     ...f.specialty.map((v) => ({ key: `s-${v}`, label: labelOf("specialties", v), icon: <ListFilterIcon className="size-3.5" />, remove: { specialty: without(f.specialty, v) } })),
@@ -79,14 +74,15 @@ export function ActiveFilters() {
           type="button"
           onClick={() => set(c.remove)}
           aria-label={`Remove ${c.label}`}
-          className="inline-flex h-8 items-center gap-1.5 rounded-tag bg-warm-800 px-2.5 text-[13px] font-medium text-white shadow-control transition-colors hover:bg-warm-700"
+          // the bar's chosen chip: an ink pill
+          className={cn(pill, topicChipOn, "gap-1.5 hover:bg-warm-700")}
         >
           {c.icon}
           <span className="max-w-[220px] truncate">{c.label}</span>
-          <XIcon className="size-3.5 text-white/70" />
+          <XIcon className="text-white/70" />
         </button>
       ))}
-      <button type="button" onClick={clear} className="ml-1 type-small font-medium text-text-primary underline underline-offset-4 hover:text-text-secondary">
+      <button type="button" onClick={clear} className="ml-1 text-[13px] text-warm-900/60 underline underline-offset-4 transition-colors hover:text-warm-900">
         Clear all
       </button>
     </div>
@@ -129,7 +125,7 @@ export function ResultsCount({ count }: { count: number }) {
     </p>
   ) : (
     <p role="status" className="type-small text-text-secondary">
-      <span className="font-semibold text-text-primary">{count}</span>
+      <span className="font-medium text-text-primary">{count}</span>
       {count === 1 ? " provider found" : " providers found"}
     </p>
   );
@@ -200,26 +196,27 @@ export function ResultsBody({
         // Re-keyed per search so "Show more" starts over.
         <CardList key={result.results.map((r) => r.provider.id).join()} items={result.results} viewer={viewer} onOpen={onOpen} impression={impression} />
       ) : (
-        <div className="flex flex-col items-center gap-4 rounded-card border border-warm-200 bg-white px-6 py-12 text-center">
-          <DoodleMagnifier aria-hidden className="size-24 text-warm-800" />
-          <div className="flex max-w-[420px] flex-col gap-1.5">
-            <h2 className="type-title text-text-primary">We couldn’t find providers within the chosen filters</h2>
-            <p className="type-body text-text-tertiary">Try tweaking filters to get more results</p>
-          </div>
-          <Button type="button" onClick={clear}>
-            Clear filters
-          </Button>
-        </div>
+        <EmptyState
+          art={<SearchIcon />}
+          title="We couldn’t find providers within the chosen filters"
+          action={
+            <Button type="button" variant="secondary" onClick={clear}>
+              Clear filters
+            </Button>
+          }
+        >
+          Try tweaking filters to get more results
+        </EmptyState>
       )}
 
       {result.close.length > 0 && (
         <section aria-labelledby="close-title" className="mt-4 flex flex-col gap-3">
           <div className="flex flex-col gap-0.5">
-            <h2 id="close-title" className="flex items-center gap-2 type-title text-text-primary">
+            <h2 id="close-title" className="flex items-center gap-2 text-[15px] leading-5 font-medium tracking-[-0.01em] text-warm-900">
               <SparklesIcon className="size-4 text-amber-600" />
               Close matches
             </h2>
-            <p className="type-small text-text-tertiary">These providers match everything you chose except one thing.</p>
+            <p className="text-[13px] leading-[18px] text-warm-900/60">These providers match everything you chose except one thing.</p>
           </div>
           <CardList items={result.close} viewer={viewer} onOpen={onOpen} impression={impression} />
         </section>
@@ -228,12 +225,12 @@ export function ResultsBody({
       {!result.results.length && !result.close.length && result.recommended.length > 0 && (
         <section aria-labelledby="recommended-title" className="mt-4 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 id="recommended-title" className="type-title text-text-primary">
+            {/* section titles in the privacy promise's 15px medium, as the empty state's */}
+            <h2 id="recommended-title" className="text-[15px] leading-5 font-medium tracking-[-0.01em] text-warm-900">
               Recommended providers
             </h2>
-            <p className="hidden items-center gap-1.5 type-small text-text-secondary sm:flex">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/how-it-works/verified-check-icon.svg" alt="" className="size-4" />
+            <p className="hidden items-center gap-1.5 text-[13px] leading-[18px] text-warm-900/60 sm:flex">
+              <VerifiedSealIcon className="size-3.5 text-blue-600" />
               Verified by PsychMind
             </p>
           </div>

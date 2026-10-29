@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { BarList } from "@/components/analytics/bar-list";
 import { TrendChart } from "@/components/analytics/trend-chart";
 import { AppShell } from "@/components/app/app-shell";
+import { DashboardShell } from "@/components/app/dashboard-shell";
 import { ChoiceChips } from "@/components/app/choice-chips";
 import { CrisisStrip } from "@/components/app/crisis-strip";
 import { EmptyState } from "@/components/app/empty-state";
@@ -49,7 +50,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DoodleCheck, DoodleMagnifier } from "@/components/ui/doodles";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -65,7 +65,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Kbd } from "@/components/ui/kbd";
 import { addDays } from "@/lib/analytics/range";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CtaArrowIcon } from "@/components/ui/hugeicons";
+import { CheckIcon, CtaArrowIcon, HeartIcon } from "@/components/ui/hugeicons";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Demo content only — option lists here are samples, not the approved taxonomy.
 const specialties = ["Anxiety", "Depression", "Trauma & PTSD", "Relationships", "Grief", "ADHD", "Stress", "Self-esteem"].map(
@@ -362,13 +363,15 @@ export function KitchenSink() {
         </div>
       </Block>
 
-      <Block title="Keyboard shortcuts" note="Geist-style key caps. meta is ⌘ on Apple devices, Ctrl elsewhere.">
+      <Block title="Keyboard shortcuts" note="Keycaps: a white face on a grey base. meta is ⌘ on Apple devices, Ctrl elsewhere; arrow keys draw a soft triangle.">
         <Row>
           <Kbd meta>↵</Kbd>
           <Kbd meta>K</Kbd>
           <Kbd meta shift>P</Kbd>
           <Kbd>Esc</Kbd>
           <Kbd small>/</Kbd>
+          <Kbd small arrow="left" />
+          <Kbd small arrow="right" />
         </Row>
       </Block>
 
@@ -447,6 +450,41 @@ export function KitchenSink() {
         <div id="overlays" />
       </Block>
 
+      <Block title="Scroll area" note="Our own scrollbar (the filters column): a thin thumb that shows while hovered or scrolled.">
+        <ScrollArea className="w-full max-w-sm rounded-field border border-warm-200" viewportClassName="max-h-40">
+          <ul className="flex flex-col p-3 type-ui-small text-warm-900/70">
+            {["Anxiety", "Depression", "Relationships", "Self-esteem", "Trauma & PTSD", "Grief & loss", "Burnout", "Life transitions", "Parenting", "Sleep"].map((t) => (
+              <li key={t} className="border-b border-warm-900/[0.06] py-2 last:border-b-0">
+                {t}
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
+      </Block>
+
+      <Block title="Dashboard shell" note="The provider dashboard and admin console frame: a sidebar in the privacy promise's grey frame, the current page lifted as a white card, a count badge and What's new. Below lg it folds into a top bar and a sheet.">
+        <div className="h-[520px] overflow-hidden rounded-card border border-warm-200">
+          <DashboardShell
+            preview
+            homeHref="/dev/ui"
+            groups={[
+              {
+                items: [
+                  { href: "/dev/ui", label: "Overview", icon: "overview" },
+                  { href: "/dev/ui/requests", label: "Requests", icon: "requests", badge: 3 },
+                  { href: "/dev/ui/analytics", label: "Analytics", icon: "analytics" },
+                ],
+              },
+              { label: "Your practice", items: [{ href: "/dev/ui/profile", label: "Profile", icon: "profile" }, { href: "/dev/ui/billing", label: "Billing", icon: "billing" }] },
+            ]}
+            whatsNew={{ href: "/dev/ui/whats-new", latestId: "kitchen-sink" }}
+            user={{ name: "Sara Oliisi", email: "sara@psychmind.test" }}
+          >
+            <PageHeader title="Good afternoon, Sara" description="Everything is in order." />
+          </DashboardShell>
+        </div>
+      </Block>
+
       <Block title="Tabs and table">
         <Tabs defaultValue="new">
           <TabsList>
@@ -482,7 +520,7 @@ export function KitchenSink() {
             </Table>
           </TabsContent>
           <TabsContent value="contacted" className="pt-4">
-            <EmptyState art={<DoodleCheck className="size-7" />} title="No contacted requests yet">
+            <EmptyState art={<CheckIcon />} title="No contacted requests yet">
               Requests you&apos;ve reached out to will show here.
             </EmptyState>
           </TabsContent>
@@ -536,7 +574,7 @@ export function KitchenSink() {
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-4/5" />
           </div>
-          <EmptyState art={<DoodleMagnifier className="size-10" />} title="No saved providers yet" className="py-8">
+          <EmptyState art={<HeartIcon />} title="No saved providers yet">
             Tap the heart on a profile to keep it here.
           </EmptyState>
           <ErrorState className="py-8" onRetry={() => toast("Retrying…")} />

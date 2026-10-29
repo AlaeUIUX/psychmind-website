@@ -24,13 +24,23 @@ export const segmentValue = "truncate text-sm leading-[18px]";
 export const searchPanel = "w-[425px] rounded-[32px]! border-0 bg-white p-6 shadow-[0_6px_20px_rgb(0_0_0/0.2)]!";
 /** A panel's small heading (with an icon) over its choices. */
 export const panelHeading = "flex items-center gap-1.5 text-xs leading-4 font-medium text-warm-900 [&_svg]:size-3.5 [&_svg]:text-warm-500";
-/** Topic chips, matching the preference chips (ToggleGroup's chip variant). */
-export const topicChip =
-  "inline-flex h-8 animate-in items-center rounded-pill border px-3 text-[13px] shadow-control transition-colors duration-200 fade-in-0 zoom-in-95";
+/** The one pill: the bar's chips, the filters' choices (ToggleGroup's chip
+ *  variant) and the tags on result cards (place, specialties, languages). */
+export const pill = "inline-flex h-8 items-center gap-1 rounded-pill border px-3 text-[13px] shadow-control transition-colors duration-200 [&_svg]:size-3.5";
+/** Topic chips in the bar's panel: a pill that pops in. */
+export const topicChip = `${pill} animate-in fade-in-0 zoom-in-95`;
 export const topicChipOn = "border-warm-800 bg-warm-800 text-white";
 /** An unpicked chip that isn't a control (a tag, a picture of the bar). */
 export const topicChipIdle = "border-warm-300 bg-white text-text-secondary";
 export const topicChipOff = `${topicChipIdle} hover:border-warm-600 hover:text-text-primary`;
+
+/** The privacy promise's layers (verified-providers.tsx), for the search and
+ *  the portal: a grey frame, a white card 7px in (a 1px border and 6px), then
+ *  grey columns 7px in again, corners concentric (20 / 13 / 6). Greys are ink
+ *  at an opacity, so each layer reads on any page. */
+export const frame = "rounded-[20px] border border-warm-900/10 bg-warm-900/[0.04] p-1.5";
+export const frameCard = "rounded-[13px] border border-warm-900/10 bg-white";
+export const frameColumn = "rounded-[6px] bg-warm-900/[0.04]";
 
 /** Figma's "What's on your mind?" suggestions. */
 export const SUGGESTIONS = ["Anxiety", "Trauma", "PTSD", "Depression", "Family issues", "Cultural changes"];

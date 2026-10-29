@@ -83,3 +83,20 @@ export function MapPinIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Verified seal: a scalloped badge (12 soft points) with a white check, next
+ *  to every provider's name. Colour it with text-*. */
+export function VerifiedSealIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...base(props)}>
+      <path
+        d="M12 1L14.48 2.73L17.5 2.47L18.79 5.21L21.53 6.5L21.27 9.52L23 12L21.27 14.48L21.53 17.5L18.79 18.79L17.5 21.53L14.48 21.27L12 23L9.52 21.27L6.5 21.53L5.21 18.79L2.47 17.5L2.73 14.48L1 12L2.73 9.52L2.47 6.5L5.21 5.21L6.5 2.47L9.52 2.73Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M7.75 12.25L10.6 15.1L16.25 9.4" fill="none" stroke="#fff" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

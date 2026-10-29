@@ -1,16 +1,17 @@
 "use client";
 
 import { cn } from "cn";
-import { CheckIcon } from "@/components/ui/hugeicons";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Controller } from "react-hook-form";
+import type { UploadItem } from "@/components/app/upload-dropzone";
 import { FormRow, describedBy } from "@/components/forms/form-row";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { identitySchema, type IdentityInput } from "@/lib/provider/schema";
-import { BANNER_STYLES } from "@/lib/taxonomy";
-import { ProfileBanner } from "../profile-view";
+import { fileUrl } from "@/lib/provider/state";
+import { BannerPicker } from "../banner-picker";
+import { PhotoCropDialog } from "../photo-crop-dialog";
+import { uploadFile } from "../upload-client";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
@@ -18,7 +19,10 @@ const PRONOUNS = ["She/her", "He/him", "They/them"];
 
 // Figma P1 "Your identity". Business name (+ "Enlist with business name") comes
 // from the provider sign-up screen (A2) and is editable here too; turning it
-// on swaps the name on the live preview.
+// on swaps the name on the live preview. The banner is the default gray water
+// or the provider's own upload (cropped to 4:1), picked from small squares
+// (BannerPicker; owner, 2026-10-29: colour swatches made the directory too
+// colourful).
 export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: SectionProps) {
   const toPreview = useCallback(
     (v: IdentityInput) => ({
@@ -26,12 +30,15 @@ export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: Sec
       lastName: v.lastName,
       titleCredentials: v.titleCredentials,
       pronouns: v.pronouns,
-      bannerStyle: v.bannerStyle,
+      bannerUrl: v.bannerId && !v.useDefaultBanner ? fileUrl(v.bannerId) : null,
       businessName: v.businessName,
       displayAsBusiness: v.displayAsBusiness,
     }),
     [],
   );
+  const [bannerItem, setBannerItem] = useState<UploadItem | null>(null);
+  const [pickedBanner, setPickedBanner] = useState<File | null>(null);
+  const uploading = bannerItem?.status === "uploading";
   const { form, onSubmit, pending } = useSectionForm({
     section: "identity",
     schema: identitySchema,
@@ -39,12 +46,14 @@ export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: Sec
     nextHref,
     onPreview,
     toPreview,
+    uploading,
     defaultValues: {
       firstName: state.firstName,
       lastName: state.lastName,
       titleCredentials: state.titleCredentials,
       pronouns: state.pronouns,
-      bannerStyle: state.bannerStyle,
+      bannerId: state.banner?.id ?? "",
+      useDefaultBanner: state.useDefaultBanner,
       businessName: state.businessName,
       displayAsBusiness: state.displayAsBusiness,
     },
@@ -52,6 +61,20 @@ export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: Sec
   const { register, control, formState, watch, setValue } = form;
   const e = formState.errors;
   const pronouns = watch("pronouns");
+  const bannerId = watch("bannerId");
+  const useDefaultBanner = watch("useDefaultBanner");
+
+  const uploadBanner = async (file: File) => {
+    setBannerItem({ id: "new", name: file.name, size: file.size, status: "uploading", progress: 0 });
+    try {
+      const meta = await uploadFile(file, "banner", (progress) => setBannerItem((i) => (i ? { ...i, progress } : i)));
+      setBannerItem(null);
+      setValue("bannerId", meta.id, { shouldDirty: true });
+      setValue("useDefaultBanner", false, { shouldDirty: true });
+    } catch (err) {
+      setBannerItem((i) => (i ? { ...i, status: "error", error: (err as Error).message } : i));
+    }
+  };
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
@@ -129,53 +152,38 @@ export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: Sec
         />
       </div>
 
-      <Controller
-        control={control}
-        name="bannerStyle"
-        render={({ field }) => (
-          <div className="flex flex-col gap-2.5" data-field="bannerStyle">
-            <div className="flex items-baseline justify-between">
-              <p id="banner-label" className="type-ui-label text-warm-800">
-                Banner style
-              </p>
-              <span className="type-ui-caption text-warm-400">Optional</span>
-            </div>
-            <div role="radiogroup" aria-labelledby="banner-label" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {BANNER_STYLES.map((b) => {
-                const on = field.value === b.value;
-                return (
-                  <Tooltip key={b.value}>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        role="radio"
-                        id={`banner-${b.value}`}
-                        aria-checked={on}
-                        aria-label={b.label}
-                        onClick={() => field.onChange(b.value)}
-                        className={cn(
-                          "relative h-10 overflow-hidden rounded-md transition-shadow outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
-                          on ? "ring-2 ring-warm-900 ring-offset-2" : "ring-1 ring-black/10 hover:ring-warm-400",
-                        )}
-                      >
-                        <ProfileBanner style={b.value} className="absolute inset-0" />
-                        {on && (
-                          <span className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-white text-warm-900 shadow-sm">
-                            <CheckIcon className="size-3" />
-                          </span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>{b.label}</TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-          </div>
+      <div className="flex flex-col gap-2.5" data-field="banner">
+        <div className="flex items-baseline justify-between">
+          <p id="banner-label" className="type-ui-label text-warm-800">
+            Banner
+          </p>
+          <span className="type-ui-caption text-warm-400">Optional</span>
+        </div>
+        <BannerPicker
+          labelId="banner-label"
+          ownUrl={bannerId ? fileUrl(bannerId) : null}
+          useDefault={useDefaultBanner}
+          upload={bannerItem}
+          onChoose={(useDefault) => setValue("useDefaultBanner", useDefault, { shouldDirty: true })}
+          onPick={setPickedBanner}
+        />
+        {e.bannerId && (
+          <p role="alert" className={cn("type-small text-destructive")}>
+            {e.bannerId.message}
+          </p>
         )}
-      />
+        <PhotoCropDialog
+          file={pickedBanner}
+          shape="banner"
+          onCancel={() => setPickedBanner(null)}
+          onConfirm={(cropped) => {
+            setPickedBanner(null);
+            uploadBanner(cropped);
+          }}
+        />
+      </div>
 
-      <SectionFooter mode={mode} backHref={backHref} pending={pending} dirty={formState.isDirty} />
+      <SectionFooter mode={mode} backHref={backHref} pending={pending} uploading={uploading} dirty={formState.isDirty} />
     </form>
   );
 }

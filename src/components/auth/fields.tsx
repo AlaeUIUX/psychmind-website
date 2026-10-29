@@ -58,7 +58,23 @@ export function AuthField({ id, label, error, hint, optional, aside, children, c
   );
 }
 
-const fieldClass = "h-10 shadow-none";
+/** The last submit's field errors, each dropped as soon as its field is
+ *  edited (the server only checks again on the next submit). Put `onInput`
+ *  on the form. */
+export function useFieldErrors(errors: Record<string, string> | undefined) {
+  const [edited, setEdited] = useState<{ errors?: Record<string, string>; keys: ReadonlySet<string> }>({ keys: new Set() });
+  const keys = edited.errors === errors ? edited.keys : new Set<string>();
+  const fieldErrors = Object.fromEntries(Object.entries(errors ?? {}).filter(([key]) => !keys.has(key)));
+  const onInput = (e: React.FormEvent<HTMLFormElement>) => {
+    const name = (e.target as HTMLInputElement).name ?? "";
+    const key = name.startsWith("birth") ? "birthDate" : name;
+    if (errors?.[key] && !keys.has(key)) setEdited({ errors, keys: new Set(keys).add(key) });
+  };
+  return { fieldErrors, onInput };
+}
+
+// Input's own look, as in the home bar's panel: white, hairline, soft shadow.
+const fieldClass = "h-10";
 
 export function TextInput({ id, error, className, ...props }: React.ComponentProps<"input"> & { id: string; error?: string }) {
   return (
@@ -263,7 +279,8 @@ export function BirthDateField({ error, values, idPrefix = "" }: { error?: strin
       <div className="flex gap-3">
         {parts.map((p) => (
           <div key={p.name} className="flex flex-col gap-1">
-            <Label htmlFor={`${idPrefix}${p.name}`} className="type-ui-caption text-warm-500">
+            {/* The MM / DD / YYYY placeholders say it; the labels stay for screen readers. */}
+            <Label htmlFor={`${idPrefix}${p.name}`} className="sr-only">
               {p.label}
             </Label>
             <TextInput

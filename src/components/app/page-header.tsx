@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
+import { DashboardBannerSlot } from "@/components/app/dashboard-shell";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,6 +26,7 @@ type PageHeaderProps = {
 };
 
 // Breadcrumb → title → subtitle, the top of every app page (portal type).
+// In the dashboard shell, the account notice (StatusBanner) sits right under it.
 export function PageHeader({ breadcrumbs, title, badge, description, actions, className }: PageHeaderProps) {
   return (
     <header className={cn("flex flex-col gap-4", className)}>
@@ -55,16 +57,17 @@ export function PageHeader({ breadcrumbs, title, badge, description, actions, cl
         <div className="flex flex-col gap-2">
           {badge ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="type-ui-display text-text-primary">{title}</h1>
+              <h1 className="type-ui-headline text-warm-900">{title}</h1>
               {badge}
             </div>
           ) : (
-            <h1 className="type-ui-display text-text-primary">{title}</h1>
+            <h1 className="type-ui-headline text-warm-900">{title}</h1>
           )}
-          {description && <p className="max-w-[640px] type-ui-body text-text-tertiary">{description}</p>}
+          {description && <p className="max-w-[640px] type-ui-body text-warm-900/60">{description}</p>}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
       </div>
+      <DashboardBannerSlot />
     </header>
   );
 }

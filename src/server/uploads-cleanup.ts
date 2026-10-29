@@ -6,8 +6,8 @@ import { deleteFile } from "@/server/storage";
 
 // Uploads that were never saved to a profile (a photo picked, then the step
 // abandoned or another photo chosen before saving): after a day, the bytes
-// and the row go. Saved files are referenced by provider_profile.photo_id or
-// provider_license.document_id. Run by the daily cron.
+// and the row go. Saved files are referenced by provider_profile.photo_id,
+// provider_profile.banner_id or provider_license.document_id. Run by the daily cron.
 
 const MAX_AGE_MS = 24 * 3_600_000;
 const BATCH = 200;
@@ -15,6 +15,7 @@ const BATCH = 200;
 export async function cleanUpUnsavedUploads(now = new Date()) {
   await dbReady;
   const photos = db.select({ id: providerProfile.photoId }).from(providerProfile).where(isNotNull(providerProfile.photoId));
+  const banners = db.select({ id: providerProfile.bannerId }).from(providerProfile).where(isNotNull(providerProfile.bannerId));
   const documents = db.select({ id: providerLicense.documentId }).from(providerLicense).where(isNotNull(providerLicense.documentId));
   const stale = await db
     .select({ id: upload.id, storageKey: upload.storageKey })
@@ -23,6 +24,7 @@ export async function cleanUpUnsavedUploads(now = new Date()) {
       and(
         lt(upload.createdAt, new Date(now.getTime() - MAX_AGE_MS)),
         notInArray(upload.id, photos),
+        notInArray(upload.id, banners),
         notInArray(upload.id, documents),
       ),
     )
@@ -35,7 +37,7 @@ export async function cleanUpUnsavedUploads(now = new Date()) {
       // The row first, checking again that nothing saved it meanwhile; then the bytes.
       const [gone] = await db
         .delete(upload)
-        .where(and(eq(upload.id, file.id), notInArray(upload.id, photos), notInArray(upload.id, documents)))
+        .where(and(eq(upload.id, file.id), notInArray(upload.id, photos), notInArray(upload.id, banners), notInArray(upload.id, documents)))
         .returning({ id: upload.id });
       if (!gone) continue;
       await deleteFile(file.storageKey);

@@ -4,7 +4,6 @@ import { db, dbReady } from "@/db";
 import { providerLicense, providerLocation, providerProfile, subscription, upload, user } from "@/db/schema";
 import type { BillingSnapshot, SubscriptionStatus } from "@/lib/billing";
 import type { ProviderState, UploadMeta } from "@/lib/provider/state";
-import type { BannerStyle } from "@/lib/taxonomy";
 
 // Reads for the provider area. Callers must already have checked who's
 // asking (see src/server/auth/session.ts); these functions take a user id.
@@ -46,7 +45,7 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     db.select().from(providerLocation).where(eq(providerLocation.profileId, p.id)).orderBy(asc(providerLocation.sortOrder)),
     db.select().from(providerLicense).where(eq(providerLicense.profileId, p.id)),
   ]);
-  const uploadIds = [p.photoId, ...licenses.map((l) => l.documentId)].filter(Boolean) as string[];
+  const uploadIds = [p.photoId, p.bannerId, ...licenses.map((l) => l.documentId)].filter(Boolean) as string[];
   const uploads = uploadIds.length ? await db.select().from(upload).where(inArray(upload.id, uploadIds)) : [];
   const byId = new Map(uploads.map((u) => [u.id, toMeta(u)]));
 
@@ -67,8 +66,9 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     displayAsBusiness: p.displayAsBusiness,
     titleCredentials: p.titleCredentials,
     pronouns: p.pronouns ?? "",
-    bannerStyle: p.bannerStyle as BannerStyle,
     photo: p.photoId ? (byId.get(p.photoId) ?? null) : null,
+    banner: p.bannerId ? (byId.get(p.bannerId) ?? null) : null,
+    useDefaultBanner: p.useDefaultBanner,
     whoYouWorkWith: p.whoYouWorkWith,
     about: p.about,
     sessionParticipants: p.sessionParticipants,

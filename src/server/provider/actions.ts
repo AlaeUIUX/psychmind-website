@@ -102,11 +102,22 @@ async function saveSection(section: SectionKey, data: never, profile: Profile, u
   const where = eq(providerProfile.id, profile.id);
   switch (section) {
     case "identity": {
-      const v = data as z.output<typeof identitySchema>;
+      const { bannerId, ...v } = data as z.output<typeof identitySchema>;
+      let banner: string | null = null;
+      if (bannerId) {
+        const [file] = await db
+          .select({ id: upload.id })
+          .from(upload)
+          .where(and(eq(upload.id, bannerId), eq(upload.ownerId, userId), eq(upload.kind, "banner")));
+        if (!file) return { ok: false, fieldErrors: { bannerId: "Upload your banner again." } };
+        banner = file.id;
+      }
       await db
         .update(providerProfile)
-        .set({ ...v, pronouns: v.pronouns || null, businessName: v.businessName || null })
+        .set({ ...v, bannerId: banner, pronouns: v.pronouns || null, businessName: v.businessName || null })
         .where(where);
+      // A replaced banner is no longer shown anywhere (one chosen away from, for the default, is kept).
+      if (profile.bannerId && profile.bannerId !== banner) await removeUpload(profile.bannerId, userId);
       await db
         .update(user)
         .set({ firstName: v.firstName, lastName: v.lastName, name: `${v.firstName} ${v.lastName}` })

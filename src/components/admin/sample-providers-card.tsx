@@ -30,7 +30,7 @@ export function SampleProvidersCard({ count }: { count: number }) {
           <DatabaseIcon className="size-5" />
         </span>
         <div className="flex flex-col gap-1">
-          <h2 className="type-small font-semibold text-text-primary">Sample providers</h2>
+          <h2 className="type-small font-medium text-text-primary">Sample providers</h2>
           <p className="type-small text-text-tertiary">
             {count
               ? `${count} sample profiles are showing in search. They're labelled as samples and can't be booked.`

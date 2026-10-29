@@ -15,6 +15,11 @@ const toggleVariants = cva(
           "border border-input bg-transparent shadow-control hover:bg-accent hover:text-accent-foreground",
         /** Selectable chip (onboarding and filters): outlined when off, filled ink when on. */
         chip: "rounded-pill border border-warm-300 bg-white text-text-secondary shadow-control hover:border-warm-600 hover:bg-white hover:text-text-primary data-[state=on]:border-warm-800 data-[state=on]:bg-warm-800 data-[state=on]:text-white",
+        /** A side of a segmented control (the search bar's Online / In-person,
+         *  after Airbnb's Dates / Flexible): the chosen one a white pill with a
+         *  hairline, on ToggleGroup's grey `segment` track. */
+        segment:
+          "rounded-(--radius-field) border border-transparent text-warm-600 hover:bg-transparent hover:text-warm-900 data-[state=on]:border-warm-300 data-[state=on]:bg-white data-[state=on]:text-warm-900 data-[state=on]:shadow-[0_1px_2px_rgb(0_0_0/0.06)]",
       },
       size: {
         default: "h-9 min-w-9 px-2",

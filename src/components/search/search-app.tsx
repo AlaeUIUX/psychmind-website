@@ -1,8 +1,11 @@
 "use client";
 
+import { cn } from "cn";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useMemo, useRef } from "react";
 import { SavedProvidersProvider, type Viewer } from "@/components/directory/save-button";
+import { frame, frameCard } from "@/components/home/search-styles";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { trackEvent, useTrackOnChange, useTrackView } from "@/lib/analytics/client";
 import type { TermParts } from "@/lib/analytics/events";
 import type { Ranked, SearchResult } from "@/lib/search/engine";
@@ -43,7 +46,7 @@ export function SearchApp({
     () => ({
       sp: Array.from(new Set([...filters.specialty, ...(result.query?.specialties ?? [])])),
       ap: filters.approach,
-      f: filters.format ?? undefined,
+      f: filters.format,
       st: result.place?.state,
     }),
     [filters.specialty, filters.approach, filters.format, result.query, result.place],
@@ -103,19 +106,20 @@ export function SearchApp({
           </div>
 
           <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
-            <aside aria-label="Filters" className="sticky top-24 hidden lg:block">
-              <div
-                data-lenis-prevent
-                className="max-h-[calc(100dvh-7.5rem)] overflow-y-auto overscroll-contain rounded-card border border-warm-200 bg-white p-5 [scrollbar-width:thin]"
-              >
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <h2 className="type-title text-text-primary">Filters</h2>
-                  <button type="button" onClick={clear} className="type-small font-medium text-text-primary underline underline-offset-4 hover:text-text-secondary">
-                    Clear all
-                  </button>
-                </div>
-                <FiltersPanel filters={filters} update={set} facets={result.facets} price={result.price} />
+            {/* The landing's privacy promise layers: the grey frame holds the
+                title, the white card the filters, scrolling on its own. */}
+            <aside aria-label="Filters" className={cn("sticky top-24 hidden lg:block", frame)}>
+              <div className="flex items-center justify-between gap-3 px-3 pt-1.5 pb-2.5">
+                <h2 className="text-[15px] leading-5 font-medium tracking-[-0.01em] text-warm-900">Filters</h2>
+                <button type="button" onClick={clear} className="text-[13px] text-warm-900/60 underline underline-offset-4 transition-colors hover:text-warm-900">
+                  Clear all
+                </button>
               </div>
+              <ScrollArea data-lenis-prevent className={frameCard} viewportClassName="max-h-[calc(100dvh-10rem)] overscroll-contain">
+                <div className="p-5">
+                  <FiltersPanel filters={filters} update={set} facets={result.facets} price={result.price} />
+                </div>
+              </ScrollArea>
             </aside>
 
             <section aria-label="Results" className="flex min-w-0 flex-col gap-4">

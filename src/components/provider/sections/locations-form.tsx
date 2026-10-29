@@ -48,7 +48,7 @@ function LicenseComplianceCard() {
     <div className="flex gap-3 rounded-xl bg-warm-50 p-4 ring-1 ring-warm-200 ring-inset">
       <ShieldCheckIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-blue-600" />
       <div className="flex flex-col gap-1 type-ui-small text-warm-600">
-        <p className="font-semibold text-warm-900">License compliance</p>
+        <p className="font-medium text-warm-900">License compliance</p>
         <p>You may only list states where you hold a valid, active license.</p>
         <p>Adding a state without a license violates professional regulations and Psychmind&apos;s terms.</p>
         <p>We verify this against your submitted credentials.</p>
@@ -73,11 +73,11 @@ function UpgradeDialog({ billingHref }: { billingHref: string }) {
         </DialogHeader>
         <ul className="flex flex-col gap-3">
           <li className="rounded-field border border-warm-800 p-4">
-            <p className="type-small font-semibold text-text-primary">Basic plan</p>
+            <p className="type-small font-medium text-text-primary">Basic plan</p>
             <p className="type-small text-text-tertiary">3 locations free</p>
           </li>
           <li className="rounded-field border border-warm-200 p-4">
-            <p className="type-small font-semibold text-text-primary">Upgrade plan</p>
+            <p className="type-small font-medium text-text-primary">Upgrade plan</p>
             <p className="type-small text-text-tertiary">{BASE_PLAN.extraLocationLabel}</p>
           </li>
         </ul>
@@ -104,7 +104,7 @@ function StateTile({ code, active }: { code?: string; active?: boolean }) {
     <span
       aria-hidden
       className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-lg font-mono text-[13px] font-semibold tracking-wide transition-colors",
+        "flex size-10 shrink-0 items-center justify-center rounded-lg font-mono text-[13px] font-medium tracking-wide transition-colors",
         active ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200 ring-inset" : "bg-warm-100 text-warm-700",
       )}
     >
@@ -304,7 +304,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
 
       {atLimit && (
         <div className="flex flex-col gap-3 rounded-card bg-warm-800 p-5 text-white">
-          <p className="flex items-center gap-2 type-small font-semibold">
+          <p className="flex items-center gap-2 type-small font-medium">
             <SparklesIcon aria-hidden className="size-4" />
             You&apos;ve reached your {limit}-location limit
           </p>

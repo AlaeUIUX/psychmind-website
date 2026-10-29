@@ -1,6 +1,7 @@
 "use client";
 
-import { ChartLineIcon, TableIcon } from "@/components/ui/hugeicons";
+import { ChartLineIcon, ListIcon } from "@/components/ui/hugeicons";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useId, useState, useSyncExternalStore } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -68,13 +69,13 @@ export function TrendChart({ series, metrics, empty }: { series: Point[]; metric
           value={view}
           onValueChange={(v) => v && setView(v as typeof view)}
           aria-label="Show as"
-          className="gap-0.5 rounded-field bg-warm-100 p-0.5 ring-1 ring-warm-200 ring-inset"
+          variant="segment"
         >
           <ToggleGroupItem value="chart" aria-label="Chart" className={toggle}>
             <ChartLineIcon />
           </ToggleGroupItem>
           <ToggleGroupItem value="table" aria-label="Table" className={toggle}>
-            <TableIcon />
+            <ListIcon />
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
@@ -122,9 +123,10 @@ export function TrendChart({ series, metrics, empty }: { series: Point[]; metric
           )}
         </figure>
       ) : (
-        <div className="h-64 overflow-y-auto rounded-field border border-warm-200">
+        // our scrollbar, not the browser's (as the filters column)
+        <ScrollArea data-lenis-prevent className="rounded-[10px] border border-warm-900/[0.08]" viewportClassName="h-64">
           <Table>
-            <TableHeader className="sticky top-0 bg-warm-50">
+            <TableHeader className="sticky top-0 z-10 bg-white shadow-[0_1px_0_rgb(28_25_23/0.06)] [&_tr]:border-b-0">
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">{current.label}</TableHead>
@@ -139,11 +141,11 @@ export function TrendChart({ series, metrics, empty }: { series: Point[]; metric
               ))}
             </TableBody>
           </Table>
-        </div>
+        </ScrollArea>
       )}
     </Card>
   );
 }
 
 const toggle =
-  "size-7 min-w-7 rounded-[calc(var(--radius-field)-2px)] p-0 text-text-tertiary hover:bg-white/60 hover:text-text-primary data-[state=on]:bg-white data-[state=on]:text-text-primary data-[state=on]:shadow-control [&_svg]:size-3.5";
+  "w-9 min-w-9 p-0 [&_svg]:size-4";

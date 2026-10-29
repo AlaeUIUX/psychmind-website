@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   AGE_GROUPS,
-  BANNER_STYLES,
   BASE_PLAN_LOCATIONS,
   GENDERS,
   SESSION_FORMATS,
@@ -41,7 +40,10 @@ export const identitySchema = z.object({
   lastName: requiredText("Last name", 60),
   titleCredentials: requiredText("Title / credentials", 120),
   pronouns: optionalText(30),
-  bannerStyle: z.enum(values(BANNER_STYLES)),
+  /** The provider's uploaded banner, or "" for none. */
+  bannerId: z.string(),
+  /** Show the default banner even though they have their own. */
+  useDefaultBanner: z.boolean(),
   businessName: optionalText(100),
   displayAsBusiness: z.boolean(),
 });

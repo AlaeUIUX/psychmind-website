@@ -15,7 +15,7 @@ export function CrisisStrip({ className }: { className?: string }) {
       )}
     >
       <span>
-        <span className="font-semibold text-white">In crisis? Don&apos;t wait.</span> Call or text 988 any time, day or
+        <span className="font-medium text-white">In crisis? Don&apos;t wait.</span> Call or text 988 any time, day or
         night. In an emergency, call 911.
       </span>
       <a

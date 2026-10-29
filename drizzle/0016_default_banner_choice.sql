@@ -1,0 +1,1 @@
+ALTER TABLE "provider_profile" ADD COLUMN "use_default_banner" boolean DEFAULT false NOT NULL;

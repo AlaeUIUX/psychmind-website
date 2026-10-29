@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import { BuildingIcon, HeartIcon, MapPinIcon, MonitorIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import type { ReactNode } from "react";
+import { VerifiedSealIcon } from "@/components/ui/icons";
 import { Tag, VerifiedBadge } from "@/components/ui/tag";
 import { displayName, listJoin } from "@/lib/provider/display";
 import type { PreviewRegion } from "@/lib/provider/steps";
@@ -8,8 +9,6 @@ import type { ProfileView as ProfileData } from "@/lib/provider/types";
 import {
   SPECIALTY_CATEGORIES,
   ageProfileLabel,
-  bannerColor,
-  bannerCta,
   labelOf,
   specialtyCategory,
   stateName,
@@ -67,7 +66,7 @@ function Paragraphs({ text, placeholder }: { text?: string; placeholder: string 
 
 /** Empty chip outline, like Figma's preview placeholders. */
 function GhostTag() {
-  return <span aria-hidden className="inline-block h-7 w-20 rounded-tag border border-dashed border-warm-300" />;
+  return <span aria-hidden className="inline-block h-8 w-20 rounded-pill border border-dashed border-warm-300" />;
 }
 
 export function formatsLabel(formats: string[]) {
@@ -79,17 +78,16 @@ export function formatsLabel(formats: string[]) {
   return null;
 }
 
-export function ProfileBanner({ style, className }: { style?: string | null; className?: string }) {
-  const color = bannerColor(style);
+/** The landing page's sea, gray: every profile without its own banner gets it,
+ *  so the directory stays calm (owner, 2026-10-29). */
+export const DEFAULT_BANNER_URL = "/images/profile/default-banner.webp";
+
+/** The provider's uploaded banner (4:1, cropped on upload), or the gray water. */
+export function ProfileBanner({ url, className }: { url?: string | null; className?: string }) {
   return (
-    <div className={cn("relative overflow-hidden", className)} style={{ backgroundColor: color }}>
-      {/* The how-it-works brush texture, centred on mid-grey and soft-lit, so
-          it adds strokes without shifting the colour (the banner matches the
-          "Request a session" button exactly). */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[url('/images/how-it-works/profile-banner.png')] bg-cover bg-center mix-blend-soft-light [filter:grayscale(1)_brightness(0.58)_contrast(2.2)]"
-      />
+    <div className={cn("relative overflow-hidden bg-warm-200", className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url || DEFAULT_BANNER_URL} alt="" className="absolute inset-0 size-full object-cover" />
     </div>
   );
 }
@@ -113,6 +111,9 @@ type ProfileViewProps = {
 
 /** `tail` stays on one line (a license number shouldn't break). */
 type CredentialLine = { text: string; tail?: string; tone?: "strong" | "note"; verified?: boolean };
+
+/** A provider's name, as the quick look shows it. */
+const nameClass = "text-xl leading-7 font-medium tracking-[-0.015em] text-warm-900";
 
 export function ProviderProfileView({ profile: p, mode = "public", actions, highlight, verifiedSlot, bannerAction, className }: ProfileViewProps) {
   const preview = mode === "preview";
@@ -171,7 +172,7 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
       )}
     >
       <Region name="banner" highlight={highlight} className={preview ? "rounded-none" : "rounded-xl"}>
-        <ProfileBanner style={p.bannerStyle} className={preview ? "h-24" : "h-24 rounded-xl @3xl:h-34"} />
+        <ProfileBanner url={p.bannerUrl} className={preview ? "h-24" : "h-24 rounded-xl @3xl:h-34"} />
         {!preview && bannerAction && (
           // Above the photo row, which overlaps the banner's lower edge.
           <div className="absolute right-3 bottom-3 z-10 @3xl:right-6 @3xl:-bottom-3">{bannerAction}</div>
@@ -205,11 +206,15 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <Region name="identity" highlight={highlight} className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
-              {preview ? (
-                <h2 className={cn("type-title", name ? "text-text-primary" : "text-text-placeholder")}>{name}</h2>
-              ) : (
-                <h1 className="type-title-lg font-semibold text-text-primary">{name}</h1>
-              )}
+              {/* The name as in the quick look (20px medium), its verified seal beside it. */}
+              <div className="flex min-w-0 items-center gap-2">
+                {preview ? (
+                  <h2 className={cn(nameClass, !name && "text-text-placeholder")}>{name}</h2>
+                ) : (
+                  <h1 className={nameClass}>{name}</h1>
+                )}
+                {p.verified && <VerifiedSealIcon role="img" aria-label="Verified" aria-hidden={false} className="size-[18px] shrink-0 text-blue-600" />}
+              </div>
               {p.verified ? (
                 (verifiedSlot ?? <VerifiedBadge />)
               ) : (
@@ -369,7 +374,8 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
 
         <aside
           className={cn(
-            "flex h-fit w-full shrink-0 flex-col gap-6 rounded-field border border-warm-200 bg-warm-100 p-6 @3xl:w-[300px]",
+            // the search card's grey column, in the privacy promise's frame corners
+            "flex h-fit w-full shrink-0 flex-col gap-6 rounded-[20px] border border-warm-900/10 bg-warm-900/[0.04] p-6 @3xl:w-[300px]",
             // The public page keeps price and actions in view while reading.
             !preview && "@3xl:sticky @3xl:top-24 @5xl:w-[400px] @5xl:p-8",
           )}
@@ -435,8 +441,8 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
             )}
             {actions ?? (
               <>
-                {/* The provider's banner colour is their call-to-action colour. */}
-                <span aria-hidden className="flex h-10 items-center justify-center rounded-field type-small font-semibold shadow-control" style={bannerCta(p.bannerStyle)}>
+                {/* The one crimson on the profile, like the landing page's search button. */}
+                <span aria-hidden className="flex h-10 items-center justify-center rounded-field bg-brand-primary type-small font-medium tracking-[-0.01em] text-white shadow-control">
                   Request a session
                 </span>
                 <span aria-hidden className="flex h-10 items-center justify-center gap-1.5 rounded-field border border-warm-300 bg-white type-small font-medium text-warm-800 shadow-control">

@@ -3,7 +3,6 @@
 import { SlidersHorizontalIcon } from "@/components/ui/hugeicons";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SearchIcon } from "@/components/ui/icons";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { Facets } from "@/lib/search/engine";
 import { activeFilterCount, EMPTY_FILTERS, type SearchFilters } from "@/lib/search/filters";
@@ -11,7 +10,7 @@ import { parsePlace } from "@/lib/search/location";
 import { labelOf } from "@/lib/taxonomy";
 import { FiltersPanel, FormatToggle } from "./filters-panel";
 import { ResultsCount, SortMenu } from "./results";
-import { searchSurface } from "./search-bar";
+import { SearchPill } from "./bar";
 import { MindInput, StateSelect, WhereInput } from "./search-fields";
 import { useSearch } from "./use-search";
 
@@ -21,7 +20,7 @@ import { useSearch } from "./use-search";
 
 function summary(f: SearchFilters) {
   const parts = [
-    f.format === "online" ? "Online" : f.format === "in_person" ? "In-person" : null,
+    f.format === "online" ? "Online" : "In-person",
     parsePlace(f.where)?.label,
     f.q ? `“${f.q}”` : null,
     ...f.specialty.map((s) => labelOf("specialties", s)),
@@ -76,7 +75,7 @@ function FiltersDrawer({
           <div className="mb-6 flex flex-col gap-4 rounded-card bg-warm-50 p-4 ring-1 ring-warm-200 ring-inset">
             <div className="flex flex-col gap-2">
               <span className="type-small font-medium text-text-primary">Session format</span>
-              <FormatToggle value={draft.format} onChange={(format) => update({ format })} className="bg-white" />
+              <FormatToggle value={draft.format} onChange={(format) => update({ format })} />
             </div>
             <div className="flex flex-col gap-2">
               {draft.format === "online" ? (
@@ -114,7 +113,7 @@ function FiltersDrawer({
             type="button"
             variant="ghost"
             onClick={() => {
-              setDraft({ ...EMPTY_FILTERS, sort: draft.sort });
+              setDraft({ ...EMPTY_FILTERS, format: draft.format, sort: draft.sort });
               setWhere("");
               setMind("");
             }}
@@ -151,23 +150,8 @@ export function MobileSearch({ count, facets, price, cities }: { count: number; 
 
   return (
     <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={`group flex w-full items-center justify-between gap-3 rounded-[28px] p-2 text-left ${searchSurface}`}
-      >
-        <span className="flex min-w-0 flex-col gap-0.5 px-3">
-          <span className="flex items-center gap-2 type-body font-medium text-text-primary">
-            <SearchIcon className="size-4 shrink-0 text-text-secondary" />
-            {current ? "Your search" : "Start search"}
-          </span>
-          <span className="truncate type-small text-text-placeholder">{current ?? "Press to get started"}</span>
-        </span>
-        {/* the hero bar's search button: 48px, 16px corners */}
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-[16px] bg-brand-primary text-white transition-colors duration-200 group-hover:bg-brand-primary-hover">
-          <SearchIcon className="size-4" />
-        </span>
-      </button>
+      {/* the home page's phone pill, with the search so far */}
+      <SearchPill title={current ? "Your search" : "Start search"} detail={current ?? "Press to get started"} onClick={() => setOpen(true)} />
 
       <div className="flex items-center justify-between gap-2">
         <ResultsCount count={count} />
@@ -177,7 +161,7 @@ export function MobileSearch({ count, facets, price, cities }: { count: number; 
             <SlidersHorizontalIcon />
             Filters
             {active > 0 && (
-              <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-warm-800 text-[11px] font-semibold text-white">{active}</span>
+              <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-warm-800 text-[11px] font-medium text-white">{active}</span>
             )}
           </Button>
         </div>

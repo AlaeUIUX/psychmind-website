@@ -105,7 +105,8 @@ function RangeFilter({ range, today, onChange }: { range: DayRange; today: strin
             value={range.preset}
             onValueChange={pick}
             aria-label="Date range"
-            className="hidden gap-1 rounded-field bg-warm-100 p-1 ring-1 ring-warm-200 ring-inset sm:flex"
+            variant="segment"
+            className="hidden sm:flex"
           >
             {RANGE_PRESETS.map((p) => (
               <ToggleGroupItem key={p.value} value={p.value} className={segment}>
@@ -147,4 +148,4 @@ function RangeFilter({ range, today, onChange }: { range: DayRange; today: strin
 }
 
 const segment =
-  "h-8 gap-1.5 rounded-[calc(var(--radius-field)-4px)] px-3 type-ui-label text-text-tertiary hover:bg-white/60 hover:text-text-primary data-[state=on]:bg-white data-[state=on]:text-text-primary data-[state=on]:shadow-control";
+  "h-8 gap-1.5 px-3 type-ui-label";

@@ -59,7 +59,8 @@ export default async function ProviderProfilePage({ params, searchParams }: Prop
   return (
     <Section spacing="none" className="pt-4 pb-14 sm:pt-6 sm:pb-20">
       <Container size="wide" className="flex flex-col gap-6">
-        <div className="flex flex-col gap-6 rounded-card bg-warm-50 px-3 py-4 ring-1 ring-warm-200/70 sm:px-8 sm:py-6 lg:px-12">
+        {/* Straight on the page, as the search results are: no card around it. */}
+        <div className="flex flex-col gap-6">
           <Breadcrumb>
             <BreadcrumbList className="gap-1.5 font-medium text-text-tertiary sm:gap-2">
               <BreadcrumbItem>
@@ -101,7 +102,7 @@ export default async function ProviderProfilePage({ params, searchParams }: Prop
               actions={
                 <>
                   <RequestSessionButton
-                    provider={{ id: p.id, name: first, bannerStyle: p.bannerStyle, isSample: p.isSample, acceptingNewClients: p.acceptingNewClients }}
+                    provider={{ id: p.id, name: first, isSample: p.isSample, acceptingNewClients: p.acceptingNewClients }}
                     viewer={viewer}
                     saved={saved}
                     returnTo={p.href}

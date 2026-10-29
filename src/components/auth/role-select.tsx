@@ -78,7 +78,7 @@ export function RoleSelect({ initial }: { initial?: "patient" | "provider" }) {
           </RadioGroupPrimitive.Item>
         ))}
       </RadioGroupPrimitive.Root>
-      <Button type="submit" fullWidth disabled={!role} className="h-10 text-[14px]">
+      <Button type="submit" size="default" fullWidth disabled={!role}>
         Continue
         <HoverArrow />
       </Button>

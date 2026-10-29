@@ -203,7 +203,7 @@ export function RecoveryForm({ signedInEmail, defaultEmail }: { signedInEmail?: 
         )}
 
         <AuthField id="details" label="Anything that helps us confirm it's you" optional hint="For example, roughly when you signed up. Please don't include health information.">
-          <Textarea id="details" name="details" maxLength={1000} rows={3} className="shadow-none" />
+          <Textarea id="details" name="details" maxLength={1000} rows={3} />
         </AuthField>
 
         <Button type="submit" size="default" fullWidth disabled={pending} aria-busy={pending || undefined} className="h-10 text-[14px]">

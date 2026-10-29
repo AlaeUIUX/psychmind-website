@@ -1,0 +1,1 @@
+ALTER TABLE "provider_profile" ADD COLUMN "banner_id" text;

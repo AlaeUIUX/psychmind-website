@@ -9,7 +9,7 @@ import { signUpPatient, signUpProvider, type AuthState } from "@/server/auth/act
 import { useAuthPanel } from "./auth-context";
 import { AgeBlocked } from "./age-blocked";
 import { GoogleSignIn } from "./auth-bits";
-import { AuthField, AuthTitle, BirthDateField, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton, TextInput } from "./fields";
+import { AuthField, AuthTitle, BirthDateField, EmailInput, FormAlert, OrDivider, PasswordInput, SubmitButton, TextInput, useFieldErrors } from "./fields";
 
 // Figma A2 "Create your account", streamlined: one password field with
 // show/hide and a strength meter instead of "Confirm Password", the business
@@ -17,7 +17,7 @@ import { AuthField, AuthTitle, BirthDateField, EmailInput, FormAlert, OrDivider,
 // portal panel fills in as they type.
 export function SignUpForm({ role, googleEnabled, next }: { role: "patient" | "provider"; googleEnabled: boolean; next?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(role === "provider" ? signUpProvider : signUpPatient, null);
-  const fe = state?.fieldErrors ?? {};
+  const { fieldErrors: fe, onInput } = useFieldErrors(state?.fieldErrors);
   const v = state?.values ?? {};
   const { setRole, setDraft } = useAuthPanel();
   const [business, setBusiness] = useState(Boolean(v.businessName));
@@ -48,7 +48,7 @@ export function SignUpForm({ role, googleEnabled, next }: { role: "patient" | "p
         </>
       )}
 
-      <form action={action} noValidate className="flex flex-col gap-4">
+      <form action={action} onInput={onInput} noValidate className="flex flex-col gap-4">
         {next && <input type="hidden" name="next" value={next} />}
         <FormAlert message={state?.error} />
         <div className="grid grid-cols-2 gap-3">

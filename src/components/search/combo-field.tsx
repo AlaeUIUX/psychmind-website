@@ -44,7 +44,8 @@ export function ComboField({
 
   return (
     <CommandPrimitive shouldFilter={false} loop label={label} className={cn("relative w-full overflow-visible", className)}>
-      <div className="flex h-10 items-center gap-2 rounded-field border border-warm-300 bg-warm-50 px-3 transition-[border-color,box-shadow,background-color] focus-within:border-warm-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-ring/12 hover:border-warm-400">
+      {/* Input's own look (the home bar's ZIP field): white, hairline, soft shadow. */}
+      <div className="flex h-11 items-center gap-2 rounded-field border border-warm-300/80 bg-white px-3.5 shadow-control transition-[border-color,box-shadow] focus-within:border-warm-600 focus-within:ring-4 focus-within:ring-ring/12 hover:border-warm-300">
         {icon}
         <CommandPrimitive.Input
           value={value}
@@ -63,7 +64,8 @@ export function ComboField({
           }}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-full min-w-0 flex-1 bg-transparent type-small font-medium text-text-primary outline-none placeholder:font-normal placeholder:text-text-placeholder"
+          // 16px on phones: iOS Safari zooms into any smaller field.
+          className="h-full min-w-0 flex-1 bg-transparent text-base text-text-primary outline-none placeholder:text-text-placeholder sm:text-sm"
         />
         {onClear && value && (
           <button

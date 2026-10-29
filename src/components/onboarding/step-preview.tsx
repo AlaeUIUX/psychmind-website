@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DoodleHookArrow } from "@/components/ui/doodles";
 import type { PreviewRegion, StepKey } from "@/lib/provider/steps";
 import type { ProfileView } from "@/lib/provider/types";
-import { ageProfileLabel, bannerCta, labelOf, SPECIALTY_CATEGORIES, specialtyCategory, stateName } from "@/lib/taxonomy";
+import { ageProfileLabel, labelOf, SPECIALTY_CATEGORIES, specialtyCategory, stateName } from "@/lib/taxonomy";
 
 // The onboarding preview, built up step by step like the sign-up panel:
 // instead of the whole profile shrunk to fit, each step shows the part of the
@@ -65,7 +65,7 @@ function Avatar({ p, className }: { p: ProfileView; className?: string }) {
     .join("")
     .toUpperCase();
   return (
-    <span className={cn("flex shrink-0 items-center justify-center overflow-hidden bg-warm-100 font-semibold text-warm-600", className)}>
+    <span className={cn("flex shrink-0 items-center justify-center overflow-hidden bg-warm-100 font-medium text-warm-600", className)}>
       {p.photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={p.photoUrl} alt="" className="size-full object-cover" />
@@ -102,7 +102,7 @@ function Chips({ items, empty = 3 }: { items: string[]; empty?: number }) {
 }
 
 function Heading({ children }: { children: ReactNode }) {
-  return <h3 className="text-[13px] font-semibold text-warm-900">{children}</h3>;
+  return <h3 className="text-[13px] font-medium text-warm-900">{children}</h3>;
 }
 
 function Label({ children }: { children: ReactNode }) {
@@ -124,7 +124,7 @@ function Header({ p, highlight, large }: { p: ProfileView; highlight: PreviewReg
   return (
     <div>
       <Spot name="banner" highlight={highlight} className="rounded-none">
-        <ProfileBanner style={p.bannerStyle} className="h-20" />
+        <ProfileBanner url={p.bannerUrl} className="h-20" />
       </Spot>
       <div className="px-5 pb-5">
         <div className="relative -mt-9 flex items-end justify-between">
@@ -138,7 +138,7 @@ function Header({ p, highlight, large }: { p: ProfileView; highlight: PreviewReg
           </span>
         </div>
         <Spot name="identity" highlight={highlight} className="-mx-2 mt-3 px-2 py-1">
-          <p className={cn("text-[18px] font-semibold tracking-tight", name ? "text-warm-900" : "text-warm-300")}>{name || "Full name"}</p>
+          <p className={cn("text-[18px] font-medium tracking-tight", name ? "text-warm-900" : "text-warm-300")}>{name || "Full name"}</p>
           {p.displayAsBusiness && p.businessName && fullName(p) && <p className="text-[12px] text-warm-500">{fullName(p)}</p>}
           <p className="mt-0.5 flex flex-wrap gap-x-1.5 text-[13.5px]">
             <span className={p.titleCredentials ? "text-warm-600" : "text-warm-300"}>{p.titleCredentials || "Title / credentials"}</span>
@@ -157,7 +157,7 @@ function MiniHeader({ p }: { p: ProfileView }) {
     <div className="flex items-center gap-3 border-b border-warm-200 px-5 py-4">
       <Avatar p={p} className="size-10 rounded-xl text-[13px]" />
       <div className="min-w-0">
-        <p className={cn("truncate text-[14px] font-semibold", name ? "text-warm-900" : "text-warm-300")}>{name || "Full name"}</p>
+        <p className={cn("truncate text-[14px] font-medium", name ? "text-warm-900" : "text-warm-300")}>{name || "Full name"}</p>
         <p className="truncate text-[12px] text-warm-500">{p.titleCredentials || "Title / credentials"}</p>
       </div>
     </div>
@@ -350,12 +350,9 @@ function Segment({ step, p, highlight }: { step: StepKey; p: ProfileView; highli
         <div className="flex flex-col gap-1.5 px-5 pb-5" aria-hidden>
           <span className="block h-2 w-full rounded bg-warm-100" />
           <span className="block h-2 w-5/6 rounded bg-warm-100" />
-          {/* The banner colour is also the profile's call to action. */}
-          <Spot name="banner" highlight={highlight} className="mt-3.5">
-            <span className="flex h-9 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors duration-300" style={bannerCta(p.bannerStyle)}>
-              Request a session
-            </span>
-          </Spot>
+          <span className="mt-3.5 flex h-9 items-center justify-center rounded-lg bg-brand-primary text-[13px] font-medium text-white">
+            Request a session
+          </span>
         </div>
       </>
     );

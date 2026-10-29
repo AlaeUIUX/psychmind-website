@@ -15,7 +15,7 @@ import { ONBOARDING_STEPS, type StepKey } from "./steps";
 // use. The review step lists them, and submission refuses until all pass.
 
 const checks: Record<Exclude<StepKey, "review">, (s: ProviderState) => boolean> = {
-  identity: (s) => identitySchema.safeParse(s).success,
+  identity: (s) => identitySchema.safeParse({ ...s, bannerId: s.banner?.id ?? "" }).success,
   picture: (s) => pictureSchema.safeParse({ photoId: s.photo?.id ?? "" }).success,
   story: (s) => storySchema.safeParse(s).success,
   clients: (s) => clientsSchema.safeParse(s).success,

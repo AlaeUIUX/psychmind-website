@@ -7,7 +7,6 @@ import { stripeConfigured } from "@/lib/billing";
 import { profilePath } from "@/lib/provider/links";
 import { fileUrl } from "@/lib/provider/state";
 import type { ProfileView } from "@/lib/provider/types";
-import type { BannerStyle } from "@/lib/taxonomy";
 import { selfHosted } from "@/lib/photos";
 
 // The public directory: who appears in search and on public profile pages,
@@ -67,8 +66,8 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       displayAsBusiness: p.displayAsBusiness,
       titleCredentials: p.titleCredentials,
       pronouns: p.pronouns,
-      bannerStyle: p.bannerStyle as BannerStyle,
       photoUrl: p.externalPhotoUrl ? selfHosted(p.externalPhotoUrl) : (p.photoId ? fileUrl(p.photoId) : null),
+      bannerUrl: p.bannerId && !p.useDefaultBanner ? fileUrl(p.bannerId) : null,
       verified: true,
       whoYouWorkWith: p.whoYouWorkWith,
       about: p.about,

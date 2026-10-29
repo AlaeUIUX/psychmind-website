@@ -5,7 +5,7 @@ import { DecisionPanel } from "@/components/admin/decision-panel";
 import { STATUS_BADGE } from "@/components/admin/provider-table";
 import { PageHeader } from "@/components/app/page-header";
 import { ProviderProfileView } from "@/components/provider/profile-view";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/app/status-pill";
 import { fileUrl, toProfileView } from "@/lib/provider/state";
 import { stateName } from "@/lib/taxonomy";
 import { providerHistory, providerOwnerEmail } from "@/server/admin/data";
@@ -31,10 +31,10 @@ export default async function AdminProviderPage({ params }: { params: Promise<{ 
   return (
     <>
       <PageHeader
-        breadcrumbs={[{ label: "Verification queue", href: "/admin" }, { label: name }]}
+        breadcrumbs={[{ label: "Verification queue", href: "/admin/queue" }, { label: name }]}
         title={name}
         description={email ?? undefined}
-        actions={<Badge variant={badge.variant}>{badge.label}</Badge>}
+        actions={<StatusPill tone={badge.variant}>{badge.label}</StatusPill>}
       />
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,440px)_1fr]">
@@ -77,8 +77,8 @@ export default async function AdminProviderPage({ params }: { params: Promise<{ 
               {state.licenses.map((l) => (
                 <li key={l.id} className="flex flex-col gap-2 rounded-field border border-warm-200 p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="type-small font-semibold text-text-primary">{stateName(l.state)}</p>
-                    <Badge variant={l.status === "verified" ? "success" : l.status === "rejected" ? "danger" : "info"}>{l.status}</Badge>
+                    <p className="type-small font-medium text-text-primary">{stateName(l.state)}</p>
+                    <StatusPill tone={l.status === "verified" ? "success" : l.status === "rejected" ? "danger" : "warning"}>{l.status}</StatusPill>
                   </div>
                   <p className="type-small text-text-secondary">
                     License #{l.licenseNumber} · {l.issuingBody}

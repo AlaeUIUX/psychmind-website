@@ -67,7 +67,7 @@ export function ProviderRequests({ requests }: { requests: ProviderRequest[] }) 
 
   if (!requests.length) {
     return (
-      <EmptyState art={<InboxIcon className="size-7" />} title="No requests yet">
+      <EmptyState art={<InboxIcon />} title="No requests yet">
         When someone requests a session, it appears here and in your email.
       </EmptyState>
     );
@@ -82,7 +82,7 @@ export function ProviderRequests({ requests }: { requests: ProviderRequest[] }) 
         ))}
       </ul>
     ) : (
-      <EmptyState art={<InboxIcon className="size-7" />} title="You're all caught up">
+      <EmptyState art={<InboxIcon />} title="You're all caught up">
         Every request has been marked as contacted.
       </EmptyState>
     );

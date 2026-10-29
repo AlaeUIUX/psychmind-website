@@ -26,7 +26,8 @@ describe("provider profile schemas", () => {
       lastName: "",
       titleCredentials: "LMHC",
       pronouns: "",
-      bannerStyle: "banner_04",
+      bannerId: "",
+      useDefaultBanner: false,
       businessName: "",
       displayAsBusiness: false,
     });

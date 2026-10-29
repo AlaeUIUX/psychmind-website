@@ -1,4 +1,3 @@
-import type { BannerStyle } from "@/lib/taxonomy";
 import type { ProfileView, ProviderStatus } from "./types";
 import { selfHosted } from "@/lib/photos";
 
@@ -26,8 +25,9 @@ export type ProviderState = {
   displayAsBusiness: boolean;
   titleCredentials: string;
   pronouns: string;
-  bannerStyle: BannerStyle;
   photo: UploadMeta | null;
+  banner: UploadMeta | null;
+  useDefaultBanner: boolean;
   whoYouWorkWith: string;
   about: string;
   sessionParticipants: string[];
@@ -75,10 +75,10 @@ export function toProfileView(s: ProviderState): ProfileView {
     displayAsBusiness: s.displayAsBusiness,
     titleCredentials: s.titleCredentials,
     pronouns: s.pronouns,
-    bannerStyle: s.bannerStyle,
     publicId: s.publicId,
     isSample: s.isSample,
     photoUrl: s.externalPhotoUrl ? selfHosted(s.externalPhotoUrl) : (s.photo ? fileUrl(s.photo.id) : null),
+    bannerUrl: s.banner && !s.useDefaultBanner ? fileUrl(s.banner.id) : null,
     verified: s.status === "approved",
     whoYouWorkWith: s.whoYouWorkWith,
     about: s.about,

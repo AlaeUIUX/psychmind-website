@@ -8,10 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { OWNER_LABEL, groupProgress, type ItemStatus, type TrackerGroup, type TrackerItem } from "./tracker";
 
-type View = "left" | "client" | "accounts" | "built" | "all";
+type View = "left" | "blocker" | "client" | "accounts" | "built" | "all";
 
 const VIEWS: { value: View; label: string; empty: string; test: (i: TrackerItem) => boolean }[] = [
   { value: "left", label: "What's left", empty: "Nothing left here.", test: (i) => i.status !== "done" },
+  { value: "blocker", label: "Blocks launch", empty: "Nothing here blocks the launch.", test: (i) => i.status !== "done" && Boolean(i.blocker) },
   { value: "client", label: "Waiting on the client", empty: "Nothing waiting on the client here.", test: (i) => i.status !== "done" && i.owner === "client" },
   { value: "accounts", label: "Accounts to set up", empty: "No accounts needed here.", test: (i) => i.status !== "done" && i.owner === "accounts" },
   { value: "built", label: "Built", empty: "Nothing built here yet.", test: (i) => i.status === "done" },
@@ -114,6 +115,7 @@ function Row({ item }: { item: TrackerItem }) {
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <p className={cn("type-ui-label", item.status === "done" ? "text-text-secondary" : "text-text-primary")}>{item.title}</p>
           {item.status === "doing" && <Badge variant="info">In progress</Badge>}
+          {item.blocker && item.status !== "done" && <Badge variant="danger">Blocks launch</Badge>}
           {item.owner !== "build" && <Badge variant={OWNER_VARIANT[item.owner]}>{OWNER_LABEL[item.owner]}</Badge>}
         </div>
         {item.detail && <p className="type-ui-small max-w-[75ch] text-text-tertiary">{item.detail}</p>}

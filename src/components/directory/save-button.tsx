@@ -1,22 +1,26 @@
 "use client";
 
 import { cn } from "cn";
-import { HeartIcon } from "@/components/ui/hugeicons";
+import { CircleAlertIcon, HeartIcon, InfoIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { pillToast } from "@/components/ui/pill-toast";
 import { setProviderSaved } from "@/server/directory/actions";
 
 // The heart. Patients save straight away (with Undo); anyone signed out is
 // asked to create an account or log in, then brought back here with the
-// provider saved (?save=1). Copy: TODO(client).
+// provider saved (?save=1). Its messages are the landing page's pill
+// (pillToast). Copy: TODO(client).
 
 export type Viewer = { role: "patient" | "provider" | "admin" | null };
 
 /** Shares saved state between every heart for the same provider on a page
  *  (a card and its quick view stay in sync). */
+const infoIcon = <InfoIcon aria-hidden className="size-3.5" />;
+const alertIcon = <CircleAlertIcon aria-hidden className="size-3.5" />;
+
 const SavedContext = createContext<{ isSaved: (id: string) => boolean; set: (id: string, saved: boolean) => void } | null>(null);
 
 export function SavedProvidersProvider({ initial, children }: { initial: string[]; children: ReactNode }) {
@@ -115,26 +119,26 @@ export function SaveButton({
       if (!result.ok) {
         setSaved(!next);
         if (result.reason === "auth") setPrompt(true);
-        else if (result.reason === "role") toast.info("Saving providers is for patient accounts.");
-        else if (result.reason === "rate") toast.error("You're doing that a lot. Try again in a minute.");
-        else toast.error("We couldn't save this provider. Please try again.");
+        else if (result.reason === "role") pillToast("Saving providers is for patient accounts.", { icon: infoIcon });
+        else if (result.reason === "rate") pillToast("You're doing that a lot. Try again in a minute.", { icon: alertIcon, tone: "error" });
+        else pillToast("We couldn't save this provider. Please try again.", { icon: alertIcon, tone: "error" });
         return;
       }
       setSaved(result.saved);
       if (quiet) return;
       if (result.saved) {
-        toast.success(`${name} saved`, {
-          description: "Find them any time under Saved providers in your account.",
+        pillToast(`${name} saved`, {
+          icon: <HeartIcon aria-hidden className="size-3.5 fill-current" />,
           action: { label: "Undo", onClick: () => toggle(false, { quiet: true }) },
         });
       } else {
-        toast(`${name} removed from your saved providers`);
+        pillToast(`${name} removed from your saved providers`, { icon: <HeartIcon aria-hidden className="size-3.5" /> });
       }
     });
 
   function toggle(next: boolean, opts?: { quiet?: boolean }) {
     if (!viewer.role) return setPrompt(true);
-    if (viewer.role !== "patient") return toast.info("Saving providers is for patient accounts.");
+    if (viewer.role !== "patient") return pillToast("Saving providers is for patient accounts.", { icon: infoIcon });
     setSaved(next);
     persist(next, opts);
   }

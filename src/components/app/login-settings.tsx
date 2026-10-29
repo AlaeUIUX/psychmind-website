@@ -27,7 +27,7 @@ function Row({ title, description, children }: { title: string; description: Rea
   return (
     <div className="flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
       <div className="flex min-w-0 max-w-[440px] flex-col gap-1">
-        <h3 className="type-small font-semibold text-text-primary">{title}</h3>
+        <h3 className="type-small font-medium text-text-primary">{title}</h3>
         <div className="type-small break-words text-text-tertiary">{description}</div>
       </div>
       <div className="shrink-0">{children}</div>

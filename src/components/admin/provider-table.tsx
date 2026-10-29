@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/app/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { DoodleCheck } from "@/components/ui/doodles";
+import { StatusPill, type StatusTone } from "@/components/app/status-pill";
+import { CheckIcon } from "@/components/ui/hugeicons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProviderStatus } from "@/lib/provider/types";
 import type { ProviderRow } from "@/server/admin/data";
 
-export const STATUS_BADGE: Record<ProviderStatus, { variant: "neutral" | "info" | "warning" | "success" | "danger"; label: string }> = {
+export const STATUS_BADGE: Record<ProviderStatus, { variant: StatusTone; label: string }> = {
   draft: { variant: "neutral", label: "Draft" },
-  submitted: { variant: "info", label: "Waiting for review" },
+  submitted: { variant: "warning", label: "Waiting for review" },
   changes_requested: { variant: "warning", label: "Changes requested" },
   approved: { variant: "success", label: "Verified" },
   rejected: { variant: "danger", label: "Rejected" },
@@ -26,13 +26,15 @@ function waiting(since: Date | null) {
 export function ProviderTable({ rows, empty }: { rows: ProviderRow[]; empty: { title: string; body: string } }) {
   if (!rows.length) {
     return (
-      <EmptyState art={<DoodleCheck className="size-7" />} title={empty.title}>
+      <EmptyState art={<CheckIcon />} title={empty.title}>
         {empty.body}
       </EmptyState>
     );
   }
   return (
-    <div className="rounded-card border border-warm-200 bg-white p-2 sm:p-4">
+    // No card: the table sits on the page (row hover is enough); -mx lines
+    // the first column up with the page title.
+    <div className="-mx-3">
       <Table>
         <TableHeader>
           <TableRow>
@@ -54,9 +56,9 @@ export function ProviderTable({ rows, empty }: { rows: ProviderRow[]; empty: { t
               <TableCell>{r.states.join(", ") || "—"}</TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  <Badge variant={STATUS_BADGE[r.status].variant}>{STATUS_BADGE[r.status].label}</Badge>
-                  {r.needsReview && <Badge variant="info">License update</Badge>}
-                  {r.isSample && <Badge variant="neutral">Sample</Badge>}
+                  <StatusPill tone={STATUS_BADGE[r.status].variant}>{STATUS_BADGE[r.status].label}</StatusPill>
+                  {r.needsReview && <StatusPill tone="warning">License update</StatusPill>}
+                  {r.isSample && <StatusPill dot={false}>Sample</StatusPill>}
                 </div>
               </TableCell>
               <TableCell className="text-right tabular-nums">{r.status === "submitted" ? waiting(r.submittedAt) : "—"}</TableCell>

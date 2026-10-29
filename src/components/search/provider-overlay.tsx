@@ -73,8 +73,8 @@ export function ProviderOverlay({
                   </span>
                 )}
                 <span aria-hidden className="ml-2 hidden items-center gap-1 type-caption text-text-placeholder sm:inline-flex">
-                  <Kbd small>←</Kbd>
-                  <Kbd small>→</Kbd>
+                  <Kbd small arrow="left" press="ArrowLeft" />
+                  <Kbd small arrow="right" press="ArrowRight" />
                 </span>
               </div>
               <div className="flex items-center gap-1">

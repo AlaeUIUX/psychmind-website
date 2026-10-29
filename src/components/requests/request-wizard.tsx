@@ -379,7 +379,7 @@ export function RequestWizard({ target, patient, resume }: { target: RequestTarg
               onChange={(e) => update({ note: e.target.value.slice(0, 1000) })}
               placeholder="Say what’s on your mind..."
               rows={5}
-              className="min-h-[120px] resize-y shadow-none"
+              className="min-h-[120px] resize-y"
             />
           </AuthField>
           <div className="flex flex-col gap-2">

@@ -60,7 +60,8 @@ test("a new admin replaces the temporary password and sets up an authenticator f
   await expect(page.getByRole("heading", { name: "Save your backup codes" })).toBeVisible();
   await page.getByRole("checkbox").check();
   await page.getByRole("link", { name: "Continue" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Verification queue" })).toBeVisible();
+  // Set up, they land on the console's home: Analytics.
+  await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
 
   // Signing out goes back to the admin log-in, where the temporary password no longer works.
   await page.getByRole("button", { name: /Nadia Haddad/ }).click();

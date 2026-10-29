@@ -60,7 +60,7 @@ export default function DevProgressPage() {
   const openBuild = milestones.flatMap((g) => g.items).filter((i) => i.status !== "done" && i.owner === "build");
   const tiles = [
     { label: "Contract scope built", value: `${built.percent}%`, hint: `${built.done} of ${built.total} items done` },
-    { label: "Left to build", value: openBuild.length, hint: `${openBuild.filter((i) => i.status === "doing").length} in progress` },
+    { label: "Left to build", value: openBuild.length, hint: `${openBuild.filter((i) => i.blocker).length} of them block launch` },
     { label: "Waiting on the client", value: open.filter((i) => i.owner === "client").length, hint: "Decisions, copy, payment" },
     { label: "Accounts to set up", value: open.filter((i) => i.owner === "accounts").length, hint: "Hosting, email, Stripe, Google" },
   ];

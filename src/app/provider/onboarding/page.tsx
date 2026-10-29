@@ -1,8 +1,8 @@
 import {
   BadgeCheckIcon,
+  CalendarIcon,
   CameraIcon,
   CircleDollarSignIcon,
-  CircleXIcon,
   ClockIcon,
   FileTextIcon,
   GraduationCapIcon,
@@ -22,7 +22,7 @@ import { loadProviderState } from "@/server/provider/data";
 
 export const metadata: Metadata = { title: "For providers — PsychMind", robots: { index: false } };
 
-const featureIcons = [CircleXIcon, BadgeCheckIcon, CircleDollarSignIcon, ShieldIcon];
+const featureIcons = [CalendarIcon, BadgeCheckIcon, CircleDollarSignIcon, ShieldIcon];
 
 // TODO(client): "How it works" and "What you'll need" are new copy.
 const timeline = [
@@ -50,7 +50,8 @@ export default async function OnboardingWelcomePage() {
 
   const started = stepIndex(state.onboardingStep) > 0;
   const done = sectionStatuses(state).filter((s) => s.complete).length;
-  const percent = Math.round((done / 8) * 100);
+  // Of all nine steps, so a filled-in profile still has submitting left.
+  const percent = Math.round((done / ONBOARDING_STEPS.length) * 100);
   const resume = ONBOARDING_STEPS.find((s) => s.key === state.onboardingStep);
 
   return (
@@ -87,7 +88,7 @@ export default async function OnboardingWelcomePage() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <p className="flex items-baseline gap-1.5">
-                <span className="font-mono text-[40px] leading-none font-semibold tracking-[-0.04em] text-warm-900">{BASE_PLAN.priceLabel}</span>
+                <span className="type-hero-title">{BASE_PLAN.priceLabel}</span>
                 <span className="type-ui-small text-warm-500">{BASE_PLAN.period}</span>
               </p>
               <p className="type-ui-label text-warm-800">{BASE_PLAN.summary}</p>
@@ -111,29 +112,32 @@ export default async function OnboardingWelcomePage() {
           </ul>
         </div>
 
-        <div className="flex animate-ui-enter flex-col gap-4" style={{ "--i": 3 } as React.CSSProperties}>
-          <p className="flex items-center gap-2 type-ui-small text-warm-600">
-            <ClockIcon aria-hidden className="size-4 text-warm-500" />
-            Takes about 20 minutes · Goes live after verification <span className="font-medium text-blue-600">1-2 days</span>
-          </p>
-          <Button asChild className="h-11 w-full px-6 text-[15px] sm:w-auto sm:self-start">
-            <Link href={`/provider/onboarding/${started ? state.onboardingStep : "identity"}`}>
-              {started ? "Continue where you left off" : "Get started"}
-              <HoverArrow />
-            </Link>
-          </Button>
-          <p className="type-ui-caption text-warm-500">
-            By clicking “Get started”, you agree to our{" "}
-            <Link href="/terms" className="underline underline-offset-2 hover:text-warm-900">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-warm-900">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        </div>
+        {/* Once started, the welcome-back card above is the one way in. */}
+        {!started && (
+          <div className="flex animate-ui-enter flex-col gap-4" style={{ "--i": 3 } as React.CSSProperties}>
+            <p className="flex items-center gap-2 type-ui-small text-warm-600">
+              <ClockIcon aria-hidden className="size-4 text-warm-500" />
+              Takes about 20 minutes · Goes live after verification <span className="font-medium text-warm-900">1-2 days</span>
+            </p>
+            <Button asChild className="h-11 w-full px-6 text-[15px] sm:w-auto sm:self-start">
+              <Link href="/provider/onboarding/identity">
+                Get started
+                <HoverArrow />
+              </Link>
+            </Button>
+            <p className="type-ui-caption text-warm-500">
+              By clicking “Get started”, you agree to our{" "}
+              <Link href="/terms" className="underline underline-offset-2 hover:text-warm-900">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-warm-900">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          </div>
+        )}
       </section>
 
       <aside className="flex flex-col gap-5">
@@ -143,7 +147,7 @@ export default async function OnboardingWelcomePage() {
             {timeline.map((t, i) => (
               <li key={t.title} className="relative flex gap-4 pb-6 last:pb-0">
                 {i < timeline.length - 1 && <span aria-hidden className="absolute top-8 bottom-1 left-[13px] w-px bg-warm-200" />}
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-warm-900 type-ui-mono text-[12px] text-white">{i + 1}</span>
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-warm-100 type-ui-mono text-[12px] text-warm-600">{i + 1}</span>
                 <div className="flex flex-1 flex-col gap-1 pt-0.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="type-ui-label text-warm-900">{t.title}</span>

@@ -26,6 +26,7 @@ import { ageOkToken } from "./age";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
 import { getSession, hasTwoFactor, homeFor } from "./session";
+import { isTestProvider, resetTestProvider } from "./test-provider";
 
 // Email/password auth as server actions. Roles are assigned here, server-side,
 // never from client input. Messages are new microcopy — TODO(client).
@@ -211,9 +212,12 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
   if (!parsed.success) return { fieldErrors: issues(parsed.error), values };
   if (await limited("signin", parsed.data.email, 5, "1 m")) return { error: TOO_MANY, values };
   await dbReady;
+  // Local only: the test provider starts onboarding over at every log-in.
+  const testProvider = isTestProvider(parsed.data.email);
+  if (testProvider) await resetTestProvider();
   let role: string | undefined;
   let needsCode = false;
-  const next = safeNext(form.get("next"));
+  const next = testProvider ? "/provider/onboarding" : safeNext(form.get("next"));
   // the account's role, read now so an admin off the admin host can be turned back below
   const teamOnly = adminHost() && !(await onAdminHost());
   const [account] = teamOnly

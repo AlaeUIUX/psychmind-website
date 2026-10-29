@@ -66,8 +66,12 @@ export const providerProfile = pgTable(
     displayAsBusiness: boolean("display_as_business").notNull().default(false),
     titleCredentials: text("title_credentials").notNull().default(""),
     pronouns: text("pronouns"),
+    /** Unused since 2026-10-29: banners are an optional upload now (bannerId), gray water by default. */
     bannerStyle: text("banner_style").notNull().default("banner_10"),
     photoId: text("photo_id"),
+    bannerId: text("banner_id"),
+    /** The provider chose the default banner; their upload (bannerId) is kept to switch back to. */
+    useDefaultBanner: boolean("use_default_banner").notNull().default(false),
 
     // Story
     whoYouWorkWith: text("who_you_work_with").notNull().default(""),
@@ -158,13 +162,13 @@ export const providerLicense = pgTable(
   (t) => [uniqueIndex("provider_license_state_idx").on(t.profileId, t.state)],
 );
 
-/** Uploaded files (photos, license documents). Bytes live in the storage driver. */
+/** Uploaded files (photos, banners, license documents). Bytes live in the storage driver. */
 export const upload = pgTable("upload", {
   id: id(),
   ownerId: text("owner_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  kind: text("kind", { enum: ["photo", "license"] }).notNull(),
+  kind: text("kind", { enum: ["photo", "banner", "license"] }).notNull(),
   storageKey: text("storage_key").notNull(),
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull(),

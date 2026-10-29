@@ -21,8 +21,9 @@ export type Sort = (typeof SORTS)[number];
 const list = parseAsArrayOf(parseAsString).withDefault([]);
 
 export const searchParsers = {
-  /** Session format; none = either. */
-  format: parseAsStringLiteral(FORMATS),
+  /** Session format, always one (Online unless in-person is chosen), as on the
+   *  home page's bar. Written out even when it's the default, so links say it. */
+  format: parseAsStringLiteral(FORMATS).withDefault("online").withOptions({ clearOnDefault: false }),
   /** "Where?": city, ZIP or state. Online sessions only use the state. */
   where: parseAsString.withDefault(""),
   /** "What's on your mind?" */
@@ -62,10 +63,10 @@ export function loadSearchFilters(params: Record<string, string | string[] | und
 /** A /providers link for a set of filters. */
 export const searchHref = createSerializer(searchParsers);
 
-/** The filters a person chose (everything except sort). */
+/** The filters a person chose (everything except sort, and the session
+ *  format, which is always set). */
 export function activeFilterCount(f: SearchFilters) {
   return (
-    (f.format ? 1 : 0) +
     (f.where ? 1 : 0) +
     (f.q ? 1 : 0) +
     f.specialty.length +
@@ -79,7 +80,7 @@ export function activeFilterCount(f: SearchFilters) {
 }
 
 export const EMPTY_FILTERS: SearchFilters = {
-  format: null,
+  format: "online",
   where: "",
   q: "",
   specialty: [],

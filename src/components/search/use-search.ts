@@ -35,8 +35,8 @@ export function useSearchControls(): SearchControls {
       }),
     [setFilters],
   );
-  // Clearing keeps the sort order.
-  const clear = useCallback(() => void setFilters((prev) => ({ ...EMPTY_FILTERS, sort: prev.sort })), [setFilters]);
+  // Clearing keeps the session format (there's always one) and the sort order.
+  const clear = useCallback(() => void setFilters((prev) => ({ ...EMPTY_FILTERS, format: prev.format, sort: prev.sort })), [setFilters]);
 
   return useMemo(() => ({ filters, pending, set, toggle, clear }), [filters, pending, set, toggle, clear]);
 }

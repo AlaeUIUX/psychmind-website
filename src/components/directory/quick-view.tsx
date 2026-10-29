@@ -3,12 +3,13 @@
 import { cn } from "cn";
 import { CheckIcon, FlaskConicalIcon, GlobeIcon, MapPinIcon, MonitorIcon } from "@/components/ui/hugeicons";
 import type { ReactNode } from "react";
+import { pill, topicChipIdle, topicChipOn } from "@/components/home/search-styles";
 import { formatsLabel, ProfileBanner } from "@/components/provider/profile-view";
 import { displayName, feeFrom, licensedStates, locationLabel, shortName, therapyType } from "@/lib/provider/display";
 import { ageProfileLabel, labelOf, stateName } from "@/lib/taxonomy";
 import type { DirectoryProvider } from "@/server/directory/data";
 import { RequestSessionButton, VerifiedExplainer } from "./profile-actions";
-import { ProviderPhoto } from "./provider-card";
+import { ProviderPhoto, VerifiedMark } from "./provider-card";
 import { SaveButton, type Viewer } from "./save-button";
 
 // A provider at a glance, in the overlay over the search results: enough to
@@ -28,8 +29,9 @@ function Chip({ children, strong }: { children: ReactNode; strong?: boolean }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-tag border px-2 py-0.5 text-[13px] font-medium",
-        strong ? "border-warm-900 bg-warm-900 text-white" : "border-warm-200 bg-white text-text-secondary",
+        // the result card's pills
+        pill,
+        strong ? topicChipOn : topicChipIdle,
       )}
     >
       {children}
@@ -65,7 +67,7 @@ export function QuickView({
   return (
     <div key={p.id} className={cn("flex animate-focus-in flex-col", className)}>
       <div className="relative px-4 pt-4 sm:px-5 sm:pt-5">
-        <ProfileBanner style={p.bannerStyle} className="h-28 rounded-xl" />
+        <ProfileBanner url={p.bannerUrl} className="h-28 rounded-xl" />
         <ProviderPhoto p={p} className="absolute top-14 left-8 size-24 rounded-2xl border-4 border-white shadow-card sm:left-9" />
       </div>
 
@@ -74,7 +76,10 @@ export function QuickView({
           <VerifiedExplainer name={first} states={states} />
         </div>
         <header className="-mt-1 flex flex-col gap-1.5">
-          <h2 className="text-[24px] leading-8 font-semibold tracking-[-0.015em] text-text-primary">{name}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl leading-7 font-medium tracking-[-0.015em] text-warm-900">{name}</h2>
+            <VerifiedMark className="size-[18px]" />
+          </div>
           <p className="type-body text-text-secondary">
             {p.titleCredentials}
             {p.pronouns && <span className="text-text-tertiary"> · {p.pronouns}</span>}
@@ -93,10 +98,10 @@ export function QuickView({
               </Chip>
             )}
             {p.acceptingNewClients === false && (
-              <span className="inline-flex items-center rounded-tag bg-amber-50 px-2 py-0.5 text-[13px] font-medium text-amber-800">Not accepting new clients</span>
+              <span className={cn(pill, "border-amber-200 bg-amber-50 text-amber-800 shadow-none")}>Not accepting new clients</span>
             )}
             {p.isSample && (
-              <span className="inline-flex items-center gap-1 rounded-tag bg-warm-100 px-2 py-0.5 text-[13px] font-medium text-text-tertiary">
+              <span className={cn(pill, "border-warm-200 bg-warm-100 text-text-tertiary shadow-none")}>
                 <FlaskConicalIcon className="size-3.5" />
                 Sample profile
               </span>
@@ -106,7 +111,7 @@ export function QuickView({
 
         <div className="flex gap-2">
           <RequestSessionButton
-            provider={{ id: p.id, name: first, bannerStyle: p.bannerStyle, isSample: p.isSample, acceptingNewClients: p.acceptingNewClients }}
+            provider={{ id: p.id, name: first, isSample: p.isSample, acceptingNewClients: p.acceptingNewClients }}
             viewer={viewer}
             saved={saved}
             returnTo={p.href}
@@ -121,7 +126,7 @@ export function QuickView({
             <dd className="type-small text-text-primary">
               {fee != null ? (
                 <>
-                  From <span className="font-semibold">{fee} USD</span>
+                  From <span className="font-medium">{fee} USD</span>
                 </>
               ) : (
                 "—"

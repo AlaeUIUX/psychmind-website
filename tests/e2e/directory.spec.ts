@@ -32,7 +32,8 @@ const count = (page: Page) => page.getByRole("status").filter({ hasText: /provid
 test("a result opens a quick look over the page; the full profile opens in a new tab", async ({ page }) => {
   await page.goto("/providers");
   await expect(count(page)).toHaveText(/\d+ providers found/);
-  await expect(page.getByText("These are sample profiles.")).toBeVisible();
+  // No banner over the results: sample profiles say so in their quick look (below) and full profile.
+  await expect(page.getByText("These are sample profiles.")).toHaveCount(0);
 
   await page.getByTestId("provider-card").filter({ hasText: "Sara Oliisi" }).getByRole("button", { name: "Preview Sara Oliisi" }).click();
   await expect(page).toHaveURL(/[?&]p=[a-z0-9]{8}/);
@@ -72,10 +73,15 @@ test("filters narrow the results and live in the URL", async ({ page, isMobile }
   const depression = Number((await count(page).textContent())!.match(/\d+/)![0]);
   expect(depression).toBeLessThan(all);
 
+  // The home page's bar: Session format opens a panel holding the format and "Where?".
+  const bar = page.getByRole("search");
+  const panel = page.getByRole("dialog");
+
   // Online needs the patient's state (licensing).
-  await page.getByRole("search").getByRole("radio", { name: "Online" }).click();
+  await bar.getByRole("button", { name: /Session format/ }).click();
+  await panel.getByRole("radio", { name: "Online" }).click();
   await expect(page.getByText(/Add your state to see who can work with you online/)).toBeVisible();
-  await page.getByRole("search").getByRole("combobox", { name: "Your state" }).click();
+  await panel.getByRole("combobox", { name: "Your state" }).click();
   await page.getByRole("option", { name: "New York" }).click();
   await expect(page).toHaveURL(/where=NY/);
   await expect(page.getByTestId("provider-card").first()).toContainText("Online in New York");
@@ -83,8 +89,9 @@ test("filters narrow the results and live in the URL", async ({ page, isMobile }
   // In-person near a place.
   await page.getByRole("button", { name: "Clear all" }).first().click();
   await expect(page).not.toHaveURL(/specialty=/);
-  await page.getByRole("search").getByRole("radio", { name: "In-person" }).click();
-  await page.getByRole("search").getByRole("combobox", { name: "Where?" }).fill("Miami");
+  await bar.getByRole("button", { name: /Session format/ }).click();
+  await panel.getByRole("radio", { name: "In-person" }).click();
+  await panel.getByRole("combobox", { name: "Where?" }).fill("Miami");
   await page.getByRole("option", { name: "Miami, FL" }).click();
   await expect(page).toHaveURL(/where=Miami/);
   await expect(async () => {
@@ -95,8 +102,8 @@ test("filters narrow the results and live in the URL", async ({ page, isMobile }
 
   // Everyday words find the matching specialty.
   await page.getByRole("button", { name: "Clear all" }).first().click();
-  await page.getByRole("search").getByRole("combobox", { name: "What's on your mind?" }).fill("panic attacks");
-  await page.getByRole("search").getByRole("combobox", { name: "What's on your mind?" }).press("Enter");
+  await bar.getByRole("textbox", { name: "What's on your mind?" }).fill("panic attacks");
+  await bar.getByRole("textbox", { name: "What's on your mind?" }).press("Enter");
   await expect(page).toHaveURL(/q=panic/);
   await expect(page.getByTestId("provider-card").first()).toBeVisible();
 });

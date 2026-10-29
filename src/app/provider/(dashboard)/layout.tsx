@@ -1,19 +1,22 @@
 import { and, count, eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { AppShell } from "@/components/app/app-shell";
+import { DashboardShell } from "@/components/app/dashboard-shell";
 import { ProviderBanner } from "@/components/provider/provider-banner";
 import { db } from "@/db";
 import { providerProfile, sessionRequest } from "@/db/schema";
 import { shownListing } from "@/lib/billing";
+import { changelogFor } from "@/lib/changelog";
+import { SIDEBAR_COOKIE } from "@/lib/dashboard";
 import { fileUrl } from "@/lib/provider/state";
 import { signOut } from "@/server/auth/actions";
 import { requireRole } from "@/server/auth/session";
 import { loadProviderState } from "@/server/provider/data";
 import { providerOverview } from "@/server/provider/status";
 
-// Provider dashboard frame (Figma: Analytics · Blogs · Profile · Settings;
-// Blogs arrive in a later slice). A provider who hasn't started
+// Provider dashboard frame: the sidebar (DashboardShell), Overview first
+// (Figma's Analytics · Blogs · Profile · Settings; Blogs arrive later). A provider who hasn't started
 // onboarding is sent to the intro first.
 export default async function ProviderDashboardLayout({ children }: { children: ReactNode }) {
   const { user } = await requireRole("provider", "/provider");
@@ -29,23 +32,30 @@ export default async function ProviderDashboardLayout({ children }: { children: 
   const name = [state.firstName, state.lastName].filter(Boolean).join(" ") || user.name;
 
   return (
-    <AppShell
+    <DashboardShell
       homeHref="/provider"
-      nav={[
-        { href: "/provider", label: "Analytics" },
+      // TODO(client): "Provider".
+      area="Provider"
+      // TODO(client): "Overview", "Your practice" and "Account" (the other labels are Figma's).
+      groups={[
         {
-          href: "/provider/requests",
-          label: "Requests",
-          badge: newRequests ? (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white">
-              {newRequests}
-            </span>
-          ) : undefined,
+          items: [
+            { href: "/provider", label: "Overview", icon: "overview" },
+            { href: "/provider/requests", label: "Requests", icon: "requests", badge: newRequests },
+            { href: "/provider/analytics", label: "Analytics", icon: "analytics" },
+          ],
         },
-        { href: "/provider/profile", label: "Profile" },
-        { href: "/provider/billing", label: "Billing" },
-        { href: "/provider/settings", label: "Settings" },
+        {
+          label: "Your practice",
+          items: [
+            { href: "/provider/profile", label: "Profile", icon: "profile" },
+            { href: "/provider/billing", label: "Billing", icon: "billing" },
+          ],
+        },
+        { label: "Account", items: [{ href: "/provider/settings", label: "Settings", icon: "settings" }] },
       ]}
+      whatsNew={{ href: "/provider/whats-new", latestId: changelogFor("provider")[0]?.id, latestTitle: changelogFor("provider")[0]?.title }}
+      defaultCollapsed={(await cookies()).get(SIDEBAR_COOKIE)?.value === "collapsed"}
       user={{
         name,
         email: user.email,
@@ -69,6 +79,6 @@ export default async function ProviderDashboardLayout({ children }: { children: 
       }
     >
       {children}
-    </AppShell>
+    </DashboardShell>
   );
 }

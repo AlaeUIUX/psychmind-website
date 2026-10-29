@@ -8,7 +8,8 @@ import { signOut } from "@/server/auth/actions";
 import { getSession } from "@/server/auth/session";
 
 // The directory: search results and public provider profiles. Marketing
-// chrome on Figma's grey page, without smooth scrolling (the quick view
+// chrome on the landing's own near-white page (its grey frames read on it),
+// without smooth scrolling (the quick view
 // scrolls on its own). It's served from the app host, where the session
 // lives, so a signed-in visitor sees their account menu and can save.
 
@@ -36,12 +37,13 @@ export default async function DirectoryLayout({ children }: { children: ReactNod
   );
   return (
     // the public site's type and buttons, as in the (site) layout
-    <div className="type-scope-sort site-ui flex flex-1 flex-col bg-warm-100">
+    <div className="type-scope-sort site-ui flex flex-1 flex-col">
       <SiteHeader account={account} onSignOut={account ? signOut : undefined} home={home} />
       <main id="main" className="flex-1">
         {children}
       </main>
-      <SiteFooter />
+      {/* Already searching here: no "Ready to find help?" or socials. */}
+      <SiteFooter quiet />
     </div>
   );
 }

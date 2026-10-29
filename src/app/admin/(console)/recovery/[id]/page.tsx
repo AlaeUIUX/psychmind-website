@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { RecoveryDecision } from "@/components/admin/recovery-decision";
 import { STATUS_BADGE } from "@/components/admin/provider-table";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/app/status-pill";
 import { RECOVERY_BADGE } from "@/lib/recovery";
 import { stateName } from "@/lib/taxonomy";
 import { getRecoveryRequest } from "@/server/account/recovery";
@@ -49,7 +49,7 @@ export default async function AdminRecoveryRequestPage({ params }: { params: Pro
         breadcrumbs={[{ label: "Account recovery", href: "/admin/recovery" }, { label: request.fullName }]}
         title={request.fullName}
         description={`Asked ${dateFmt.format(request.createdAt)}${request.signedIn ? " while logged in" : ""}`}
-        actions={<Badge variant={badge.variant}>{badge.label}</Badge>}
+        actions={<StatusPill tone={badge.variant}>{badge.label}</StatusPill>}
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -130,10 +130,10 @@ export default async function AdminRecoveryRequestPage({ params }: { params: Pro
               {account.profile && (
                 <div className="flex flex-col gap-3 border-t border-warm-200 pt-4">
                   <div className="flex items-center justify-between gap-2">
-                    <Link href={`/admin/providers/${account.profile.id}`} className="type-small font-semibold text-text-primary hover:underline">
+                    <Link href={`/admin/providers/${account.profile.id}`} className="type-small font-medium text-text-primary hover:underline">
                       {[account.profile.firstName, account.profile.lastName].filter(Boolean).join(" ") || "Provider profile"}
                     </Link>
-                    <Badge variant={STATUS_BADGE[account.profile.status].variant}>{STATUS_BADGE[account.profile.status].label}</Badge>
+                    <StatusPill tone={STATUS_BADGE[account.profile.status].variant}>{STATUS_BADGE[account.profile.status].label}</StatusPill>
                   </div>
                   {account.licenses.length ? (
                     <ul className="flex flex-col gap-1 type-small text-text-secondary">

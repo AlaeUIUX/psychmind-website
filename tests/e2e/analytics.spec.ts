@@ -11,7 +11,7 @@ const count = async (text: string | null) => Number((text ?? "").replace(/[^\d]/
 test("a visitor's search shows up on the admin dashboard", async ({ page, browser, isMobile }) => {
   test.skip(isMobile, "The admin console is checked on desktop.");
   const admin = await adminPage(browser);
-  await admin.goto("/admin/analytics");
+  await admin.goto("/admin"); // the console's home
   await expect(admin.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
   const searches = admin.getByRole("group", { name: "Searches" }).locator('[data-slot="stat-value"]');
   const before = await count(await searches.textContent());

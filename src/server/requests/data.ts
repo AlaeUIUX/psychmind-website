@@ -24,7 +24,6 @@ export async function requestTarget(publicId: string) {
     title: p.titleCredentials ?? "",
     pronouns: p.pronouns ?? null,
     photoUrl: p.photoUrl ?? null,
-    bannerStyle: p.bannerStyle ?? null,
     isSample: !!p.isSample,
     accepting: p.acceptingNewClients !== false,
     // Figma B2 offers the provider's own session types and formats.

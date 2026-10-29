@@ -4,8 +4,8 @@ import Link from "next/link";
 import { RECOVERY_BADGE } from "@/lib/recovery";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge } from "@/components/ui/badge";
-import { DoodleCheck } from "@/components/ui/doodles";
+import { StatusPill } from "@/components/app/status-pill";
+import { CheckIcon } from "@/components/ui/hugeicons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listRecoveryRequests } from "@/server/account/recovery";
 
@@ -50,7 +50,7 @@ export default async function AdminRecoveryPage({ searchParams }: { searchParams
         ))}
       </nav>
       {rows.length ? (
-        <div className="rounded-card border border-warm-200 bg-white p-2 sm:p-4">
+        <div className="-mx-3">
           <Table>
             <TableHeader>
               <TableRow>
@@ -73,13 +73,13 @@ export default async function AdminRecoveryPage({ searchParams }: { searchParams
                     <div className="flex flex-col gap-1">
                       <span className="break-all">{r.accountEmail}</span>
                       <div className="flex flex-wrap gap-1">
-                        {!r.matched && <Badge variant="warning">No such account</Badge>}
-                        {r.hasId && <Badge variant="neutral">ID attached</Badge>}
+                        {!r.matched && <StatusPill tone="warning">No such account</StatusPill>}
+                        {r.hasId && <StatusPill dot={false}>ID attached</StatusPill>}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={RECOVERY_BADGE[r.status].variant}>{RECOVERY_BADGE[r.status].label}</Badge>
+                    <StatusPill tone={RECOVERY_BADGE[r.status].variant}>{RECOVERY_BADGE[r.status].label}</StatusPill>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {view === "open" ? waiting(r.createdAt) : r.resolvedAt ? dateFmt.format(r.resolvedAt) : "—"}
@@ -90,7 +90,7 @@ export default async function AdminRecoveryPage({ searchParams }: { searchParams
           </Table>
         </div>
       ) : (
-        <EmptyState art={<DoodleCheck className="size-7" />} title={view === "open" ? "No one is waiting" : "Nothing closed yet"}>
+        <EmptyState art={<CheckIcon />} title={view === "open" ? "No one is waiting" : "Nothing closed yet"}>
           {view === "open" ? "Requests from people who can't access their email will appear here." : "Requests you complete or decline will appear here."}
         </EmptyState>
       )}

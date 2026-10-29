@@ -118,7 +118,7 @@ export function UploadDropzone({
           <UploadCloudIcon className="size-5" />
         </span>
         <span className="type-small text-text-secondary">
-          <span className="font-semibold text-text-primary">{label}</span> or drag and drop
+          <span className="font-medium text-text-primary">{label}</span> or drag and drop
         </span>
         {hint && (
           <span id={hintId} className="type-caption text-text-placeholder">

@@ -26,7 +26,7 @@ export default async function AdminSettingsPage() {
         <NotificationSettings settings={notifications} alwaysSent={ALWAYS_SENT.admin} />
         <section className="flex max-w-[640px] flex-col gap-4 rounded-card border border-warm-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-8">
           <div className="flex max-w-[440px] flex-col gap-1">
-            <h2 className="type-small font-semibold text-text-primary">Two-step login</h2>
+            <h2 className="type-small font-medium text-text-primary">Two-step login</h2>
             <p className="type-small text-text-tertiary">
               Required for every admin. If you lose your authenticator, another admin can reset your access from Admins.
             </p>

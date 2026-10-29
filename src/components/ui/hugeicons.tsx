@@ -1,5 +1,13 @@
 import {
   AlertCircleIcon,
+  CreditCardIcon as HugeCreditCardIcon,
+  DashboardSquare01Icon,
+  Megaphone01Icon,
+  Settings01Icon,
+  LeftToRightListBulletIcon,
+  SidebarLeftIcon,
+  UserGroupIcon,
+  UserCircleIcon as HugeUserCircleIcon,
   Alert02Icon,
   ArrowDown01Icon,
   ArrowDownRight01Icon,
@@ -221,3 +229,13 @@ export const ScaleIcon = icon(JusticeScale01Icon, "ScaleIcon");
 export const SparklesIcon = icon(HugeSparklesIcon, "SparklesIcon");
 export const StarIcon = icon(HugeStarIcon, "StarIcon");
 export const TableIcon = icon(Table01Icon, "TableIcon");
+
+// Dashboard navigation (DashboardShell).
+export const LayoutDashboardIcon = icon(DashboardSquare01Icon, "LayoutDashboardIcon");
+export const SettingsIcon = icon(Settings01Icon, "SettingsIcon");
+export const CreditCardIcon = icon(HugeCreditCardIcon, "CreditCardIcon");
+export const UserCircleIcon = icon(HugeUserCircleIcon, "UserCircleIcon");
+export const MegaphoneIcon = icon(Megaphone01Icon, "MegaphoneIcon");
+export const UsersIcon = icon(UserGroupIcon, "UsersIcon");
+export const PanelLeftIcon = icon(SidebarLeftIcon, "PanelLeftIcon");
+export const ListIcon = icon(LeftToRightListBulletIcon, "ListIcon");

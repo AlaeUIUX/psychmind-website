@@ -5,11 +5,11 @@ import { CalendarHeartIcon, CheckIcon, Share2Icon, ShieldCheckIcon } from "@/com
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { pill, topicChipOff } from "@/components/home/search-styles";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { listJoin } from "@/lib/provider/display";
-import { bannerCta } from "@/lib/taxonomy";
 import { SaveButton, type Viewer } from "./save-button";
 
 // Actions on a provider's quick view and public profile. All copy is new —
@@ -18,12 +18,12 @@ import { SaveButton, type Viewer } from "./save-button";
 type ActionProvider = {
   id: string;
   name: string;
-  bannerStyle?: string | null;
   isSample?: boolean;
   acceptingNewClients?: boolean;
 };
 
-/** "Request a session" in the provider's banner colour. It opens the request
+/** "Request a session", in the crimson of the landing page's search button:
+ *  the app's one loud call to action, kept for this and search. It opens the request
  *  flow (/request/…; sample providers run it as a demo). A provider who
  *  isn't taking new clients gets an explanation and Save instead. */
 export function RequestSessionButton({
@@ -43,13 +43,13 @@ export function RequestSessionButton({
   const [open, setOpen] = useState(false);
   const { name } = provider;
   const look = cn(
-    "flex h-10 w-full items-center justify-center rounded-field px-4 type-small font-semibold shadow-control transition-[filter,scale] duration-200 hover:brightness-95 focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:outline-none active:scale-[0.98]",
+    "flex h-10 w-full items-center justify-center rounded-field bg-brand-primary px-4 type-small font-medium tracking-[-0.01em] text-white shadow-control transition-[background-color,scale] duration-200 hover:bg-brand-primary-hover focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:outline-none active:scale-[0.98]",
     className,
   );
 
   if (provider.acceptingNewClients !== false) {
     return (
-      <Link href={`/request/${returnTo.split("/").pop()}`} style={bannerCta(provider.bannerStyle)} className={look}>
+      <Link href={`/request/${returnTo.split("/").pop()}`} className={look}>
         Request a session
       </Link>
     );
@@ -57,7 +57,7 @@ export function RequestSessionButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} style={bannerCta(provider.bannerStyle)} className={look}>
+      <button type="button" onClick={() => setOpen(true)} className={look}>
         Request a session
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -92,7 +92,10 @@ export function VerifiedExplainer({ name, states, className }: { name: string; s
         <button
           type="button"
           className={cn(
-            "inline-flex shrink-0 items-center gap-1 rounded-tag border border-warm-300 bg-white px-2.5 py-1 text-sm font-medium text-text-secondary shadow-control transition-colors hover:border-warm-400 hover:text-text-primary focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:outline-none",
+            // the pill every chip is
+            pill,
+            topicChipOff,
+            "shrink-0 focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:outline-none",
             className,
           )}
           aria-label="Verified by PsychMind — what does this mean?"
@@ -103,7 +106,7 @@ export function VerifiedExplainer({ name, states, className }: { name: string; s
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[300px] p-4">
-        <p className="flex items-center gap-2 type-small font-semibold text-text-primary">
+        <p className="flex items-center gap-2 type-small font-medium text-text-primary">
           <ShieldCheckIcon className="size-4 text-emerald-600" />
           Verified by PsychMind
         </p>

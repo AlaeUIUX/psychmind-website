@@ -29,11 +29,42 @@ export function initials(name: string) {
     .toUpperCase();
 }
 
-/** Figma's avatar pill (avatar, name, chevron) with the account menu. */
-export function AccountMenu({ user, onSignOut }: { user: AppUser; onSignOut?: () => void }) {
+/** Figma's avatar pill (avatar, name, chevron) with the account menu.
+ *  `row`: a full-width row (avatar, name and email) at the foot of the
+ *  dashboard sidebar, opening upwards. `avatar`: the avatar alone (the
+ *  collapsed sidebar), opening to its right. */
+export function AccountMenu({ user, onSignOut, variant = "pill" }: { user: AppUser; onSignOut?: () => void; variant?: "pill" | "row" | "avatar" }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
+        {variant === "avatar" ? (
+          <button
+            type="button"
+            className="flex size-9 items-center justify-center rounded-full transition-colors hover:bg-warm-900/[0.04] focus-visible:ring-4 focus-visible:ring-ring/12 focus-visible:outline-none"
+            aria-label={`Account menu for ${user.name}`}
+          >
+            <Avatar className="size-8">
+              {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
+              <AvatarFallback className="bg-warm-900/10 text-xs font-medium text-warm-900/80">{initials(user.name)}</AvatarFallback>
+            </Avatar>
+          </button>
+        ) : variant === "row" ? (
+          <button
+            type="button"
+            className="flex w-full items-center gap-2.5 rounded-[10px] px-2 py-1.5 text-left transition-colors hover:bg-warm-900/[0.04] focus-visible:ring-4 focus-visible:ring-ring/12 focus-visible:outline-none"
+            aria-label={`Account menu for ${user.name}`}
+          >
+            <Avatar className="size-8">
+              {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
+              <AvatarFallback className="bg-warm-900/10 text-xs font-medium text-warm-900/80">{initials(user.name)}</AvatarFallback>
+            </Avatar>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-[13px] leading-[18px] font-medium text-warm-900">{user.name}</span>
+              {user.email && <span className="truncate text-xs leading-4 text-warm-900/50">{user.email}</span>}
+            </span>
+            <ChevronDownIcon aria-hidden className="size-4 shrink-0 rotate-180 text-warm-900/50" />
+          </button>
+        ) : (
         <button
           type="button"
           className="flex items-center gap-2 rounded-pill border border-warm-200 bg-white py-1 pr-2.5 pl-1 shadow-control transition-colors hover:bg-warm-50 focus-visible:ring-4 focus-visible:ring-ring/12 focus-visible:outline-none"
@@ -46,8 +77,13 @@ export function AccountMenu({ user, onSignOut }: { user: AppUser; onSignOut?: ()
           <span className="hidden max-w-[160px] truncate text-sm font-medium text-text-primary sm:inline">{user.name}</span>
           <ChevronDownIcon aria-hidden className="size-4 text-warm-600" />
         </button>
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent
+        align={variant === "pill" ? "end" : variant === "avatar" ? "end" : "start"}
+        side={variant === "row" ? "top" : variant === "avatar" ? "right" : "bottom"}
+        className="w-60"
+      >
         <DropdownMenuLabel className="flex flex-col gap-0.5">
           <span className="truncate text-sm font-medium text-text-primary">{user.name}</span>
           {user.email && <span className="truncate text-xs font-normal text-text-placeholder">{user.email}</span>}

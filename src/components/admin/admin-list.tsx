@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "cn";
 import { KeyRoundIcon, LoaderCircleIcon } from "@/components/ui/hugeicons";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -16,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/app/status-pill";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { resetAccess } from "@/server/admin/account-actions";
@@ -82,7 +81,7 @@ function ResetAccess({ id, name }: { id: string; name: string }) {
 
 export function AdminList({ rows, me }: { rows: AdminRow[]; me: string }) {
   return (
-    <div className="rounded-card border border-warm-200 bg-white p-2 shadow-control sm:p-4">
+    <div className="-mx-3">
       <Table>
         <TableHeader>
           <TableRow>
@@ -112,10 +111,7 @@ export function AdminList({ rows, me }: { rows: AdminRow[]; me: string }) {
                 </TableCell>
                 <TableCell>
                   <span className="flex flex-col items-start gap-1">
-                    <Badge variant={status.variant} className="gap-1.5">
-                      <span aria-hidden className={cn("size-1.5 rounded-full", status.dot)} />
-                      {status.label}
-                    </Badge>
+                    <StatusPill tone={status.variant}>{status.label}</StatusPill>
                     {a?.mustChangePassword && a.tempPasswordExpiresAt && status.variant === "info" && (
                       <span className="type-ui-caption text-text-placeholder">
                         Temporary password until <LocalTime value={a.tempPasswordExpiresAt} style="datetime" />

@@ -28,7 +28,7 @@ export function RequestEmailForm({ current, accountEmail }: { current: string | 
           defaultValue={current ?? ""}
           placeholder={accountEmail}
           aria-invalid={!!state?.error}
-          className="h-10 shadow-none sm:max-w-[360px]"
+          className="h-10 sm:max-w-[360px]"
         />
         <Button type="submit" variant="secondary" disabled={pending} className="h-10 px-4 text-[13px]">
           {pending && <LoaderCircleIcon className="animate-spin" />}

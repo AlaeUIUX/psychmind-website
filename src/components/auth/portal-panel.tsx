@@ -18,7 +18,6 @@ import { ProfileBanner } from "@/components/provider/profile-view";
 import { DoodleHookArrow } from "@/components/ui/doodles";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { providerPhoto } from "@/lib/photos";
-import { DEFAULT_BANNER } from "@/lib/taxonomy";
 import { useAuthPanel } from "./auth-context";
 
 // The right half of every auth screen: a quiet sheet of gray paper with live
@@ -89,7 +88,7 @@ function LoginScene() {
             <BellIcon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col">
-            <span className="text-[13px] font-semibold">New session request</span>
+            <span className="text-[13px] font-medium">New session request</span>
             <span className="truncate text-[12px] text-zinc-600">Individual · Online · this week</span>
           </div>
           <span className="ml-auto font-mono text-[11px] text-zinc-500">2m</span>
@@ -98,7 +97,7 @@ function LoginScene() {
       <FloatCard depth={0.8} className="top-[34%] right-[8%] w-[250px] p-4">
         <p className="text-[12px] text-zinc-600">Profile views</p>
         <p className="mt-1 flex items-baseline gap-2">
-          <span className="text-[26px] font-semibold tracking-tight">312</span>
+          <span className="text-[26px] font-medium tracking-tight">312</span>
           <span className="text-[12px] font-medium text-emerald-600">↑ 24%</span>
         </p>
         <svg viewBox="0 0 200 48" className="mt-2 h-12 w-full" aria-hidden>
@@ -115,7 +114,7 @@ function LoginScene() {
       <FloatCard depth={1.1} className="top-[58%] left-[16%] flex w-[270px] items-center gap-3 p-3.5">
         <Avatar who="sara" size={36} />
         <div className="flex flex-col">
-          <span className="text-[13px] font-semibold">Sara Oliisi</span>
+          <span className="text-[13px] font-medium">Sara Oliisi</span>
           <span className="flex items-center gap-1 text-[12px] text-emerald-700">
             <BadgeCheckIcon className="size-3.5" /> License verified
           </span>
@@ -187,14 +186,14 @@ function RoleScene() {
           <div className="mt-3 flex items-center gap-3">
             <Avatar who="shatiria" size={40} />
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="text-[13px] font-semibold">Shatiria Johnson</span>
+              <span className="text-[13px] font-medium">Shatiria Johnson</span>
               <div className="flex gap-1">
                 <Chip>Anxiety</Chip>
                 <Chip>Online</Chip>
               </div>
             </div>
           </div>
-          <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-zinc-900 text-[12px] font-medium text-white">Request a session</div>
+          <div className="mt-3 flex h-8 items-center justify-center rounded-md bg-brand-primary text-[12px] font-medium text-white">Request a session</div>
         </div>
       </FocusGroup>
       <FocusGroup focus={focusOf("provider")} depth={0.9} className="top-[55%] right-[8%] w-[290px]">
@@ -211,7 +210,7 @@ function RoleScene() {
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg bg-zinc-50 p-2">
                 <p className="text-[10.5px] text-zinc-500">{k}</p>
-                <p className="text-[16px] font-semibold tracking-tight">{v}</p>
+                <p className="text-[16px] font-medium tracking-tight">{v}</p>
               </div>
             ))}
           </div>
@@ -253,17 +252,17 @@ function ProviderScene() {
       <DoodleHookArrow className="mt-4 h-12 w-7" />
     </div>
     <FloatCard depth={0.8} className="top-1/2 left-1/2 w-[340px] overflow-hidden" style={{ translate: "-50% -58%" }}>
-      <ProfileBanner style={DEFAULT_BANNER} className="h-20" />
+      <ProfileBanner className="h-20" />
       <div className="px-5 pb-5">
         <div className="relative -mt-9 flex items-end justify-between">
-          <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-zinc-100 text-[20px] font-semibold text-zinc-700 shadow-md">
+          <span className="flex size-[72px] items-center justify-center rounded-2xl border-4 border-white bg-zinc-100 text-[20px] font-medium text-zinc-700 shadow-md">
             {initials}
           </span>
           <span className="mb-1 inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
             <SparklesIcon className="size-3" /> Verified after review
           </span>
         </div>
-        <p className={cn("mt-3 text-[18px] font-semibold tracking-tight transition-colors", name ? "text-zinc-900" : "text-zinc-300")}>
+        <p className={cn("mt-3 text-[18px] font-medium tracking-tight transition-colors", name ? "text-zinc-900" : "text-zinc-300")}>
           {name || "Your name"}
           {name && <span className="ml-0.5 inline-block h-[18px] w-px translate-y-[3px] animate-caret bg-zinc-900" />}
         </p>
@@ -304,7 +303,7 @@ function PatientScene() {
         <FloatCard key={who} depth={depth} className={cn("flex w-[280px] items-center gap-3 p-3", pos)} style={{ animation: `ui-enter 700ms var(--ease-out-soft) ${200 + i * 140}ms both` }}>
           <Avatar who={who} size={40} />
           <div className="flex min-w-0 flex-col">
-            <span className="text-[13px] font-semibold">{name}</span>
+            <span className="text-[13px] font-medium">{name}</span>
             <span className="text-[12px] text-zinc-600">{tags}</span>
           </div>
           <span className="ml-auto flex items-center gap-1 text-[11px] text-zinc-500">
@@ -330,7 +329,7 @@ function InboxScene() {
         <div key={String(subject)} className={cn("flex items-center gap-3 px-4 py-3", fresh && "bg-blue-50/60")}>
           <span className={cn("size-2 shrink-0 rounded-full", fresh ? "bg-blue-600" : "bg-transparent")} />
           <div className="flex min-w-0 flex-col">
-            <span className={cn("text-[13px]", fresh ? "font-semibold text-zinc-900" : "text-zinc-600")}>{from}</span>
+            <span className={cn("text-[13px]", fresh ? "font-medium text-zinc-900" : "text-zinc-600")}>{from}</span>
             <span className="truncate text-[12px] text-zinc-500">{subject}</span>
           </div>
           <span className="ml-auto font-mono text-[11px] text-zinc-400">{time}</span>
@@ -346,7 +345,7 @@ function KeyScene() {
       <span className="flex size-12 items-center justify-center rounded-full bg-zinc-900 text-white">
         <KeyRoundIcon className="size-5" />
       </span>
-      <p className="text-[14px] font-semibold">Set a new password</p>
+      <p className="text-[14px] font-medium">Set a new password</p>
       <div className="flex w-full gap-1">
         {[0, 1, 2, 3].map((i) => (
           <span key={i} className={cn("h-1 flex-1 rounded-full", i < 3 ? "bg-emerald-500" : "bg-zinc-200")} />
@@ -364,7 +363,7 @@ function ShieldScene() {
       <span className="flex size-12 items-center justify-center rounded-full bg-zinc-900 text-white">
         <ShieldCheckIcon className="size-5" />
       </span>
-      <p className="text-[14px] font-semibold">Two-step verification</p>
+      <p className="text-[14px] font-medium">Two-step verification</p>
       <div className="flex items-center gap-1.5 font-mono text-[18px] font-medium tracking-wider text-zinc-900">
         {["4", "8", "2", "9", "1", "3"].map((d, i) => (
           <span key={i} className={cn("flex h-9 w-7 items-center justify-center rounded-md bg-zinc-100", i === 3 && "ml-2")}>
@@ -392,7 +391,7 @@ function RequestScene() {
           <span className="size-11 shrink-0 rounded-lg bg-zinc-100" />
         )}
         <div className="flex min-w-0 flex-col">
-          <span className="flex items-center gap-1 truncate text-[13px] font-semibold">
+          <span className="flex items-center gap-1 truncate text-[13px] font-medium">
             {request.name}
             <BadgeCheckIcon className="size-3.5 shrink-0 text-blue-600" />
           </span>
@@ -405,7 +404,7 @@ function RequestScene() {
         </div>
         <div className="flex flex-col gap-2.5 px-4 py-3.5">
           <span className="text-[13px] text-zinc-500">
-            From <span className="font-semibold text-zinc-900">{request.from || "you"}</span>
+            From <span className="font-medium text-zinc-900">{request.from || "you"}</span>
           </span>
           <div className="flex flex-wrap gap-1.5">
             {request.chips.map((c) => (

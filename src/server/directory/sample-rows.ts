@@ -1,4 +1,3 @@
-import { BANNER_STYLES } from "@/lib/taxonomy";
 import type { SampleProvider } from "./sample-data";
 
 // What gets stored for each sample provider, derived the same way every time
@@ -111,7 +110,6 @@ export function sampleRows(s: SampleProvider, index: number) {
       lastName: s.last,
       titleCredentials: s.title,
       pronouns: s.pronouns,
-      bannerStyle: BANNER_STYLES[index % BANNER_STYLES.length].value,
       whoYouWorkWith: s.who,
       about: s.about,
       sessionParticipants: s.participants,

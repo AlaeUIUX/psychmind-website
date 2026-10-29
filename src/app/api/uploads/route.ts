@@ -6,7 +6,7 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/server/auth/session";
 import { putFile } from "@/server/storage";
 
-// POST multipart { file, kind: "photo" | "license" } → { id, fileName, size, mimeType }.
+// POST multipart { file, kind: "photo" | "banner" | "license" } → { id, fileName, size, mimeType }.
 // Providers only. Type and size are enforced here whatever the browser said,
 // and the bytes are sniffed so a renamed file can't pass as a PDF/image.
 

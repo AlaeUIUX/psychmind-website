@@ -21,7 +21,8 @@ function ToggleGroup({
   className,
   variant,
   size,
-  spacing = 0,
+  // a segment keeps its own corners (0 squares items off into one strip)
+  spacing = variant === "segment" ? 1 : 0,
   children,
   ...props
 }: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
@@ -37,6 +38,8 @@ function ToggleGroup({
       style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(
         "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-control",
+        // the segment track: grey, 4px around the items, corners concentric with theirs
+        "data-[variant=segment]:gap-0 data-[variant=segment]:rounded-[calc(var(--radius-field)+4px)] data-[variant=segment]:bg-warm-200/70 data-[variant=segment]:p-1",
         className
       )}
       {...props}

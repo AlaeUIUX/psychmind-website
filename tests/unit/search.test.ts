@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { searchDirectory } from "@/lib/search/engine";
-import { EMPTY_FILTERS, loadSearchFilters, type SearchFilters } from "@/lib/search/filters";
+import { searchDirectory, type EngineFilters } from "@/lib/search/engine";
+import { EMPTY_FILTERS, loadSearchFilters } from "@/lib/search/filters";
 import { closeness, parsePlace, stateForZip, whereForZip } from "@/lib/search/location";
 import { parseQuery } from "@/lib/search/text";
 import type { DirectoryProvider } from "@/server/directory/data";
@@ -71,7 +71,8 @@ const sample = provider("sample", {
 });
 const all = [sample, sara, omar, lena];
 
-const search = (over: Partial<SearchFilters>) => searchDirectory(all, { ...EMPTY_FILTERS, ...over });
+// Either format unless a test picks one (the pages always pass one).
+const search = (over: Partial<EngineFilters>) => searchDirectory(all, { ...EMPTY_FILTERS, format: null, ...over });
 const names = (r: { provider: DirectoryProvider }[]) => r.map((x) => x.provider.id);
 
 describe("where", () => {
@@ -167,5 +168,10 @@ describe("loadSearchFilters", () => {
     expect(f.min).toBeNull();
     expect(f.q).toHaveLength(120);
     expect(f.sort).toBe("best");
+  });
+
+  it("always has a session format, Online by default", () => {
+    expect(loadSearchFilters({}).format).toBe("online");
+    expect(loadSearchFilters({ format: "anything" }).format).toBe("online");
   });
 });

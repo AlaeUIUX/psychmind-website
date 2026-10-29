@@ -89,7 +89,8 @@ export const SHORE_DEFAULTS = {
   lighthouseDistance: 200,
   headland: 8,
   // the girl: where she stands, as a point in the frame (from the left, from the top),
-  // on desktop and on phones, and how tall she looks against the lighthouse (its height,
+  // on desktop and on phones (read at the rig's own shape, so a wider window shows more
+  // around her rather than moving her), and how tall she looks against the lighthouse (its height,
   // ground to rod tip; the owner's reference had her at 0.19, and asked for 0.8 of that)
   girlX: 0.242,
   girlY: 0.686,
@@ -169,10 +170,11 @@ const SHAPE = [
 const at = (x, y, z) => new THREE.Vector3(x, z, -y);
 
 // the two views, as the study's two cameras: tangent of the half-angle across, the
-// lowest and highest tangent up/down to keep in frame, and the turn to the left
+// lowest and highest tangent up/down to keep in frame, the turn to the left, and the
+// shape the girl's point is read in (the blog's band, the tuner's phone)
 const RIGS = {
-  wide: { tanH: 0.45, bottom: -0.0524, top: 0.1745, yaw: 0 },
-  narrow: { tanH: 0.2866, bottom: -0.089, top: 0.229, yaw: (17 * Math.PI) / 180 },
+  wide: { tanH: 0.45, bottom: -0.0524, top: 0.1745, yaw: 0, aspect: 4 },
+  narrow: { tanH: 0.2866, bottom: -0.089, top: 0.229, yaw: (17 * Math.PI) / 180, aspect: 1512 / 840 },
 };
 
 /** Gives the page a turn when this slice of work has run ~30 ms. */
@@ -633,24 +635,32 @@ export async function createShore(canvas, { tune: initial } = {}) {
   // --- framing ----------------------------------------------------------------------
   let rig = RIGS.wide;
   const ray = new THREE.Raycaster();
+  const spot = camera.clone(); // the rig at its own shape, where the girl is placed
+  /** Frames `cam` as rig `r` at `aspect`: as wide as the study's view at least, and tall
+   *  enough to keep the lighthouse's top in; the foot stays put. */
+  function aim(cam, r, aspect) {
+    const tanV = Math.max(r.tanH / aspect, (r.top - r.bottom) / 2);
+    const tanH = tanV * aspect;
+    const n = cam.near;
+    cam.position.copy(camera.position);
+    cam.rotation.set(0, r.yaw, 0);
+    cam.aspect = aspect;
+    cam.projectionMatrix.makePerspective(-tanH * n, tanH * n, (r.bottom + 2 * tanV) * n, r.bottom * n, n, cam.far);
+    cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
+    cam.updateMatrixWorld();
+  }
   function frame(w, h) {
     const aspect = w / h;
     rig = aspect < 2.6 ? RIGS.narrow : RIGS.wide;
-    // as wide as the study's view at least, and tall enough to keep the lighthouse's top
-    // in; the foot stays put
-    const tanV = Math.max(rig.tanH / aspect, (rig.top - rig.bottom) / 2);
-    const tanH = tanV * aspect;
-    const n = camera.near;
-    camera.rotation.set(0, rig.yaw, 0);
-    camera.aspect = aspect;
-    camera.projectionMatrix.makePerspective(-tanH * n, tanH * n, (rig.bottom + 2 * tanV) * n, rig.bottom * n, n, camera.far);
-    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
-    camera.updateMatrixWorld();
+    aim(camera, rig, aspect);
+    // she's placed in the rig's own shape, so she stands on the same spot of sand however
+    // wide the window (past 1680 px the blog's band stops growing taller and sees more)
+    aim(spot, rig, rig.aspect);
     const [u, v] = rig === RIGS.wide ? [P.girlX, P.girlY] : [P.girlPhoneX, P.girlPhoneY];
-    // where the ground is under her point; if it's over the skyline (a wider band frames a
-    // little less sky), the nearest ground straight below it
+    // where the ground is under her point; if it's over the skyline, the nearest ground
+    // straight below it
     for (let dv = 0; dv < 0.4; dv += 0.004) {
-      ray.setFromCamera(new THREE.Vector2(u * 2 - 1, 1 - (v + dv) * 2), camera);
+      ray.setFromCamera(new THREE.Vector2(u * 2 - 1, 1 - (v + dv) * 2), spot);
       const hit = ray.intersectObject(ground, false)[0];
       if (hit) {
         girl.position.copy(hit.point);
@@ -659,7 +669,7 @@ export async function createShore(canvas, { tune: initial } = {}) {
     }
     // as tall as she looks against the lighthouse (28 m, ground to rod tip): her height in
     // metres follows from how far off she stands
-    const lift = (p, dy) => new THREE.Vector3(p.x, p.y + dy, p.z).project(camera).y;
+    const lift = (p, dy) => new THREE.Vector3(p.x, p.y + dy, p.z).project(spot).y;
     const looks = (lift(light.position, 28) - lift(light.position, 0)) * P.girlSize;
     const metres = looks / (lift(girl.position, 1) - lift(girl.position, 0));
     GIRL_S = metres / 0.69;

@@ -149,6 +149,9 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
 
   await test.step("admin approves", async () => {
     const admin = await adminPage(browser);
+    // From the home (Analytics), the sidebar opens the queue.
+    await admin.getByRole("complementary", { name: "Sidebar" }).getByRole("link", { name: /Verification queue/ }).click();
+    await expect(admin).toHaveURL(/\/admin\/queue$/);
     await admin.getByRole("link", { name: new RegExp(`Sara ${last}`) }).click();
     await expect(admin.getByText("License #LPC-77812 · Texas Behavioral Health Executive Council")).toBeVisible();
     await admin.getByRole("button", { name: "Approve", exact: true }).click();
@@ -157,13 +160,22 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await admin.context().close();
   });
 
-  await test.step("provider is live, sees their analytics and can see billing", async () => {
+  await test.step("provider is live, sees their overview, analytics and billing", async () => {
+    // Overview: a greeting, account health and the last days at a glance.
     await page.goto("/provider");
-    await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), Sara$/ })).toBeVisible();
     // Until billing is connected, approval alone lists a provider.
     await expect(page.getByText("Live", { exact: true })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Overview" })).toBeVisible();
+    const health = page.getByRole("region", { name: "Account health" });
+    await expect(health).toContainText("Live in search");
+    await expect(health).toContainText("Verified");
+    await expect(page.getByRole("region", { name: "Last 7 days" })).toBeVisible();
     await expect(page.getByRole("link", { name: /View public profile/ })).toBeVisible();
+    // The sidebar takes them to Analytics.
+    await page.getByRole("complementary", { name: "Sidebar" }).getByRole("link", { name: "Analytics" }).click();
+    await expect(page).toHaveURL(/\/provider\/analytics$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Overview" })).toBeVisible();
     await page.goto("/provider/billing");
     await expect(page.getByRole("heading", { level: 1, name: "Billing" })).toBeVisible();
     await expect(page.getByText("Payments aren't connected yet")).toBeVisible();
@@ -224,6 +236,8 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     const request = page.getByTestId("provider-request").filter({ hasText: "Guest Patient" }).first();
     await expect(request).toContainText(guestEmail);
     await request.getByRole("switch", { name: "Mark Guest Patient as contacted" }).click();
+    // Let the save land before reloading (the switch flips at once, optimistically).
+    await page.waitForLoadState("networkidle");
     await page.reload();
     await page.getByRole("tab", { name: /All/ }).click();
     await expect(page.getByRole("tabpanel").getByRole("switch", { name: "Mark Guest Patient as contacted" })).toBeChecked();
@@ -269,7 +283,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     const profileHref = await page.getByRole("link", { name: /View public profile/ }).getAttribute("href");
     await page.goto(profileHref!);
     await expect(page.getByRole("heading", { level: 1, name: new RegExp(`Sara ${last}`) })).toBeVisible();
-    await page.goto("/provider"); // leaving sends the page's events
+    await page.goto("/provider/analytics"); // leaving sends the page's events
 
     // A guest finds them in search, takes a quick look, then opens the profile.
     const guest = await browser.newContext();

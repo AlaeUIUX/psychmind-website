@@ -408,7 +408,7 @@ html.reader-snap {
 
 /* sort.to's type: Inter for the UI, STIX Two Text wherever we'd use the
    display serif. The whole public site sits in it (the (site) and
-   (directory) layouts); the portal keeps Geist. Swapping the font variables,
+   (directory) layouts); the portal (.app-ui) takes the same Inter. Swapping the font variables,
    the theme's included, keeps every font-sans / font-display / type-*
    utility inside it working. */
 @utility type-scope-sort {
@@ -476,7 +476,7 @@ html.reader-snap {
 /* Sans feature / step title. */
 @utility type-title {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 18px;
   line-height: 26px;
   letter-spacing: -0.005em;
@@ -576,39 +576,29 @@ html.reader-snap {
 }
 
 /* ------------------------------------------------------------------------
-   Portal UI (app.psychmind.org). Geist throughout, product-sized: 14px body,
-   13px labels, tight-tracked semibold titles — the marketing site's serif
-   display type stays on the marketing site. Apply `.app-ui` on portal roots.
+   Portal UI (app.psychmind.org). The public site's Inter and warm stone greys,
+   so the portal and the site read as one product (2026-10-29), product-sized:
+   14px body, 13px labels, tight-tracked medium titles (Inter reads heavy at 600) — the serif display
+   type stays on the marketing site. Apply `.app-ui` on portal roots.
    ------------------------------------------------------------------------ */
 .app-ui {
   /* Interface accent is blue (focus, selection, progress); crimson stays the
      marketing call-to-action colour. */
   --ring-accent: oklch(0.546 0.245 262.881); /* Tailwind blue-600 */
-  /* Tailwind zinc: a cool, neutral gray for the product UI. */
-  --warm-25: #fcfcfd;
-  --warm-50: #fafafa; /* zinc-50 */
-  --warm-100: #f4f4f5; /* zinc-100 */
-  --warm-200: #e4e4e7; /* zinc-200 */
-  --warm-300: #d4d4d8; /* zinc-300 */
-  --warm-400: #a1a1aa; /* zinc-400 */
-  --warm-500: #71717a; /* zinc-500 */
-  --warm-600: #52525b; /* zinc-600 */
-  --warm-700: #3f3f46; /* zinc-700 */
-  --warm-800: #27272a; /* zinc-800 */
-  --warm-900: #18181b; /* zinc-900 */
-  --warm-950: #09090b; /* zinc-950 */
-  --text-primary: #18181b;
-  --text-secondary: #3f3f46;
-  --text-tertiary: #52525b;
-  --text-placeholder: #71717a;
-  --radius-button: 8px;
-  --radius-field: 8px;
+  /* Inter, as type-scope-sort swaps it in on the public site: every
+     font-sans / type-ui-* utility inside follows. Mono stays Geist Mono. */
+  --font-geist-sans: var(--font-inter);
+  --font-sans: var(--font-inter);
+  /* The public site's corner rule: about a third of the height, like the hero
+     search button's 48px / 16px. Buttons step per size (below); fields are
+     40px here, so 12px, the home bar's ZIP field's own corner. */
+  --radius-button: 13px;
+  --radius-field: 12px;
   --radius-card: 14px;
   --radius-tag: 6px;
-  font-family: var(--font-sans);
+  font-family: var(--font-inter);
   font-size: 14px;
   line-height: 20px;
-  font-feature-settings: "cv11", "ss01";
 }
 
 /* Portal density: shadcn controls default to the marketing site's roomier
@@ -634,6 +624,21 @@ html.reader-snap {
     line-height: 21px;
   }
 }
+/* Buttons keep the public site's shape (.site-ui): a third of the height per
+   size. Set as the variable Button rounds with, so a className still wins. */
+.app-ui [data-slot="button"] {
+  &[data-size="sm"],
+  &[data-size="icon-sm"] {
+    --radius-button: 12px;
+  }
+  &[data-size="md"],
+  &[data-size="icon"] {
+    --radius-button: 14px;
+  }
+  &[data-size="lg"] {
+    --radius-button: 16px;
+  }
+}
 /* Fields: neutral hover, blue focus (border + soft halo from --color-ring). */
 .app-ui [data-slot="input"]:focus-visible,
 .app-ui [data-slot="textarea"]:focus-visible,
@@ -651,7 +656,7 @@ html.reader-snap {
 
 @utility type-ui-display {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 28px;
   line-height: 34px;
   letter-spacing: -0.032em;
@@ -665,7 +670,7 @@ html.reader-snap {
 /* Auth and onboarding page titles. */
 @utility type-ui-headline {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 24px;
   line-height: 30px;
   letter-spacing: -0.028em;
@@ -678,7 +683,7 @@ html.reader-snap {
 
 @utility type-ui-title {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 22px;
   line-height: 28px;
   letter-spacing: -0.024em;
@@ -687,7 +692,7 @@ html.reader-snap {
 
 @utility type-ui-heading {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
   line-height: 22px;
   letter-spacing: -0.012em;
@@ -728,7 +733,7 @@ html.reader-snap {
    digits look loose at this size. */
 @utility type-ui-figure {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 28px;
   line-height: 34px;
   letter-spacing: -0.03em;
@@ -737,7 +742,7 @@ html.reader-snap {
 /* The one number a dashboard leads with. */
 @utility type-ui-hero-figure {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 40px;
   line-height: 44px;
   letter-spacing: -0.035em;

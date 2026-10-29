@@ -124,7 +124,8 @@ export async function adminPage(browser: Browser) {
       const context = await browser.newContext({ storageState: ADMIN_STATE_FILE });
       const page = await context.newPage();
       await page.goto("/admin");
-      const queue = page.getByRole("heading", { level: 1, name: "Verification queue" });
+      // The admin home is Analytics.
+      const queue = page.getByRole("heading", { level: 1, name: "Analytics" });
       const login = page.getByRole("heading", { level: 1, name: "Log in to PsychMind" });
       await expect(queue.or(login)).toBeVisible({ timeout: 15_000 });
       if (await queue.isVisible()) return page;
@@ -140,7 +141,7 @@ export async function adminPage(browser: Browser) {
   await page.goto("/admin/login");
   await logIn(page, ADMIN_EMAIL, TEST_PASSWORD);
   const failed = page.getByText("don't match");
-  const queue = page.getByRole("heading", { level: 1, name: "Verification queue" });
+  const queue = page.getByRole("heading", { level: 1, name: "Analytics" });
   const setup = page.getByRole("heading", { name: "Set up two-step login" });
   const challenge = page.getByRole("heading", { name: "Two-step verification" });
   await expect(failed.or(queue).or(setup).or(challenge)).toBeVisible({ timeout: 15_000 });

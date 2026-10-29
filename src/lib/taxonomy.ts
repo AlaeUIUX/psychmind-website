@@ -111,41 +111,6 @@ export const US_STATES = [
   ["VA", "Virginia"], ["WA", "Washington"], ["WV", "West Virginia"], ["WI", "Wisconsin"], ["WY", "Wyoming"],
 ].map(([value, label]) => ({ value, label })) satisfies Option[];
 
-/** Figma P1 has 12 brush-texture banner swatches; until those are exported we
- *  tint the existing banner texture. Order matches the Figma grid. Each is a
- *  Tailwind (shadcn) shade — 500, or 600 where white text needs it — and the
- *  same colour is the profile's "Request a session" button, always with
- *  white text (every shade has at least 3:1 contrast against white). */
-export const BANNER_STYLES = [
-  { value: "banner_01", label: "Blue", color: "#3b82f6" }, // blue-500
-  { value: "banner_02", label: "Green", color: "#16a34a" }, // green-600
-  { value: "banner_03", label: "Grey", color: "#78716c" }, // stone-500
-  { value: "banner_04", label: "Teal", color: "#0d9488" }, // teal-600
-  { value: "banner_05", label: "Indigo", color: "#6366f1" }, // indigo-500
-  { value: "banner_06", label: "Slate", color: "#64748b" }, // slate-500
-  { value: "banner_07", label: "Emerald", color: "#059669" }, // emerald-600
-  { value: "banner_08", label: "Sky blue", color: "#0284c7" }, // sky-600
-  { value: "banner_09", label: "Pink", color: "#ec4899" }, // pink-500
-  { value: "banner_10", label: "Violet", color: "#8b5cf6" }, // violet-500
-  { value: "banner_11", label: "Amber", color: "#d97706" }, // amber-600
-  { value: "banner_12", label: "Orange", color: "#ea580c" }, // orange-600
-] as const;
-
-export type BannerStyle = (typeof BANNER_STYLES)[number]["value"];
-
-/** The standard banner until a provider picks their own: violet (Tailwind violet-500). */
-export const DEFAULT_BANNER: BannerStyle = "banner_10";
-
-/** The colour of a banner style (falls back to the default violet). */
-export function bannerColor(style?: string | null) {
-  return (BANNER_STYLES.find((b) => b.value === style) ?? BANNER_STYLES.find((b) => b.value === DEFAULT_BANNER)!).color;
-}
-
-/** A provider's call-to-action is their banner colour, with white text. */
-export function bannerCta(style?: string | null) {
-  return { backgroundColor: bannerColor(style), color: "#ffffff" };
-}
-
 /** Base plan includes this many practice locations (Figma P5: "up to 3 locations"). */
 export const BASE_PLAN_LOCATIONS = 3;
 

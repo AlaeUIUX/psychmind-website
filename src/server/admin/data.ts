@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, or } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { auditLog, providerLocation, providerProfile, user } from "@/db/schema";
 import type { ProviderStatus } from "@/lib/provider/types";
@@ -23,14 +23,22 @@ export type ProviderRow = {
   states: string[];
 };
 
+const inQueue = or(eq(providerProfile.status, "submitted"), eq(providerProfile.needsReview, true));
+
+/** How many providers wait for a decision (the sidebar's queue badge). */
+export async function countQueue() {
+  await requireRole("admin");
+  await dbReady;
+  const [row] = await db.select({ n: count() }).from(providerProfile).where(inQueue);
+  return row?.n ?? 0;
+}
+
 /** Providers for the admin lists. `queue` = waiting for a decision, oldest first. */
 export async function listProviders(filter: "queue" | "all"): Promise<ProviderRow[]> {
   await requireRole("admin");
   await dbReady;
   const where =
-    filter === "queue"
-      ? or(eq(providerProfile.status, "submitted"), eq(providerProfile.needsReview, true))
-      : undefined;
+    filter === "queue" ? inQueue : undefined;
   const rows = await db
     .select({
       id: providerProfile.id,

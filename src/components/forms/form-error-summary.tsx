@@ -130,7 +130,7 @@ export function FormErrorSummary<T extends FieldValues, C, O extends FieldValues
   }, [items, submitCount, isSubmitting]);
 
   return (
-    <div ref={ref} tabIndex={-1} className="scroll-mt-24 outline-none" data-error-summary-skip>
+    <div ref={ref} tabIndex={-1} className="scroll-mt-24 outline-none empty:hidden" data-error-summary-skip>
       {items.length > 0 && (
         <div
           role="alert"

@@ -23,7 +23,7 @@ export function ActivateButton({ disabled, label = "Activate your listing", term
     <form action={action} className="flex max-w-xl flex-col gap-4" data-testid="renewal-terms">
       <div className="flex flex-col gap-3 rounded-field border border-warm-200 bg-warm-50 p-4">
         <p className="type-small text-text-primary">
-          <span className="font-semibold">Automatic renewal. </span>
+          <span className="font-medium">Automatic renewal. </span>
           {terms}
         </p>
         <label className="flex items-start gap-2.5 type-small font-medium text-text-primary">
