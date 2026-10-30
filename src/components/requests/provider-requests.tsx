@@ -6,7 +6,7 @@ import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/app/empty-state";
 import { LocalTime } from "@/components/app/local-time";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/app/status-pill";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatLabel, sessionTypeLabel } from "@/lib/requests";
@@ -19,13 +19,13 @@ import type { ProviderRequest } from "@/server/requests/data";
 function RequestRow({ r, onContacted }: { r: ProviderRequest; onContacted: (contacted: boolean) => void }) {
   const contacted = r.status === "contacted";
   return (
-    <li className={cn("flex flex-col gap-4 rounded-card border bg-white p-4 sm:p-5", contacted ? "border-warm-200" : "border-blue-200")} data-testid="provider-request">
+    <li className={cn("flex flex-col gap-4 rounded-card border bg-white p-4 sm:p-5", contacted ? "border-warm-200" : "border-warm-300")} data-testid="provider-request">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="flex flex-wrap items-center gap-2 type-ui-heading text-text-primary">
             {r.name}
-            {!contacted && <Badge variant="info">New</Badge>}
-            <Badge variant="neutral">{r.fromAccount ? "PsychMind account" : "Guest"}</Badge>
+            {!contacted && <StatusPill tone="warning">New</StatusPill>}
+            <StatusPill dot={false}>{r.fromAccount ? "PsychMind account" : "Guest"}</StatusPill>
           </p>
           <p className="type-ui-small text-text-secondary">
             {sessionTypeLabel(r.sessionType)} · {formatLabel(r.format)} · <LocalTime value={r.createdAt} style="datetime" />
@@ -37,12 +37,12 @@ function RequestRow({ r, onContacted }: { r: ProviderRequest; onContacted: (cont
         </label>
       </div>
       <div className="flex flex-wrap gap-x-5 gap-y-2 type-ui-body">
-        <a href={`mailto:${r.email}`} className="inline-flex items-center gap-1.5 text-blue-700 underline-offset-4 hover:underline">
+        <a href={`mailto:${r.email}`} className="inline-flex items-center gap-1.5 text-warm-900/70 underline-offset-4 transition-colors hover:text-warm-900 hover:underline">
           <MailIcon className="size-4" />
           {r.email}
         </a>
         {r.phone && (
-          <a href={`tel:${r.phone.replace(/[^+\d]/g, "")}`} className="inline-flex items-center gap-1.5 text-blue-700 underline-offset-4 hover:underline">
+          <a href={`tel:${r.phone.replace(/[^+\d]/g, "")}`} className="inline-flex items-center gap-1.5 text-warm-900/70 underline-offset-4 transition-colors hover:text-warm-900 hover:underline">
             <PhoneIcon className="size-4" />
             {r.phone}
           </a>

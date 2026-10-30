@@ -13,6 +13,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { PendingChanges, PendingLicense } from "@/lib/provider/review";
 import { PROVIDER_STATUSES } from "@/lib/provider/types";
 import { user } from "./auth";
 
@@ -106,8 +107,12 @@ export const providerProfile = pgTable(
     reviewNote: text("review_note"),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     approvedAt: timestamp("approved_at", { withTimezone: true }),
-    /** Set when a live provider changes licenses; the admin re-checks them. */
+    /** Set while a verified provider has changes waiting for an admin: reviewed
+     *  fields in pending_changes, or a license that's new or edited (lib/provider/review.ts). */
     needsReview: boolean("needs_review").notNull().default(false),
+    /** Verified providers' requested name, title or NPI changes, applied once an
+     *  admin approves them; the columns above stay as verified meanwhile. */
+    pendingChanges: jsonb("pending_changes").$type<PendingChanges>(),
 
     // Billing visibility (kept in sync from Stripe events)
     pastDueSince: timestamp("past_due_since", { withTimezone: true }),
@@ -156,6 +161,8 @@ export const providerLicense = pgTable(
     issuingBody: text("issuing_body").notNull(),
     documentId: text("document_id"),
     status: licenseStatus("status").notNull().default("pending"),
+    /** An edit to a verified license, waiting for an admin; the verified details stay public. */
+    pending: jsonb("pending").$type<PendingLicense>(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     ...timestamps,
   },

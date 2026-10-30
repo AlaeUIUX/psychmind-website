@@ -26,6 +26,7 @@ import { ageOkToken } from "./age";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
 import { getSession, hasTwoFactor, homeFor } from "./session";
+import { isDemoProvider, resetDemoProvider } from "./demo-provider";
 import { isTestProvider, resetTestProvider } from "./test-provider";
 
 // Email/password auth as server actions. Roles are assigned here, server-side,
@@ -134,8 +135,9 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
     firstName: v.firstName,
     lastName: v.lastName,
     dateOfBirth: isoDate(age.birth),
-    // The verification link signs them in and returns them here.
-    callbackURL: role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account"),
+    // The verification link signs them in and returns them here, by way of
+    // /auth/verified, which explains an expired or already-used link.
+    callbackURL: `/auth/verified?next=${encodeURIComponent(role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account"))}`,
   };
   try {
     const result = await auth.api.signUpEmail({ body, headers: await headers() });
@@ -215,6 +217,8 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
   // Local only: the test provider starts onboarding over at every log-in.
   const testProvider = isTestProvider(parsed.data.email);
   if (testProvider) await resetTestProvider();
+  // Local only: the demo provider is rebuilt full of requests and analytics.
+  if (isDemoProvider(parsed.data.email)) await resetDemoProvider();
   let role: string | undefined;
   let needsCode = false;
   const next = testProvider ? "/provider/onboarding" : safeNext(form.get("next"));
@@ -352,7 +356,7 @@ export async function resendVerification(_prev: AuthState, form: FormData): Prom
   if (await limited("verify", parsed.data.email, 3, "10 m")) return { error: TOO_MANY };
   await dbReady;
   try {
-    await auth.api.sendVerificationEmail({ body: { email: parsed.data.email, callbackURL: "/auth/continue" }, headers: await headers() });
+    await auth.api.sendVerificationEmail({ body: { email: parsed.data.email, callbackURL: "/auth/verified" }, headers: await headers() });
   } catch (err) {
     const message = authMessage(err);
     if (message.startsWith("Too many")) return { error: message };

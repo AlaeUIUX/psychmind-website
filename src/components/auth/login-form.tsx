@@ -13,12 +13,15 @@ export function LoginForm({
   next,
   googleEnabled,
   notice,
+  info,
   error,
   admin = false,
 }: {
   next?: string;
   googleEnabled: boolean;
   notice?: string;
+  /** Something to know before logging in, e.g. a confirmation link that expired. */
+  info?: string;
   error?: string;
   admin?: boolean;
 }) {
@@ -38,6 +41,7 @@ export function LoginForm({
         <AuthTitle title="Log in to PsychMind" description="Good to see you again. Pick up right where you left off." />
       )}
       <FormAlert message={notice} tone="success" />
+      <FormAlert message={info} tone="info" />
       <FormAlert message={error} />
       {/* Google sign-in shows once its keys are configured. */}
       {googleEnabled && !admin && (

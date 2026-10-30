@@ -16,6 +16,7 @@ import { HoverArrow } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";
 import { BASE_PLAN } from "@/lib/billing";
 import { sectionStatuses } from "@/lib/provider/completeness";
+import { sizeLabel, UPLOAD_RULES } from "@/lib/provider/uploads";
 import { ONBOARDING_STEPS, stepIndex } from "@/lib/provider/steps";
 import { requireRole } from "@/server/auth/session";
 import { loadProviderState } from "@/server/provider/data";
@@ -34,7 +35,7 @@ const timeline = [
 const needs = [
   { icon: CameraIcon, text: "A recent, clear photo of you" },
   { icon: HashIcon, text: "Your NPI number" },
-  { icon: FileTextIcon, text: "License number and document for each state (PDF, JPG or PNG, up to 10 MB)" },
+  { icon: FileTextIcon, text: `License number and document for each state (PDF, JPG or PNG, up to ${sizeLabel(UPLOAD_RULES.license.maxBytes)})` },
   { icon: GraduationCapIcon, text: "Degrees and training (optional)" },
   { icon: CircleDollarSignIcon, text: "Your session fees (optional)" },
 ];

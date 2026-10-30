@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import { LEAVE_BACK, UnsavedChangesGuard } from "@/components/app/unsaved-changes-guard";
 import { StepActions } from "@/components/onboarding/step-actions";
 import { useOptionalOnboarding, useUploadingFlag } from "@/components/onboarding/onboarding-context";
+import { ShieldCheckIcon } from "@/components/ui/hugeicons";
 import { zodResolver } from "@/lib/forms/zod-resolver";
+import { listJoin } from "@/lib/provider/display";
 import type { ActionResult, ProviderState } from "@/lib/provider/state";
 import type { ProfileView } from "@/lib/provider/types";
+import { stateName } from "@/lib/taxonomy";
 import { saveProviderSection, type SectionKey } from "@/server/provider/actions";
 
 export type SectionMode = "wizard" | "editor";
@@ -81,7 +84,7 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
         form.reset(form.getValues());
         router.push(result.redirectTo ?? nextHref!);
       } else {
-        toast.success("Changes saved");
+        toast.success(result.notice ?? "Changes saved");
         form.reset(form.getValues());
         router.refresh();
       }
@@ -125,6 +128,39 @@ export function useSectionForm<S extends z.ZodType<FieldValues, FieldValues>>({
   };
 
   return { form, onSubmit, pending };
+}
+
+/** Editing a verified profile: what our team checks before it shows (name,
+ *  title, NPI, licenses: lib/provider/review.ts), and what's waiting now.
+ *  The rest of the profile updates as soon as it's saved. TODO(client): copy. */
+export function ReviewNotice({ state, part }: { state: ProviderState; part: "identity" | "credentials" }) {
+  if (state.status !== "approved") return null;
+  const waiting =
+    part === "identity"
+      ? state.inReview.filter((c) => c.field !== "npiNumber").map((c) => c.label.toLowerCase())
+      : [
+          ...state.inReview.filter((c) => c.field === "npiNumber").map(() => "your NPI number"),
+          ...state.licenses.filter((l) => l.review).map((l) => `the ${stateName(l.state)} license`),
+        ];
+  const rule =
+    part === "identity"
+      ? "Changes to your name, title or business name are checked by our team before they show on your profile. Your pronouns and banner update right away."
+      : "A new NPI number or license is checked by our team before it shows on your profile. To practice in a new state, add the location, then its license here: the state goes live once the license is verified.";
+  return (
+    <div className="flex gap-3 rounded-field border border-warm-900/10 bg-warm-900/[0.04] px-4 py-3 type-ui-small text-warm-900/70">
+      <ShieldCheckIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-warm-900/50" />
+      <p>
+        {waiting.length ? (
+          <>
+            <span className="font-medium text-warm-900">In review: {listJoin(waiting)}.</span> Your profile shows your verified details until our
+            team approves the change, usually within 1–2 business days.
+          </>
+        ) : (
+          rule
+        )}
+      </p>
+    </div>
+  );
 }
 
 /** Wizard: Go back / Save and continue. Editor: a single Save changes.

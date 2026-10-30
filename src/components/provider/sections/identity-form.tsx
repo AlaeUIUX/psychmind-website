@@ -13,7 +13,7 @@ import { BannerPicker } from "../banner-picker";
 import { PhotoCropDialog } from "../photo-crop-dialog";
 import { uploadFile } from "../upload-client";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
-import { SectionFooter, type SectionProps, useSectionForm } from "./shared";
+import { ReviewNotice, SectionFooter, type SectionProps, useSectionForm } from "./shared";
 
 const PRONOUNS = ["She/her", "He/him", "They/them"];
 
@@ -79,6 +79,7 @@ export function IdentityForm({ state, mode, onPreview, backHref, nextHref }: Sec
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       <FormErrorSummary control={form.control} />
+      {mode === "editor" && <ReviewNotice state={state} part="identity" />}
       <div className="grid gap-4 sm:grid-cols-2">
         <FormRow id="firstName" label="First name" required error={e.firstName?.message}>
           <Input

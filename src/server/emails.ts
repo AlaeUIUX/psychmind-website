@@ -4,10 +4,15 @@ import { legalDetails } from "@/lib/legal";
 import type { Email } from "./email";
 
 // Email templates. One short message and one button, in the landing page's
-// look: serif headline, ink pill button, and the footer's lined notepad sheet
-// (pink margin line, blue rules) with the founders' path illustration.
+// look (since 2026-10-30): the stone paper, a serif headline over plain text,
+// the privacy promise's layers (a grey frame, a white card in it, a grey
+// column in that), an ink button with the site's soft corners, then the site
+// footer's sign-off with the voyage's boat at sea under it.
 // Built from tables with inline styles so Gmail, Outlook and Apple Mail all
-// render it; images are PNGs in /images/email (Gmail doesn't show SVG).
+// render it (Outlook squares the corners); images are PNGs in /images/email
+// (Gmail doesn't show SVG). No web fonts are loaded (no third-party hosts):
+// STIX Two Text and Inter show where they're installed, Georgia and the
+// system sans elsewhere. Weights stop at medium (500), as on the site.
 // Privacy rule: emails carry links, not data, with one exception the owner
 // decided on: a session request is forwarded to the provider with the
 // patient's details and optional note, so their office can reply directly
@@ -16,11 +21,20 @@ import type { Email } from "./email";
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-const SERIF = "'Ivar Display', Georgia, 'Times New Roman', serif";
-const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
-const INK = "#1c1917";
-const RULE = "#dceaf5";
-const MARGIN_LINE = "#f695b6";
+const SERIF = "'STIX Two Text', 'Iowan Old Style', Georgia, 'Times New Roman', serif";
+const SANS = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
+// The site's stone greys (globals.css), written out: email has no variables.
+const INK = "#1c1917"; // warm-900
+const BODY = "#44403c"; // text-secondary
+const LEDE = "#656360"; // type-hero-lede
+const MUTED = "#78716c"; // warm-500: the footer's links and fine print
+const FAINT = "#a8a29e"; // warm-400
+const ARROW = "#d6d3d1"; // warm-300: the arrow on an ink button
+const PAPER = "#fdfdfc"; // warm-25: the page
+const HAIRLINE = "#e7e5e4"; // warm-200, ink at 10%
+const FRAME = "#f4f4f3"; // the privacy promise's grey frame: ink at 4% on the paper
+const COLUMN = "#f5f5f4"; // its grey column: ink at 4% on white
+const ROW_RULE = "#ebe9e7"; // between rows in a grey column
 
 /** Absolute origins: images and account links come from the app, footer links
  *  from the marketing site. */
@@ -30,39 +44,44 @@ function origins() {
   return { app, site };
 }
 
-/** One 32px line of the notepad: text resting on a blue rule. */
-const ruledRow = (content: string, style = "") =>
-  `<tr><td height="32" style="height:32px;border-bottom:1.5px solid ${RULE};padding:0 24px 0 20px;font-family:${SANS};font-size:13px;line-height:32px;color:#57534e;vertical-align:bottom;${style}">${content}</td></tr>`;
-
 /** The sender's postal address (CAN-SPAM), in every email once it's set (lib/legal.ts). */
 function postalLine() {
   const { companyName, postalAddress } = legalDetails();
   return postalAddress ? `${companyName}, ${postalAddress}` : null;
 }
 
-function notepadFooter() {
+/** A full-width hairline, as the site footer draws between its parts. */
+const hairline = (top: number) =>
+  `<tr><td style="padding-top:${top}px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" style="height:1px;border-top:1px solid ${HAIRLINE};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>`;
+
+/** The site footer's sign-off (site-footer.tsx): its call to action, the
+ *  links, 988, the copyright and the small print, then the voyage's boat at
+ *  sea (footer-scene.tsx, as a still with its edges dissolved into the paper). */
+function siteFooter(smallPrint: string) {
   const { app, site } = origins();
   const postal = postalLine();
-  const link = (href: string, label: string) =>
-    `<a href="${site}${href}" style="color:#44403c;text-decoration:none;font-weight:500">${label}</a>`;
-  const dot = `<span style="color:#a8a29e">&nbsp;&middot;&nbsp;</span>`;
+  const link = (href: string, label: string) => `<a href="${site}${href}" style="color:${MUTED};text-decoration:none">${label}</a>`;
+  const dot = `<span style="color:${ARROW}">&nbsp;&nbsp;&middot;&nbsp;&nbsp;</span>`;
+  const call = (n: string) => `<a href="tel:${n}" style="color:${INK};text-decoration:none;font-weight:500">${n}</a>`;
   return `
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;border:1px solid #e7e5e4;border-radius:16px;border-collapse:separate;overflow:hidden">
-  <tr>
-    <td width="26" style="width:26px;border-right:2px solid ${MARGIN_LINE};font-size:0;line-height:0">&nbsp;</td>
-    <td style="padding:24px 0 20px 0">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td align="center" style="padding:0 24px 4px 20px"><img src="${app}/images/email/footer-illustration.png" width="240" height="160" alt="" style="display:block;width:240px;max-width:100%;height:auto;border:0"></td></tr>
-        ${ruledRow(`<span style="font-family:${SERIF};font-size:20px;color:${INK}">Ready to find help?</span>`)}
-        ${ruledRow("It takes less than two minutes. No referral needed")}
-        ${ruledRow(`${link("/how-it-works", "How it works")}${dot}${link("/blog", "Blog")}${dot}${link("/contact", "Contact")}`)}
-        ${ruledRow(`<strong style="color:${INK};font-weight:600">In crisis?</strong> Call or text 988, any time. In an emergency, call 911.`)}
-        ${ruledRow(`<img src="${app}/images/email/logo.png" width="14" height="14" alt="" style="display:inline-block;vertical-align:-2px;border:0">&nbsp; &copy; ${new Date().getFullYear()} PsychMind. All rights reserved.${dot}${link("/privacy-policy", "Privacy Policy")}`, "color:#78716c")}
-        ${postal ? ruledRow(escape(postal), "color:#78716c") : ""}
-      </table>
-    </td>
-  </tr>
-</table>`;
+      <tr><td align="center" style="padding:52px 8px 0">
+        <p style="margin:0;font-family:${SERIF};font-weight:400;font-size:26px;line-height:32px;letter-spacing:-0.1px;color:${INK}">Ready to find help?</p>
+        <p style="margin:8px 0 0;font-family:${SANS};font-size:15px;line-height:22px;color:${LEDE}">It takes less than two minutes. No referral needed</p>
+        <p style="margin:18px 0 0;font-family:${SANS};font-size:13px;line-height:20px">${link("/how-it-works", "How it works")}${dot}${link("/blog", "Blog")}${dot}${link("/contact", "Contact")}</p>
+      </td></tr>
+      <tr><td style="padding:32px 0 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${FRAME};border:1px solid ${HAIRLINE};border-radius:13px;border-collapse:separate">
+          <tr><td align="center" style="padding:14px 20px;font-family:${SANS};font-size:13px;line-height:20px;color:${BODY}"><span style="color:${INK};font-weight:500">In crisis?</span> Call or text ${call("988")}, any time. In an emergency, call ${call("911")}.</td></tr>
+        </table>
+      </td></tr>
+      ${hairline(32)}
+      <tr><td align="center" style="padding:20px 8px 0;font-family:${SANS};font-size:12px;line-height:18px;color:${MUTED}">
+        <img src="${app}/images/email/logo.png" width="14" height="14" alt="" style="display:inline-block;vertical-align:-2px;border:0">&nbsp; &copy; ${new Date().getFullYear()} PsychMind. All rights reserved.${dot}${link("/privacy-policy", "Privacy Policy")}${
+          postal ? `<br>${escape(postal)}` : ""
+        }
+      </td></tr>
+      <tr><td align="center" style="padding:12px 8px 0;font-family:${SANS};font-size:11px;line-height:16px;color:${FAINT}">${smallPrint}</td></tr>
+      <tr><td style="padding:20px 0 0;font-size:0;line-height:0"><img src="${app}/images/email/footer-sea.png" width="560" alt="" style="display:block;width:100%;max-width:560px;height:auto;border:0"></td></tr>`;
 }
 
 export function layout({
@@ -92,22 +111,27 @@ export function layout({
   settingsUrl?: string;
 }) {
   const { app } = origins();
+  // A grey column in the white card, as in the privacy promise: each row a
+  // small medium label over its value (the search bar's segments).
   const detailRows = details?.length
-    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;border:1px solid #e7e5e4;border-radius:12px;border-collapse:separate">${details
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;background:${COLUMN};border-radius:8px;border-collapse:separate">${details
         .map(
           ([label, value], i) =>
-            `<tr><td style="padding:12px 16px;${i ? "border-top:1px solid #f5f5f4;" : ""}font-family:${SANS};font-size:12px;line-height:18px;color:#78716c;text-transform:uppercase;letter-spacing:0.05em;width:120px;vertical-align:top">${escape(label)}</td><td style="padding:12px 16px;${i ? "border-top:1px solid #f5f5f4;" : ""}font-family:${SANS};font-size:15px;line-height:22px;color:${INK};white-space:pre-line">${escape(value)}</td></tr>`,
+            `<tr><td style="padding:10px 16px;${i ? `border-top:1px solid ${ROW_RULE};` : ""}font-family:${SANS}"><div style="font-size:12px;line-height:16px;font-weight:500;color:${MUTED}">${escape(label)}</div><div style="margin-top:2px;font-size:15px;line-height:22px;color:${INK};white-space:pre-line">${escape(value)}</div></td></tr>`,
         )
         .join("")}</table>`
     : "";
   const button = cta
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0"><tr>
-        <td bgcolor="${INK}" style="border-radius:999px">
-          <a href="${escape(cta.url)}" style="display:inline-block;padding:14px 26px;font-family:${SANS};font-size:15px;font-weight:600;line-height:20px;color:#ffffff;text-decoration:none;border-radius:999px">${escape(cta.label)}&nbsp;&nbsp;&rarr;</a>
-        </td></tr></table>
-      <p style="margin:20px 0 0;font-family:${SANS};font-size:12px;line-height:18px;color:#78716c">Button not working? Paste this link into your browser:<br><a href="${escape(cta.url)}" style="color:#57534e;word-break:break-all">${escape(cta.url)}</a></p>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0"><tr>
+          <td bgcolor="${INK}" style="border-radius:12px">
+            <a href="${escape(cta.url)}" style="display:inline-block;padding:13px 20px;font-family:${SANS};font-size:15px;font-weight:500;line-height:20px;color:#ffffff;text-decoration:none;border-radius:12px">${escape(cta.label)}&nbsp;&nbsp;<span style="color:${ARROW}">&rarr;</span></a>
+          </td></tr></table>
+        <p style="margin:18px 0 0;font-family:${SANS};font-size:12px;line-height:18px;color:${MUTED}">Button not working? Paste this link into your browser:<br><a href="${escape(cta.url)}" style="color:${BODY};word-break:break-all">${escape(cta.url)}</a></p>`
     : "";
   const preview = escape(preheader ?? body.replace(/<[^>]+>/g, ""));
+  const smallPrint = `${escape(reason)}${
+    unsubscribeUrl ? ` <a href="${escape(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline">Unsubscribe from PsychMind marketing emails</a>.` : ""
+  }${settingsUrl ? ` <a href="${escape(settingsUrl)}" style="color:${MUTED};text-decoration:underline">Choose which emails you get</a>.` : ""}`;
 
   const html = `<!doctype html>
 <html lang="en">
@@ -119,33 +143,36 @@ export function layout({
 <title>${escape(heading)}</title>
 <style>
   @media (max-width: 600px) {
-    .pm-pad { padding-left: 16px !important; padding-right: 16px !important; }
-    .pm-card { padding: 28px 22px !important; }
+    .pm-pad { padding-left: 12px !important; padding-right: 12px !important; }
+    .pm-card { padding: 28px 20px !important; }
     .pm-h1 { font-size: 26px !important; line-height: 32px !important; }
   }
 </style>
 </head>
-<body style="margin:0;padding:0;background:#f5f5f4;-webkit-text-size-adjust:100%">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f5f5f4">${preview}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f4">
-  <tr><td align="center" class="pm-pad" style="padding:40px 24px">
+<body style="margin:0;padding:0;background:${PAPER};-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${PAPER}">${preview}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PAPER}">
+  <tr><td align="center" class="pm-pad" style="padding:36px 24px 0">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
-      <tr><td style="padding:0 4px 24px">
-        <a href="${app}" style="text-decoration:none;color:${INK}"><img src="${app}/images/email/logo.png" width="28" height="28" alt="" style="display:inline-block;vertical-align:middle;border:0">&nbsp;&nbsp;<span style="font-family:${SERIF};font-size:21px;line-height:28px;color:${INK};vertical-align:middle">PsychMind</span></a>
+      <tr><td style="padding:0 8px 20px">
+        <a href="${app}" style="text-decoration:none;color:${INK}"><img src="${app}/images/email/logo.png" width="24" height="24" alt="" style="display:inline-block;vertical-align:middle;border:0">&nbsp;&nbsp;<span style="font-family:${SERIF};font-size:20px;line-height:24px;color:${INK};vertical-align:middle">PsychMind</span></a>
       </td></tr>
-      <tr><td class="pm-card" style="background:#ffffff;border:1px solid #e7e5e4;border-radius:16px;padding:40px">
-        <h1 class="pm-h1" style="margin:0 0 14px;font-family:${SERIF};font-weight:400;font-size:30px;line-height:38px;letter-spacing:-0.01em;color:${INK}">${escape(heading)}</h1>
-        <p style="margin:0;font-family:${SANS};font-size:16px;line-height:26px;color:#44403c">${body}</p>
-        ${detailRows}
-        ${button}
-        ${footnote ? `<p style="margin:28px 0 0;padding-top:20px;border-top:1px solid #f5f5f4;font-family:${SANS};font-size:13px;line-height:20px;color:#78716c">${escape(footnote)}</p>` : ""}
+      <tr><td>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${FRAME};border:1px solid ${HAIRLINE};border-radius:20px;border-collapse:separate">
+          <tr><td style="padding:6px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid ${HAIRLINE};border-radius:13px;border-collapse:separate">
+              <tr><td class="pm-card" style="padding:36px 32px">
+                <h1 class="pm-h1" style="margin:0 0 12px;font-family:${SERIF};font-weight:400;font-size:30px;line-height:36px;letter-spacing:-0.1px;color:${INK}">${escape(heading)}</h1>
+                <p style="margin:0;font-family:${SANS};font-size:16px;line-height:26px;color:${BODY}">${body}</p>
+                ${detailRows}
+                ${button}
+                ${footnote ? `<p style="margin:28px 0 0;padding-top:20px;border-top:1px solid ${COLUMN};font-family:${SANS};font-size:13px;line-height:20px;color:${MUTED}">${escape(footnote)}</p>` : ""}
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
       </td></tr>
-      <tr><td style="padding:16px 0 0">${notepadFooter()}</td></tr>
-      <tr><td style="padding:20px 4px 0;font-family:${SANS};font-size:11px;line-height:16px;color:#a8a29e;text-align:center">${escape(reason)}${
-        unsubscribeUrl
-          ? ` <a href="${escape(unsubscribeUrl)}" style="color:#57534e;text-decoration:underline">Unsubscribe from PsychMind marketing emails</a>.`
-          : ""
-      }${settingsUrl ? ` <a href="${escape(settingsUrl)}" style="color:#57534e;text-decoration:underline">Choose which emails you get</a>.` : ""}</td></tr>
+      ${siteFooter(smallPrint)}
     </table>
   </td></tr>
 </table>
@@ -253,6 +280,34 @@ export function providerDecisionEmail(
     },
   }[decision];
   return { to, subject: copy.subject, ...layout({ heading: copy.heading, body: copy.body, cta: { label: copy.cta, url: dashboardUrl } }) };
+}
+
+/** A verified provider's changes (name, title, NPI, licenses) after review
+ *  (lib/provider/review.ts). TODO(client): copy. */
+export function profileChangesApprovedEmail(to: string, profileUrl: string): Email {
+  return {
+    to,
+    subject: "Your PsychMind profile changes are live",
+    ...layout({
+      heading: "Your changes are live",
+      body: "Our team checked the changes to your profile, and patients can see them now.",
+      cta: { label: "View your profile", url: profileUrl },
+    }),
+  };
+}
+
+export function profileChangesDeclinedEmail(to: string, note: string, profileUrl: string): Email {
+  return {
+    to,
+    subject: "About your PsychMind profile changes",
+    ...layout({
+      heading: "We couldn't approve your changes",
+      body: "Our team couldn't approve the latest changes to your profile, so it still shows your verified details.",
+      details: [["Note from our team", note]],
+      cta: { label: "Review your profile", url: profileUrl },
+      footnote: "Update the details and save them to send them for another check.",
+    }),
+  };
 }
 
 export function adminNewSubmissionEmail(to: string, reviewUrl: string, settingsUrl?: string): Email {

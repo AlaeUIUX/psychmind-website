@@ -3,17 +3,16 @@
 import { cn } from "cn";
 import { CircleAlertIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
-import { useCallback, useState } from "react";
 import type { SectionStatus } from "@/lib/provider/completeness";
-import { toProfileView, type ProviderState } from "@/lib/provider/state";
-import type { ProfileView } from "@/lib/provider/types";
+import type { ProviderState } from "@/lib/provider/state";
 import type { SectionKey } from "@/server/provider/actions";
-import { ProviderProfileView } from "./profile-view";
 import { SectionForm } from "./section-form";
 
 // Edit every profile field after onboarding: section list on the left, the
-// section's form in the middle, live preview on the right (desktop). The same
-// forms as the wizard, in "editor" mode (Save changes instead of continue).
+// section's form beside it. The same forms as the wizard, in "editor" mode
+// (Save changes instead of continue). No preview squeezed in beside them (the
+// owner's call, 2026-10-30): "View profile" in the page header opens the
+// whole profile in a new tab (/provider/preview), on phones too.
 export function ProfileEditor({
   state,
   section,
@@ -25,12 +24,10 @@ export function ProfileEditor({
   sections: SectionStatus[];
   locked?: string;
 }) {
-  const [preview, setPreview] = useState<ProfileView>(() => toProfileView(state));
-  const onPreview = useCallback((patch: Partial<ProfileView>) => setPreview((p) => ({ ...p, ...patch })), []);
   const current = sections.find((s) => s.key === section);
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[220px_minmax(0,520px)_1fr]">
+    <div className="grid gap-8 xl:grid-cols-[220px_minmax(0,680px)]">
       <nav aria-label="Profile sections" className="flex gap-1 overflow-x-auto xl:flex-col">
         {sections.map((s) => (
           <Link
@@ -56,15 +53,9 @@ export function ProfileEditor({
             {locked}
           </p>
         ) : (
-          <SectionForm key={section} section={section} state={state} mode="editor" onPreview={onPreview} />
+          <SectionForm key={section} section={section} state={state} mode="editor" />
         )}
       </section>
-
-      <aside className="hidden xl:block">
-        <div className="sticky top-24">
-          <ProviderProfileView profile={preview} mode="preview" />
-        </div>
-      </aside>
     </div>
   );
 }

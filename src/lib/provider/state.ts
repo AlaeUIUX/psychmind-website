@@ -1,3 +1,4 @@
+import type { ReviewField } from "./review";
 import type { ProfileView, ProviderStatus } from "./types";
 import { selfHosted } from "@/lib/photos";
 
@@ -18,6 +19,10 @@ export type ProviderState = {
   onboardingStep: string;
   reviewNote: string | null;
   needsReview: boolean;
+  /** Verified providers' changes waiting for an admin (lib/provider/review.ts):
+   *  each with the verified value it would replace. The fields below already
+   *  show the requested values, so the editor and previews show their edits. */
+  inReview: { field: ReviewField; label: string; verified: string; requested: string }[];
   extraLocations: number;
   firstName: string;
   lastName: string;
@@ -61,6 +66,11 @@ export type ProviderState = {
     issuingBody: string;
     status: "pending" | "verified" | "rejected";
     document: UploadMeta | null;
+    /** Waiting for an admin on a verified profile: a new (or resubmitted)
+     *  license, or an edit to a verified one. */
+    review: "new" | "update" | null;
+    /** For an edit: the verified details, still public until it's approved. */
+    verified: { licenseNumber: string; issuingBody: string; document: UploadMeta | null } | null;
   }[];
 };
 
@@ -101,5 +111,5 @@ export function toProfileView(s: ProviderState): ProfileView {
 }
 
 export type ActionResult =
-  | { ok: true; redirectTo?: string }
+  | { ok: true; redirectTo?: string; /** Shown instead of "Changes saved" (e.g. sent for review). */ notice?: string }
   | { ok: false; error?: string; fieldErrors?: Record<string, string> };

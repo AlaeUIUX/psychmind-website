@@ -2,6 +2,22 @@
 
 What stands between today's build and a full public release, page by page. The short version, with status, is on `/dev/progress` (filter "Blocks launch"). Copy findings are flagged for the client, never reworded here.
 
+## Recheck, 2026-10-30
+
+Every finding below was checked again against `b1ab8fe` (the design-language pass and the new provider and admin dashboards) plus the uncommitted work in the tree.
+
+- **Still open:** every blocker and should-fix item. One is partly done: the blog index now ends with the site footer on phones (`ed274ed`), but computers still have no footer or legal links.
+- **Page sweep:** all 70 pages, now including the provider Overview, Analytics and What's new and the admin queue at `/admin/queue`, load at 1280 and 375 for every role, with no page errors and no horizontal scroll. Only the intended 404s are flagged.
+- **Checks:** `npm test` 102 passed (14 files); `tsc` 0 errors; lint 0 errors, 13 warnings.
+- **Live site:** still on `ed274ed`, because `b1ab8fe` isn't pushed, so the new dashboards aren't live yet. The samples are still in search, `/robots.txt` is still 404, and `app.psychmind.org` still returns Vercel's 404.
+- **Banners:** the new profile-banner upload allows 5 MB, but banners are cropped to WebP in the browser first, so they stay under Vercel's 4.5 MB limit. License documents are still the only uploads at risk.
+- **Fixed later the same day:**
+  - Expired, broken and already-used confirmation links now explain themselves on log in (`/auth/verified`, with a Playwright test).
+  - License documents are capped at 4 MB, with the text to match.
+  - Every email was redesigned in the landing's look (preview them all at `/dev/emails`).
+  - Re-verification (D12): once verified, a new name, title, business name, NPI or license waits for an admin while the public profile keeps the verified details, and a new state stays hidden until its license is verified (`lib/provider/review.ts`).
+  - The profile editor lost its cramped side preview; "View profile" opens the full profile in a new tab (`/provider/preview`).
+
 ## How it was checked
 
 - **Every page loaded** at 1280 and 375 px: signed out, as a new patient, as a new provider, and as an admin (local test accounts). All 66 views render with no page errors and no horizontal scroll. Role redirects work (a patient opening `/provider` or `/admin` lands on `/account`), and unknown providers, requests and admin ids give a 404.

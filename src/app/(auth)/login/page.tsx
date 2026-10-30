@@ -14,6 +14,13 @@ const notices: Record<string, string> = {
   deleted: "Your account has been deleted.",
 };
 
+// An email-confirmation link that didn't work (app/auth/verified). Logging in
+// leads to the confirm screen, which sends a new link. TODO(client): copy.
+const linkProblems: Record<string, string> = {
+  expired: "That confirmation link has expired. Log in to get a new one.",
+  invalid: "That confirmation link didn't work. Log in to get a new one.",
+};
+
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const session = await getSession();
@@ -29,7 +36,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     : undefined;
   return (
     <>
-      <LoginForm next={params.next} googleEnabled={authFeatures.google} notice={notice} error={error} />
+      <LoginForm
+        next={params.next}
+        googleEnabled={authFeatures.google}
+        notice={notice}
+        info={params.link ? (linkProblems[params.link] ?? linkProblems.invalid) : undefined}
+        error={error}
+      />
     </>
   );
 }

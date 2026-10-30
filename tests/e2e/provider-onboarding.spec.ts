@@ -325,8 +325,110 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
-  await test.step("provider deletes their account and their files go with it", async () => {
+  await test.step("View profile opens the whole profile in a new tab", async () => {
     await page.goto("/provider/profile");
+    const view = page.getByRole("link", { name: "View profile" });
+    await expect(view).toHaveAttribute("target", "_blank");
+    const [preview] = await Promise.all([page.context().waitForEvent("page"), view.click()]);
+    await expect(preview).toHaveURL(/\/provider\/preview$/);
+    await expect(preview.getByRole("heading", { level: 1, name: `Sara ${last}`, exact: true })).toBeVisible();
+    await expect(preview.getByText("Your profile as patients see it.")).toBeVisible();
+    await preview.close();
+  });
+
+  // Once verified, a new name, title, NPI or license waits for our team; the
+  // public profile keeps the verified details meanwhile (lib/provider/review.ts).
+  const renamed = `${last}-Ray`;
+  await test.step("a new name waits for the team, then goes live once approved", async () => {
+    await page.goto("/provider");
+    const profileHref = await page.getByRole("link", { name: /View public profile/ }).getAttribute("href");
+    await page.goto("/provider/profile?section=identity");
+    // Typing before the form has loaded its saved value would mix the two.
+    await expect(page.getByLabel(/Last name/)).toHaveValue(last);
+    await page.getByLabel(/Last name/).fill(renamed);
+    await expect(page.getByLabel(/Last name/)).toHaveValue(renamed);
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText(/^Saved\. Our team checks changes/)).toBeVisible();
+    await expect(page.getByText("In review: last name.")).toBeVisible();
+
+    // Patients still see the verified name.
+    const guest = await browser.newContext();
+    const g = await guest.newPage();
+    await g.goto(profileHref!);
+    await expect(g.getByRole("heading", { level: 1, name: `Sara ${last}`, exact: true })).toBeVisible();
+
+    const admin = await adminPage(browser);
+    await admin.goto("/admin/queue");
+    await expect(admin.getByRole("row").filter({ hasText: `Sara ${last}` })).toContainText("Changes to review");
+    await admin.getByRole("link", { name: new RegExp(`Sara ${last}`) }).first().click();
+    await expect(admin.getByRole("heading", { name: "Changes to review" })).toBeVisible();
+    await expect(admin.getByText(renamed, { exact: true })).toBeVisible();
+    await admin.getByRole("button", { name: "Approve changes" }).click();
+    await admin.getByRole("button", { name: "Confirm decision" }).click();
+    await expect(admin.getByText("Decision saved")).toBeVisible();
+    await admin.context().close();
+
+    // Live now (the old link redirects to the new name).
+    await g.goto(profileHref!);
+    await expect(g.getByRole("heading", { level: 1, name: `Sara ${renamed}`, exact: true })).toBeVisible();
+    await guest.close();
+    await page.goto("/dev/mail");
+    await expect(page.getByTestId("dev-mail").filter({ hasText: "Your PsychMind profile changes are live" }).filter({ hasText: email })).toHaveCount(1);
+  });
+
+  await test.step("a new state stays off the profile until its license is verified; a decline says why", async () => {
+    await page.goto("/provider/profile?section=locations");
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: "Add another location" }).click();
+    // The new card (the second location).
+    await page.locator("#loc-1-state").click();
+    await page.getByRole("option", { name: "Florida" }).click();
+    await page.locator("#loc-1-city").fill("Miami");
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+
+    // Its license: the Florida card is the one still missing a license, so it's open.
+    await page.goto("/provider/profile?section=credentials");
+    await page.waitForLoadState("networkidle");
+    await page.locator('input[type="file"]').setInputFiles({ ...PDF, name: "Florida-license.pdf" });
+    await expect(page.getByText("Florida-license.pdf")).toBeVisible();
+    await page.getByLabel(/License number/).fill("MH-1234");
+    await page.getByLabel(/Issuing body/).fill("Florida Board of Clinical Social Work");
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText(/^Saved\. Our team checks changes/)).toBeVisible();
+    await expect(page.getByText("In review: the Florida license.")).toBeVisible();
+
+    // Patients don't see Florida yet.
+    await page.goto("/provider");
+    const profileHref = await page.getByRole("link", { name: /View public profile/ }).getAttribute("href");
+    const guest = await browser.newContext();
+    const g = await guest.newPage();
+    await g.goto(profileHref!);
+    await expect(g.getByRole("heading", { level: 1, name: `Sara ${renamed}`, exact: true })).toBeVisible();
+    await expect(g.getByText("Miami")).toHaveCount(0);
+    await expect(g.getByText(/Licensed in .*Florida/)).toHaveCount(0);
+    await guest.close();
+
+    // The team declines, with a note the provider sees.
+    const admin = await adminPage(browser);
+    await admin.goto("/admin/queue");
+    await admin.getByRole("link", { name: new RegExp(`Sara ${renamed}`) }).first().click();
+    await expect(admin.getByText("New state", { exact: true })).toBeVisible();
+    await admin.getByRole("button", { name: "Decline changes" }).click();
+    await admin.getByLabel(/Note for the provider/).fill("The Florida license number doesn't match the board's record.");
+    await admin.getByRole("button", { name: "Confirm decision" }).click();
+    await expect(admin.getByText("Decision saved")).toBeVisible();
+    await admin.context().close();
+
+    await page.goto("/provider");
+    await expect(page.getByText("We couldn't approve your recent changes")).toBeVisible();
+    await expect(page.getByText("The Florida license number doesn't match the board's record.").first()).toBeVisible();
+    await page.goto("/provider/profile?section=credentials");
+    await expect(page.getByText("Not verified").first()).toBeVisible();
+  });
+
+  await test.step("provider deletes their account and their files go with it", async () => {
+    await page.goto("/provider/profile?section=picture");
     const photo = await page.locator('img[src*="/api/files/"]').first().getAttribute("src");
     expect(photo).toBeTruthy();
     const photoPath = new URL(photo!, page.url()).pathname;

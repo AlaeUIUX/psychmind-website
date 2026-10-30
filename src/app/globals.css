@@ -731,8 +731,15 @@ html.reader-snap {
 
 /* Dashboard numbers (stat tiles). Geist with proportional figures: equal-width
    digits look loose at this size. */
+/* Dashboard numbers in Geist Mono (owner's pick, 2026-10-29) while the portal
+   reads in Inter: resolved on :root, where next/font sets the font, so .app-ui's
+   Inter swap doesn't reach it. Mono figures line up from tile to tile. */
+:root {
+  --font-figure: var(--font-geist-mono);
+}
+
 @utility type-ui-figure {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-weight: 500;
   font-size: 28px;
   line-height: 34px;
@@ -741,7 +748,7 @@ html.reader-snap {
 
 /* The one number a dashboard leads with. */
 @utility type-ui-hero-figure {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-weight: 500;
   font-size: 40px;
   line-height: 44px;

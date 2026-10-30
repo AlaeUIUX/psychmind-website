@@ -18,6 +18,7 @@ import {
   storySchema,
   submitSchema,
 } from "@/lib/provider/schema";
+import { hasPending, mergePending, sameLicense, type PendingChanges } from "@/lib/provider/review";
 import type { ActionResult } from "@/lib/provider/state";
 import { furthest, nextStep, type StepKey } from "@/lib/provider/steps";
 import { requireRole } from "@/server/auth/session";
@@ -30,7 +31,12 @@ import { ensureProfile, loadProviderState } from "./data";
 
 // Mutations for the provider's own profile. Every action re-checks the
 // session and role, re-validates with the shared Zod schemas, and only ever
-// touches the caller's own rows.
+// touches the caller's own rows. Once a profile is verified, changes to the
+// name, title, NPI and licenses wait for an admin (lib/provider/review.ts).
+
+// TODO(client): copy.
+const SENT_FOR_REVIEW =
+  "Saved. Our team checks changes to your name, title, NPI and licenses before they show on your profile, usually within 1–2 business days.";
 
 export type SectionKey = Exclude<StepKey, "review">;
 
@@ -75,6 +81,7 @@ export async function saveProviderSection(section: SectionKey, input: unknown): 
   const data = parsed.data as never;
   const result = await saveSection(section, data, profile, me.id);
   if (!result.ok) return result;
+  const needsReview = profile.status === "approved" ? await refreshReview(profile.id) : false;
 
   const onboarding = profile.status === "draft" || profile.status === "changes_requested";
   const next = nextStep(section);
@@ -85,10 +92,46 @@ export async function saveProviderSection(section: SectionKey, input: unknown): 
       .where(eq(providerProfile.id, profile.id));
   }
   revalidatePath("/provider", "layout");
-  return { ok: true, redirectTo: onboarding && next ? `/provider/onboarding/${next}` : undefined };
+  if (needsReview) revalidatePath("/admin", "layout");
+  return {
+    ok: true,
+    redirectTo: onboarding && next ? `/provider/onboarding/${next}` : undefined,
+    notice: needsReview && result.reviewed ? SENT_FOR_REVIEW : undefined,
+  };
 }
 
 type Profile = typeof providerProfile.$inferSelect;
+type SaveResult = ActionResult & { reviewed?: boolean };
+
+/** The reviewed fields as verified (what the public profile shows). */
+const verifiedOf = (p: Profile) => ({
+  firstName: p.firstName,
+  lastName: p.lastName,
+  titleCredentials: p.titleCredentials,
+  businessName: p.businessName ?? "",
+  displayAsBusiness: p.displayAsBusiness,
+  npiNumber: p.npiNumber ?? "",
+});
+
+const samePending = (a: PendingChanges | null | undefined, b: PendingChanges | null | undefined) =>
+  JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
+
+/** A verified profile waits for an admin while anything is pending: reviewed
+ *  fields, or a license that's new or edited. A fresh change also clears the
+ *  note from a previous decline. Returns whether it's waiting. */
+async function refreshReview(profileId: string) {
+  const [p] = await db.select({ pendingChanges: providerProfile.pendingChanges }).from(providerProfile).where(eq(providerProfile.id, profileId));
+  const licenses = await db
+    .select({ status: providerLicense.status, pending: providerLicense.pending })
+    .from(providerLicense)
+    .where(eq(providerLicense.profileId, profileId));
+  const needsReview = hasPending(p?.pendingChanges) || licenses.some((l) => l.status === "pending" || l.pending);
+  await db
+    .update(providerProfile)
+    .set(needsReview ? { needsReview, reviewNote: null } : { needsReview })
+    .where(eq(providerProfile.id, profileId));
+  return needsReview;
+}
 
 async function removeUpload(id: string, ownerId: string) {
   const [old] = await db
@@ -98,8 +141,9 @@ async function removeUpload(id: string, ownerId: string) {
   if (old) await deleteFile(old.storageKey);
 }
 
-async function saveSection(section: SectionKey, data: never, profile: Profile, userId: string): Promise<ActionResult> {
+async function saveSection(section: SectionKey, data: never, profile: Profile, userId: string): Promise<SaveResult> {
   const where = eq(providerProfile.id, profile.id);
+  const live = profile.status === "approved";
   switch (section) {
     case "identity": {
       const { bannerId, ...v } = data as z.output<typeof identitySchema>;
@@ -112,17 +156,42 @@ async function saveSection(section: SectionKey, data: never, profile: Profile, u
         if (!file) return { ok: false, fieldErrors: { bannerId: "Upload your banner again." } };
         banner = file.id;
       }
-      await db
-        .update(providerProfile)
-        .set({ ...v, bannerId: banner, pronouns: v.pronouns || null, businessName: v.businessName || null })
-        .where(where);
+      const free = { bannerId: banner, useDefaultBanner: v.useDefaultBanner, pronouns: v.pronouns || null };
+      let reviewed = false;
+      if (live) {
+        // Who they are waits for an admin; the verified name stays public meanwhile.
+        const pending = mergePending(verifiedOf(profile), profile.pendingChanges, {
+          firstName: v.firstName,
+          lastName: v.lastName,
+          titleCredentials: v.titleCredentials,
+          businessName: v.businessName ?? "",
+          displayAsBusiness: v.displayAsBusiness,
+        });
+        reviewed = hasPending(pending) && !samePending(pending, profile.pendingChanges);
+        await db
+          .update(providerProfile)
+          .set({ ...free, pendingChanges: hasPending(pending) ? pending : null })
+          .where(where);
+      } else {
+        await db
+          .update(providerProfile)
+          .set({
+            ...free,
+            firstName: v.firstName,
+            lastName: v.lastName,
+            titleCredentials: v.titleCredentials,
+            businessName: v.businessName || null,
+            displayAsBusiness: v.displayAsBusiness,
+          })
+          .where(where);
+        await db
+          .update(user)
+          .set({ firstName: v.firstName, lastName: v.lastName, name: `${v.firstName} ${v.lastName}` })
+          .where(eq(user.id, userId));
+      }
       // A replaced banner is no longer shown anywhere (one chosen away from, for the default, is kept).
       if (profile.bannerId && profile.bannerId !== banner) await removeUpload(profile.bannerId, userId);
-      await db
-        .update(user)
-        .set({ firstName: v.firstName, lastName: v.lastName, name: `${v.firstName} ${v.lastName}` })
-        .where(eq(user.id, userId));
-      return { ok: true };
+      return { ok: true, reviewed };
     }
     case "picture": {
       const v = data as z.output<typeof pictureSchema>;
@@ -196,34 +265,47 @@ async function saveSection(section: SectionKey, data: never, profile: Profile, u
 
       const before = await db.select().from(providerLicense).where(eq(providerLicense.profileId, profile.id));
       const prior = new Map(before.map((l) => [l.state, l]));
-      let changedLive = false;
+      let reviewed = false;
       await db.transaction(async (tx) => {
-        await tx
-          .update(providerProfile)
-          .set({ npiNumber: v.npiNumber, yearsExperience: v.yearsExperience })
-          .where(where);
+        if (live) {
+          // A new NPI waits for an admin, like the name.
+          const pending = mergePending(verifiedOf(profile), profile.pendingChanges, { npiNumber: v.npiNumber });
+          if (hasPending(pending) && !samePending(pending, profile.pendingChanges)) reviewed = true;
+          await tx
+            .update(providerProfile)
+            .set({ yearsExperience: v.yearsExperience, pendingChanges: hasPending(pending) ? pending : null })
+            .where(where);
+        } else {
+          await tx.update(providerProfile).set({ npiNumber: v.npiNumber, yearsExperience: v.yearsExperience }).where(where);
+        }
         for (const l of v.licenses) {
           const old = prior.get(l.state);
-          const changed =
-            !old || old.licenseNumber !== l.licenseNumber || old.issuingBody !== l.issuingBody || old.documentId !== l.documentId;
-          if (changed && profile.status === "approved") changedLive = true;
+          const requested = { licenseNumber: l.licenseNumber, issuingBody: l.issuingBody, documentId: l.documentId };
+          if (live && old?.status === "verified") {
+            // A verified license stays public as it is; an edit to it waits for an admin.
+            const edit = sameLicense(requested, old) ? null : requested;
+            if (edit && !(old.pending && sameLicense(edit, old.pending))) reviewed = true;
+            await tx.update(providerLicense).set({ pending: edit }).where(eq(providerLicense.id, old.id));
+            continue;
+          }
+          const changed = !old || !sameLicense(requested, old);
+          if (changed && live) reviewed = true;
           const row = {
             profileId: profile.id,
             state: l.state,
-            licenseNumber: l.licenseNumber,
-            issuingBody: l.issuingBody,
-            documentId: l.documentId,
-            // Any change goes back to "pending" until an admin re-checks it.
+            ...requested,
+            // Any change goes back to "pending" until an admin checks it; a new
+            // state stays off the profile and out of search until then.
             status: changed ? ("pending" as const) : (old?.status ?? "pending"),
+            pending: null,
           };
           await tx
             .insert(providerLicense)
             .values(row)
             .onConflictDoUpdate({ target: [providerLicense.profileId, providerLicense.state], set: row });
         }
-        if (changedLive) await tx.update(providerProfile).set({ needsReview: true }).where(where);
       });
-      return { ok: true };
+      return { ok: true, reviewed };
     }
   }
 }

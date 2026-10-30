@@ -64,6 +64,32 @@ test("logging in before confirming the email goes to the confirm screen, with re
   await expect(page).toHaveURL(/\/account/);
 });
 
+test("a confirmation link that's broken, expired or already used says so on log in", async ({ page }) => {
+  // A link that doesn't check out: Better Auth sends it back with ?error=.
+  await page.goto(`/api/auth/verify-email?token=not-a-token&callbackURL=${encodeURIComponent("/auth/verified?next=/account")}`);
+  await expect(page).toHaveURL(/\/login\?link=invalid/);
+  await expect(page.getByText("That confirmation link didn't work. Log in to get a new one.")).toBeVisible();
+
+  // An expired one, as Better Auth hands it over.
+  await page.goto("/auth/verified?next=%2Faccount&error=TOKEN_EXPIRED");
+  await expect(page.getByText("That confirmation link has expired. Log in to get a new one.")).toBeVisible();
+
+  // The real link, opened again once confirmed and signed out.
+  const email = uniqueEmail("link-twice");
+  await fillSignUp(page, "patient", email);
+  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  await followEmailLink(page, email);
+  await expect(page).toHaveURL(/\/account/);
+  await page.context().clearCookies();
+  await followEmailLink(page, email);
+  await expect(page.getByText("Your email is confirmed. Log in to continue.")).toBeVisible();
+  // …and logging in carries on to where the link was going.
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL(/\/account/);
+});
+
 test("forgot password: link, new password, and the link only works once", async ({ page }) => {
   const email = uniqueEmail("forgot");
   await signUp(page, "patient", email, "Ivy", "Lane");

@@ -18,7 +18,7 @@ export type UploadItem = {
 
 type UploadDropzoneProps = {
   label: string;
-  /** e.g. "PDF, JPG or PNG, up to 10 MB" — shown under the drop area. */
+  /** e.g. "PDF, JPG or PNG, up to 4 MB" — shown under the drop area. */
   hint?: string;
   /** MIME types or extensions, as for <input accept>. */
   accept: string[];

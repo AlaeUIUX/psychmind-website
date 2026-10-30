@@ -1,4 +1,4 @@
-import { ExternalLinkIcon, FileTextIcon } from "@/components/ui/hugeicons";
+import { ArrowRightIcon, ExternalLinkIcon, FileTextIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DecisionPanel } from "@/components/admin/decision-panel";
@@ -6,7 +6,7 @@ import { STATUS_BADGE } from "@/components/admin/provider-table";
 import { PageHeader } from "@/components/app/page-header";
 import { ProviderProfileView } from "@/components/provider/profile-view";
 import { StatusPill } from "@/components/app/status-pill";
-import { fileUrl, toProfileView } from "@/lib/provider/state";
+import { fileUrl, toProfileView, type ProviderState, type UploadMeta } from "@/lib/provider/state";
 import { stateName } from "@/lib/taxonomy";
 import { providerHistory, providerOwnerEmail } from "@/server/admin/data";
 import { requireRole } from "@/server/auth/session";
@@ -49,6 +49,8 @@ export default async function AdminProviderPage({ params }: { params: Promise<{ 
               </p>
             )}
           </section>
+
+          {state.status === "approved" && state.needsReview && <ChangesToReview state={state} />}
 
           <section className="flex flex-col gap-4 rounded-card border border-warm-200 bg-white p-6">
             <h2 className="type-title text-text-primary">Credentials</h2>
@@ -124,5 +126,82 @@ export default async function AdminProviderPage({ params }: { params: Promise<{ 
         </section>
       </div>
     </>
+  );
+}
+
+/** A verified provider's changes waiting for a decision (lib/provider/review.ts):
+ *  each reviewed field from its verified value to the requested one, and each
+ *  license that's new or edited, with its document. TODO(client): copy. */
+function ChangesToReview({ state }: { state: ProviderState }) {
+  const licenses = state.licenses.filter((l) => l.review);
+  const doc = (d: UploadMeta | null) =>
+    d ? (
+      <a href={fileUrl(d.id)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 font-medium text-text-primary underline underline-offset-2">
+        <FileTextIcon aria-hidden className="size-4 shrink-0" />
+        <span className="truncate">{d.fileName}</span>
+      </a>
+    ) : (
+      <span className="text-destructive">No document</span>
+    );
+  return (
+    <section className="flex flex-col gap-4 rounded-card border border-warm-200 bg-white p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="type-title text-text-primary">Changes to review</h2>
+        <p className="type-small text-text-tertiary">
+          The profile keeps its verified details until you approve these. A new state appears in search once its license is approved.
+        </p>
+      </div>
+      {state.inReview.length > 0 && (
+        <dl className="flex flex-col divide-y divide-warm-100 type-small">
+          {state.inReview.map((c) => (
+            <div key={c.field} className="grid grid-cols-[110px_minmax(0,1fr)] gap-3 py-2">
+              <dt className="text-text-tertiary">{c.label}</dt>
+              <dd className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-text-tertiary line-through">{c.verified}</span>
+                <ArrowRightIcon aria-label="changes to" className="size-3.5 text-text-placeholder" />
+                <span className="font-medium text-text-primary">{c.requested}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {licenses.length > 0 && (
+        <ul className="flex flex-col gap-3">
+          {licenses.map((l) => (
+            <li key={l.id} className="flex flex-col gap-2 rounded-field border border-warm-200 p-4 type-small">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-medium text-text-primary">{stateName(l.state)}</p>
+                <StatusPill tone="warning">{l.review === "new" ? "New state" : "Updated license"}</StatusPill>
+              </div>
+              {l.verified ? (
+                <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
+                  <dt className="text-text-tertiary">Verified</dt>
+                  <dd className="flex min-w-0 flex-col gap-1 text-text-tertiary">
+                    <span>
+                      #{l.verified.licenseNumber} · {l.verified.issuingBody}
+                    </span>
+                    {doc(l.verified.document)}
+                  </dd>
+                  <dt className="text-text-tertiary">Requested</dt>
+                  <dd className="flex min-w-0 flex-col gap-1 text-text-primary">
+                    <span>
+                      #{l.licenseNumber} · {l.issuingBody}
+                    </span>
+                    {doc(l.document)}
+                  </dd>
+                </dl>
+              ) : (
+                <>
+                  <p className="text-text-secondary">
+                    License #{l.licenseNumber} · {l.issuingBody}
+                  </p>
+                  {doc(l.document)}
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

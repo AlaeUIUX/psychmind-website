@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { credentialsSchema, type CredentialsInput } from "@/lib/provider/schema";
 import type { UploadMeta } from "@/lib/provider/state";
-import { UPLOAD_RULES } from "@/lib/provider/uploads";
+import { sizeLabel, UPLOAD_RULES } from "@/lib/provider/uploads";
 import { stateName } from "@/lib/taxonomy";
 import { formatsLabel } from "../profile-view";
 import { uploadFile } from "../upload-client";
 import { FormErrorSummary, useCardReveal } from "@/components/forms/form-error-summary";
-import { SectionFooter, type SectionProps, errorAt, hasErrorAt, useSectionForm } from "./shared";
+import { ReviewNotice, SectionFooter, type SectionProps, errorAt, hasErrorAt, useSectionForm } from "./shared";
 
 type License = CredentialsInput["licenses"][number];
 type Status = "missing" | "ready" | "pending" | "verified" | "rejected";
@@ -151,6 +151,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       <FormErrorSummary control={form.control} />
+      {mode === "editor" && <ReviewNotice state={state} part="credentials" />}
       <div className="grid gap-6 sm:grid-cols-2">
         <FormRow id="npiNumber" label="NPI number" required hint="Your 10-digit National Provider Identifier." error={e.npiNumber?.message}>
           <Input
@@ -265,7 +266,7 @@ export function CredentialsForm({ state, mode, onPreview, backHref, nextHref }: 
                       </p>
                       <UploadDropzone
                         label={doc ? "Replace file" : "Choose file"}
-                        hint="PDF, JPG or PNG · Max 10MB"
+                        hint={`PDF, JPG or PNG · Max ${sizeLabel(UPLOAD_RULES.license.maxBytes)}`}
                         accept={[...UPLOAD_RULES.license.types]}
                         maxBytes={UPLOAD_RULES.license.maxBytes}
                         files={file}

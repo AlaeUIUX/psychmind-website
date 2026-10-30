@@ -87,9 +87,18 @@ export function ProviderBanner({
         </StatusBanner>
       );
     default:
-      return needsReview ? (
-        <StatusBanner tone="info" title="We're checking your updated licenses">
-          Your profile stays live while our team reviews the changes.
+      // A verified provider's changes to their name, title, NPI or licenses
+      // (lib/provider/review.ts). TODO(client): copy.
+      if (needsReview) {
+        return (
+          <StatusBanner tone="info" title="We're checking your recent changes">
+            Your profile stays live with your verified details while our team reviews them, usually within 1–2 business days.
+          </StatusBanner>
+        );
+      }
+      return reviewNote ? (
+        <StatusBanner tone="warning" title="We couldn't approve your recent changes" action={action("/provider/profile", "Review your profile")}>
+          <span className="whitespace-pre-line">{reviewNote}</span>
         </StatusBanner>
       ) : null;
   }

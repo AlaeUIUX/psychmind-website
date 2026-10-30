@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ProviderStatus } from "@/lib/provider/types";
 import { decideProvider, type DecisionState } from "@/server/admin/actions";
 
-type Decision = "approve" | "request_changes" | "reject" | "suspend" | "unsuspend";
+type Decision = "approve" | "request_changes" | "reject" | "suspend" | "unsuspend" | "decline_changes";
 
 // Approve / Request changes / Reject (submitted), Suspend (verified),
-// Unsuspend (suspended). Anything but approval needs a note for the provider.
+// Unsuspend (suspended), and a verified provider's later changes: Approve
+// changes / Decline changes. Anything but approval needs a note for the provider.
 export function DecisionPanel({ profileId, status, needsReview }: { profileId: string; status: ProviderStatus; needsReview: boolean }) {
   const [decision, setDecision] = useState<Decision | null>(null);
   const [state, action, pending] = useActionState<DecisionState, FormData>(async (prev, form) => {
@@ -31,7 +32,12 @@ export function DecisionPanel({ profileId, status, needsReview }: { profileId: s
         ]
       : status === "approved"
         ? [
-            ...(needsReview ? [{ value: "approve" as const, label: "Approve license changes", variant: "brand" as const }] : []),
+            ...(needsReview
+              ? [
+                  { value: "approve" as const, label: "Approve changes", variant: "brand" as const },
+                  { value: "decline_changes" as const, label: "Decline changes", variant: "secondary" as const },
+                ]
+              : []),
             { value: "suspend", label: "Suspend", variant: "destructive" },
           ]
         : status === "suspended"

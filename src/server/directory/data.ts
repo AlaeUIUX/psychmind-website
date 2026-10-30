@@ -55,6 +55,10 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       .where(and(inArray(providerLicense.profileId, ids), eq(providerLicense.status, "verified"))),
   ]);
   return rows.map((p) => {
+    const own = licenses.filter((l) => l.profileId === p.id);
+    // A practice shows only in states the provider holds a verified license in:
+    // a new state stays off the profile and out of search until our team checks it.
+    const verifiedStates = new Set(own.map((l) => l.state));
     const view: DirectoryProvider = {
       id: p.id,
       publicId: p.publicId,
@@ -85,11 +89,9 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       acceptingNewClients: p.acceptingNewClients,
       education: p.education,
       yearsExperience: p.yearsExperience,
-      licenses: licenses
-        .filter((l) => l.profileId === p.id)
-        .map((l) => ({ state: l.state, licenseNumber: l.licenseNumber, issuingBody: l.issuingBody, verified: true })),
+      licenses: own.map((l) => ({ state: l.state, licenseNumber: l.licenseNumber, issuingBody: l.issuingBody, verified: true })),
       locations: locations
-        .filter((l) => l.profileId === p.id)
+        .filter((l) => l.profileId === p.id && (p.isSample || verifiedStates.has(l.state)))
         .map((l) => ({
           state: l.state,
           city: l.city,

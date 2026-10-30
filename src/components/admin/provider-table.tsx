@@ -57,7 +57,7 @@ export function ProviderTable({ rows, empty }: { rows: ProviderRow[]; empty: { t
               <TableCell>
                 <div className="flex flex-wrap gap-1">
                   <StatusPill tone={STATUS_BADGE[r.status].variant}>{STATUS_BADGE[r.status].label}</StatusPill>
-                  {r.needsReview && <StatusPill tone="warning">License update</StatusPill>}
+                  {r.needsReview && <StatusPill tone="warning">Changes to review</StatusPill>}
                   {r.isSample && <StatusPill dot={false}>Sample</StatusPill>}
                 </div>
               </TableCell>

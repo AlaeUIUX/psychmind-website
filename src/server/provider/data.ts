@@ -3,6 +3,7 @@ import { asc, eq, inArray } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { providerLicense, providerLocation, providerProfile, subscription, upload, user } from "@/db/schema";
 import type { BillingSnapshot, SubscriptionStatus } from "@/lib/billing";
+import { REVIEW_FIELD_LABEL, REVIEW_FIELDS, showValue, type PendingChanges } from "@/lib/provider/review";
 import type { ProviderState, UploadMeta } from "@/lib/provider/state";
 
 // Reads for the provider area. Callers must already have checked who's
@@ -45,9 +46,30 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     db.select().from(providerLocation).where(eq(providerLocation.profileId, p.id)).orderBy(asc(providerLocation.sortOrder)),
     db.select().from(providerLicense).where(eq(providerLicense.profileId, p.id)),
   ]);
-  const uploadIds = [p.photoId, p.bannerId, ...licenses.map((l) => l.documentId)].filter(Boolean) as string[];
+  const uploadIds = [p.photoId, p.bannerId, ...licenses.flatMap((l) => [l.documentId, l.pending?.documentId])].filter(Boolean) as string[];
   const uploads = uploadIds.length ? await db.select().from(upload).where(inArray(upload.id, uploadIds)) : [];
   const byId = new Map(uploads.map((u) => [u.id, toMeta(u)]));
+  const meta = (id: string | null | undefined) => (id ? (byId.get(id) ?? null) : null);
+
+  // A verified profile's requested changes show in its own state (the editor,
+  // previews, the admin's review); the public directory reads the columns.
+  const live = p.status === "approved";
+  const pending: PendingChanges = live ? (p.pendingChanges ?? {}) : {};
+  const want = <T,>(field: keyof PendingChanges, verified: T): T => (field in pending ? (pending[field] as T) : verified);
+  const verifiedValues = {
+    firstName: p.firstName,
+    lastName: p.lastName,
+    titleCredentials: p.titleCredentials,
+    businessName: p.businessName ?? "",
+    displayAsBusiness: p.displayAsBusiness,
+    npiNumber: p.npiNumber ?? "",
+  };
+  const inReview = REVIEW_FIELDS.filter((f) => f in pending).map((field) => ({
+    field,
+    label: REVIEW_FIELD_LABEL[field],
+    verified: showValue(verifiedValues[field]),
+    requested: showValue(pending[field]),
+  }));
 
   return {
     id: p.id,
@@ -59,15 +81,16 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     onboardingStep: p.onboardingStep,
     reviewNote: p.reviewNote,
     needsReview: p.needsReview,
+    inReview,
     extraLocations: p.extraLocations,
-    firstName: p.firstName,
-    lastName: p.lastName,
-    businessName: p.businessName ?? "",
-    displayAsBusiness: p.displayAsBusiness,
-    titleCredentials: p.titleCredentials,
+    firstName: want("firstName", verifiedValues.firstName),
+    lastName: want("lastName", verifiedValues.lastName),
+    businessName: want("businessName", verifiedValues.businessName),
+    displayAsBusiness: want("displayAsBusiness", verifiedValues.displayAsBusiness),
+    titleCredentials: want("titleCredentials", verifiedValues.titleCredentials),
     pronouns: p.pronouns ?? "",
-    photo: p.photoId ? (byId.get(p.photoId) ?? null) : null,
-    banner: p.bannerId ? (byId.get(p.bannerId) ?? null) : null,
+    photo: meta(p.photoId),
+    banner: meta(p.bannerId),
     useDefaultBanner: p.useDefaultBanner,
     whoYouWorkWith: p.whoYouWorkWith,
     about: p.about,
@@ -83,7 +106,7 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     slidingScale: p.slidingScale,
     acceptingNewClients: p.acceptingNewClients,
     education: p.education,
-    npiNumber: p.npiNumber ?? "",
+    npiNumber: want("npiNumber", verifiedValues.npiNumber),
     yearsExperience: p.yearsExperience,
     locations: locations.map((l) => ({
       id: l.id,
@@ -95,14 +118,19 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
       formats: l.formats,
       isPrimary: l.isPrimary,
     })),
-    licenses: licenses.map((l) => ({
-      id: l.id,
-      state: l.state,
-      licenseNumber: l.licenseNumber,
-      issuingBody: l.issuingBody,
-      status: l.status,
-      document: l.documentId ? (byId.get(l.documentId) ?? null) : null,
-    })),
+    licenses: licenses.map((l) => {
+      const edit = live ? l.pending : null;
+      return {
+        id: l.id,
+        state: l.state,
+        licenseNumber: edit?.licenseNumber ?? l.licenseNumber,
+        issuingBody: edit?.issuingBody ?? l.issuingBody,
+        status: edit ? ("pending" as const) : l.status,
+        document: meta(edit ? edit.documentId : l.documentId),
+        review: edit ? ("update" as const) : live && l.status === "pending" ? ("new" as const) : null,
+        verified: edit ? { licenseNumber: l.licenseNumber, issuingBody: l.issuingBody, document: meta(l.documentId) } : null,
+      };
+    }),
   };
 }
 

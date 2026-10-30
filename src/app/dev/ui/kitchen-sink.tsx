@@ -303,9 +303,9 @@ export function KitchenSink() {
       <Block title="Upload" note="Type and size checked before upload; progress, error with retry, remove.">
         <UploadDropzone
           label="Upload your license"
-          hint="PDF, JPG or PNG, up to 10 MB"
+          hint="PDF, JPG or PNG, up to 4 MB"
           accept={["application/pdf", "image/jpeg", "image/png"]}
-          maxBytes={10 * 1024 * 1024}
+          maxBytes={4 * 1024 * 1024}
           multiple
           files={files}
           onFiles={fakeUpload}
