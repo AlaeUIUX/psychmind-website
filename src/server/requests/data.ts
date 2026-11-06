@@ -33,7 +33,9 @@ export async function requestTarget(publicId: string) {
 }
 export type RequestTarget = NonNullable<Awaited<ReturnType<typeof requestTarget>>>;
 
-/** Where a provider's requests are emailed, and their profile id (server only). */
+/** Where a provider's requests are emailed, and their profile id (server only).
+ *  request_email is only ever a confirmed address; one waiting for its link
+ *  (request_email_pending) gets nothing (server/requests/request-email.ts). */
 export async function requestRecipient(publicId: string) {
   await dbReady;
   const [row] = await db
@@ -42,6 +44,18 @@ export async function requestRecipient(publicId: string) {
     .innerJoin(user, eq(user.id, providerProfile.userId))
     .where(eq(providerProfile.publicId, publicId));
   return row ? { profileId: row.profileId, userId: row.userId, email: row.requestEmail || row.accountEmail } : null;
+}
+
+/** The signed-in provider's "Send session requests to" setting: the confirmed
+ *  address (null = the account email) and one waiting to be confirmed. */
+export async function myRequestEmail() {
+  const { user: me } = await requireRole("provider", "/provider/settings");
+  await dbReady;
+  const [row] = await db
+    .select({ confirmed: providerProfile.requestEmail, pending: providerProfile.requestEmailPending })
+    .from(providerProfile)
+    .where(eq(providerProfile.userId, me.id));
+  return { confirmed: row?.confirmed ?? null, pending: row?.pending ?? null, accountEmail: me.email };
 }
 
 /** A request from this email to this provider in the last day, if any. */

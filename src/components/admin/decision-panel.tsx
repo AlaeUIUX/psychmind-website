@@ -17,7 +17,8 @@ export function DecisionPanel({ profileId, status, needsReview }: { profileId: s
   const [state, action, pending] = useActionState<DecisionState, FormData>(async (prev, form) => {
     const result = await decideProvider(prev, form);
     if (result?.ok) {
-      toast.success("Decision saved");
+      if (result.warning) toast.warning(result.warning, { duration: 15_000 });
+      else toast.success("Decision saved");
       setDecision(null);
     }
     return result;

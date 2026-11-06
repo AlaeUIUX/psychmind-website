@@ -7,13 +7,14 @@ import { z } from "zod";
 import { db, dbReady } from "@/db";
 import { providerProfile, sessionRequest } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { formatLabel, requestSchema, sessionTypeLabel, type RequestInput } from "@/lib/requests";
+import { formatLabel, planRequestEmail, requestSchema, sessionTypeLabel, type RequestInput } from "@/lib/requests";
 import { getSession, requireRole } from "@/server/auth/session";
 import { sendEmail } from "@/server/email";
 import { sessionRequestEmail, sessionRequestSentEmail } from "@/server/emails";
 import { wantsEmail } from "@/server/notifications";
 import { appUrl } from "@/server/url";
 import { recentRequest, requestRecipient, requestTarget } from "./data";
+import { cancelRequestEmail, confirmRequestEmail, resendRequestEmail, setConfirmedRequestEmail, startRequestEmail } from "./request-email";
 
 // "Request a session" (Figma B1–B7). Guests and patients alike: the request
 // is saved, emailed to the provider's requests address (Reply-To: the
@@ -122,16 +123,77 @@ export async function setRequestContacted(id: string, contacted: boolean) {
   return { ok: true as const };
 }
 
-export type RequestEmailState = { ok?: boolean; error?: string } | null;
+export type RequestEmailState = { ok?: boolean; sentTo?: string; error?: string } | null;
 
-/** Provider settings: where requests are emailed (empty = the account email). */
+const LINK_FAILED = "We couldn't send the email. Please try again in a moment.";
+
+/** Provider settings: where requests are emailed (empty = the account email).
+ *  A new address gets a confirmation link and waits for it
+ *  (server/requests/request-email.ts). */
 export async function setRequestEmail(_prev: RequestEmailState, form: FormData): Promise<RequestEmailState> {
   const { user } = await requireRole("provider");
   const raw = String(form.get("requestEmail") ?? "").trim();
   const parsed = z.union([z.literal(""), z.email().max(200)]).safeParse(raw);
   if (!parsed.success) return { error: "Enter a valid email address, or leave it empty to use your account email." };
   await dbReady;
-  await db.update(providerProfile).set({ requestEmail: parsed.data || null }).where(eq(providerProfile.userId, user.id));
+  const [profile] = await db
+    .select({ id: providerProfile.id, requestEmail: providerProfile.requestEmail })
+    .from(providerProfile)
+    .where(eq(providerProfile.userId, user.id));
+  if (!profile) return { error: "Finish setting up your profile first." };
+
+  const plan = planRequestEmail(parsed.data, user.email, profile.requestEmail);
+  if (plan.kind === "account") await setConfirmedRequestEmail(profile.id, null);
+  else if (plan.kind === "unchanged") await setConfirmedRequestEmail(profile.id, profile.requestEmail);
+  else {
+    if (!(await rateLimit("request-email-link", user.id, 3, "10 m")).ok) return { error: TOO_MANY };
+    try {
+      await startRequestEmail(profile.id, plan.email);
+    } catch (err) {
+      console.error("request email link failed", err);
+      return { error: LINK_FAILED };
+    }
+  }
+  revalidatePath("/provider/settings");
+  return plan.kind === "confirm" ? { ok: true, sentTo: plan.email } : { ok: true };
+}
+
+/** "Resend link" beside a requests address waiting to be confirmed. */
+export async function resendRequestEmailLink(): Promise<RequestEmailState> {
+  const { user } = await requireRole("provider");
+  if (!(await rateLimit("request-email-link", user.id, 3, "10 m")).ok) return { error: TOO_MANY };
+  await dbReady;
+  const [profile] = await db.select({ id: providerProfile.id }).from(providerProfile).where(eq(providerProfile.userId, user.id));
+  try {
+    if (!profile || !(await resendRequestEmail(profile.id))) return { error: "There's no address waiting to be confirmed." };
+  } catch (err) {
+    console.error("request email link failed", err);
+    return { error: LINK_FAILED };
+  }
+  return { ok: true };
+}
+
+/** "Cancel" beside a requests address waiting to be confirmed. */
+export async function cancelRequestEmailChange(): Promise<RequestEmailState> {
+  const { user } = await requireRole("provider");
+  await dbReady;
+  const [profile] = await db.select({ id: providerProfile.id }).from(providerProfile).where(eq(providerProfile.userId, user.id));
+  if (profile) await cancelRequestEmail(profile.id);
   revalidatePath("/provider/settings");
   return { ok: true };
+}
+
+export type ConfirmRequestEmailState = { ok: true; email: string; providerName: string } | { ok: false; error: string } | null;
+
+/** The button behind the link sent to a new requests address. Works signed
+ *  out: the link is the proof (see request-email.ts). */
+export async function confirmRequestEmailAction(_prev: ConfirmRequestEmailState, form: FormData): Promise<ConfirmRequestEmailState> {
+  const ip = clientIp(await headers());
+  if (!(await rateLimit("request-email-confirm", ip, 20, "10 m")).ok) return { ok: false, error: TOO_MANY };
+  const result = await confirmRequestEmail(String(form.get("token") ?? ""));
+  // TODO(client): copy.
+  if (!result) return { ok: false, error: "This link has expired or was already used. Ask for a new one from PsychMind Settings." };
+  // No revalidatePath: it would re-render this page with the spent link (the
+  // expired view) instead of showing that it worked. Settings is dynamic.
+  return { ok: true, email: result.email, providerName: result.providerName };
 }

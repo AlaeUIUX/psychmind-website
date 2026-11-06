@@ -75,6 +75,8 @@ export default async function ProviderDashboardLayout({ children }: { children: 
           reviewNote={state.reviewNote}
           onboardingStep={state.onboardingStep}
           needsReview={state.needsReview}
+          billing={overview.billing}
+          liveAgain={overview.liveAgain}
         />
       }
     >

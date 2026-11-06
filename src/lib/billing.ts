@@ -42,6 +42,8 @@ export type BillingSnapshot = {
   pastDueSince: Date | null;
   periodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
+  /** A founding provider: listed free, for good, whatever the subscription. */
+  founding?: boolean;
 };
 
 export type ListingState =
@@ -56,6 +58,7 @@ export type ListingState =
 export function listingState(status: ProviderStatus, billing: BillingSnapshot, now = new Date()): ListingState {
   if (status === "rejected" || status === "suspended") return "blocked";
   if (status !== "approved") return "not_verified";
+  if (billing.founding) return "live";
   switch (billing.status) {
     case "active":
     case "trialing":
@@ -74,6 +77,24 @@ export function listingState(status: ProviderStatus, billing: BillingSnapshot, n
 
 export function isListed(state: ListingState) {
   return state === "live" || state === "grace";
+}
+
+/** A subscription that still bills, or can still be managed in Stripe's
+ *  portal: everything but one that ended or never started. */
+export function hasSubscription(status: SubscriptionStatus | null) {
+  return status !== null && status !== "canceled" && status !== "incomplete_expired";
+}
+
+/** How long "You're live again" shows after a suspension is lifted or a
+ *  failed payment goes through. */
+const LIVE_AGAIN_DAYS = 3;
+
+/** The latest event that took a listing down or brought it back. */
+export type ListingEvent = { kind: "down" | "back"; at: Date };
+
+/** "You're live again": the listing came back recently and is live now. */
+export function liveAgain(listing: ListingState, last: ListingEvent | null, now = new Date()) {
+  return listing === "live" && last?.kind === "back" && now.getTime() - last.at.getTime() < LIVE_AGAIN_DAYS * DAY;
 }
 
 /** Whole days left in the grace period (at least 1 while it lasts). */

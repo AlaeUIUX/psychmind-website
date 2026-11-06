@@ -1,7 +1,8 @@
 "use client";
 
 import { ExternalLinkIcon } from "@/components/ui/hugeicons";
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { openBillingPortal, startCheckout, type BillingActionState } from "@/server/billing/actions";
@@ -58,4 +59,20 @@ export function ManageBillingButton({ label = "Manage billing" }: { label?: stri
       <ActionError state={state} />
     </form>
   );
+}
+
+/** Re-reads the billing page every few seconds for a minute, while Stripe's
+ *  webhook (or a slow payment) catches up. The page stops rendering it once
+ *  the subscription is in. */
+export function RefreshWhileProcessing({ every = 3000, tries = 20 }: { every?: number; tries?: number }) {
+  const router = useRouter();
+  useEffect(() => {
+    let n = 0;
+    const timer = window.setInterval(() => {
+      if (++n > tries) return window.clearInterval(timer);
+      router.refresh();
+    }, every);
+    return () => window.clearInterval(timer);
+  }, [router, every, tries]);
+  return null;
 }

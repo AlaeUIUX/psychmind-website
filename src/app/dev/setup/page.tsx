@@ -81,7 +81,7 @@ export default async function DevSetupPage() {
     google
       ? googleReachable
         ? { label: "Google sign-in", status: "ok", badge: "On", detail: "The Google button shows on log in and sign up." }
-        : { label: "Google sign-in", status: "warn", badge: "Wrong host", detail: `Google only allows http://localhost for local testing, not ${hostname}. Set APP_HOST=off in .env.local, restart, and open http://localhost:${process.env.PORT ?? 3000}/login.` }
+        : { label: "Google sign-in", status: "warn", badge: "Wrong host", detail: `Google only allows http://localhost for local testing, not ${hostname}. Set APP_HOST=off in .env.local, restart, and open http://localhost:${process.env.PORT ?? 3001}/login.` }
       : { label: "Google sign-in", status: "off", badge: "Off", detail: "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to show the Google button." },
     emailRow(),
     {
@@ -143,7 +143,7 @@ export default async function DevSetupPage() {
           <CopyField label="Authorized redirect URI" value={callback} />
           {!googleReachable && (
             <p className="type-ui-small rounded-field border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
-              Google rejects {hostname}. Locally, set APP_HOST=off and use http://localhost:{process.env.PORT ?? 3000} instead.
+              Google rejects {hostname}. Locally, set APP_HOST=off and use http://localhost:{process.env.PORT ?? 3001} instead.
             </p>
           )}
         </section>

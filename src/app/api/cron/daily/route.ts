@@ -17,7 +17,7 @@ export const maxDuration = 60;
 function authorized(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   // Local convenience only: `next dev` with no CRON_SECRET set may call it
-  // without a header (curl http://localhost:3000/api/cron/daily). Anywhere
+  // without a header (curl http://localhost:3001/api/cron/daily). Anywhere
   // else, no secret means no access.
   if (!secret) return process.env.NODE_ENV === "development";
   const given = Buffer.from(request.headers.get("authorization") ?? "");

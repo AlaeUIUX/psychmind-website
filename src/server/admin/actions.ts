@@ -1,12 +1,14 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { auditLog, providerLicense, providerProfile, user } from "@/db/schema";
+import { auditLog, providerLicense, providerLocation, providerProfile, user } from "@/db/schema";
 import { hasPending } from "@/lib/provider/review";
+import { locationLimit } from "@/lib/provider/schema";
 import { requireRole } from "@/server/auth/session";
+import { setBillingPaused } from "@/server/billing/pause";
 import { sendEmail } from "@/server/email";
 import { profileChangesApprovedEmail, profileChangesDeclinedEmail, providerDecisionEmail } from "@/server/emails";
 import { appUrl } from "@/server/url";
@@ -16,8 +18,10 @@ import { appUrl } from "@/server/url";
 // other than approval, and it's shown to the provider. A verified provider's
 // later changes (name, title, NPI, licenses: lib/provider/review.ts) are
 // approved, which applies them, or declined, which keeps the verified details.
+// Suspending pauses the provider's billing in Stripe; unsuspending resumes it.
 
-export type DecisionState = { error?: string; ok?: boolean } | null;
+/** `warning`: the decision was saved, but something after it needs a hand. */
+export type DecisionState = { error?: string; ok?: boolean; warning?: string } | null;
 
 const decisionSchema = z
   .object({
@@ -97,6 +101,9 @@ export async function decideProvider(_prev: DecisionState, form: FormData): Prom
     });
   });
 
+  // Hidden from search, so no charges until the suspension is lifted.
+  const billingOk = decision === "suspend" || decision === "unsuspend" ? await setBillingPaused(profile.userId, profileId, decision === "suspend") : true;
+
   const [owner] = await db.select({ email: user.email }).from(user).where(eq(user.id, profile.userId));
   const emailKind = decision === "approve" ? "approved" : decision === "request_changes" ? "changes_requested" : decision === "reject" ? "rejected" : null;
   if (owner && emailKind && !(decision === "approve" && profile.status === "approved")) {
@@ -106,6 +113,15 @@ export async function decideProvider(_prev: DecisionState, form: FormData): Prom
   }
 
   revalidatePath("/admin", "layout");
+  if (!billingOk) {
+    return {
+      ok: true,
+      warning:
+        decision === "suspend"
+          ? "Suspended, but Stripe didn't pause their billing. Pause the subscription's payments in the Stripe dashboard."
+          : "Unsuspended, but Stripe didn't resume their billing. Resume the subscription's payments in the Stripe dashboard.",
+    };
+  }
   return { ok: true };
 }
 
@@ -159,6 +175,43 @@ async function decideChanges(profile: Profile, approve: boolean, note: string | 
     const email = approve ? profileChangesApprovedEmail(owner.email, url) : profileChangesDeclinedEmail(owner.email, note ?? "", url);
     await sendEmail(email).catch((err) => console.error("changes email failed", err));
   }
+  revalidatePath("/admin", "layout");
+  revalidatePath("/provider", "layout");
+  return { ok: true };
+}
+
+const extraSchema = z.object({
+  profileId: z.string().min(1),
+  extra: z.coerce.number().int().min(0).max(50),
+});
+
+/** Practice locations beyond the plan's three, added by the team while they
+ *  can't be bought online (their price waits on the client, D9). Never fewer
+ *  than the provider already uses. Audited. */
+export async function setExtraLocations(_prev: DecisionState, form: FormData): Promise<DecisionState> {
+  const { user: admin } = await requireRole("admin");
+  const parsed = extraSchema.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { error: "Enter a whole number from 0 to 50." };
+  const { profileId, extra } = parsed.data;
+
+  const [profile] = await db.select({ extraLocations: providerProfile.extraLocations }).from(providerProfile).where(eq(providerProfile.id, profileId));
+  if (!profile) return { error: "Provider not found." };
+  if (profile.extraLocations === extra) return { ok: true };
+  const [{ used } = { used: 0 }] = await db.select({ used: count() }).from(providerLocation).where(eq(providerLocation.profileId, profileId));
+  if (locationLimit(extra) < used) {
+    return { error: `They use ${used} locations, so they need at least ${used - locationLimit(0)} extra.` };
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.update(providerProfile).set({ extraLocations: extra }).where(eq(providerProfile.id, profileId));
+    await tx.insert(auditLog).values({
+      actorId: admin.id,
+      action: "provider.extra_locations",
+      targetType: "provider_profile",
+      targetId: profileId,
+      meta: { from: profile.extraLocations, to: extra },
+    });
+  });
   revalidatePath("/admin", "layout");
   revalidatePath("/provider", "layout");
   return { ok: true };

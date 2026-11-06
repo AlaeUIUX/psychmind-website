@@ -30,10 +30,14 @@ const APP_PREFIXES = [
   // requesting a session), and the session cookie belongs to this host.
   "/providers",
   "/request",
+  // Confirming a provider's requests address (server/requests/request-email.ts).
+  "/request-email",
   // Unsubscribe links in marketing email (server/marketing.ts) point at the app host,
   // and so do the links that confirm a blog subscription.
   "/unsubscribe",
   "/subscribe",
+  // The founding link (server/founding.ts): it signs providers up, so it lives with sign-up.
+  "/founding",
 ] as const;
 
 /** Served on both hosts. */
@@ -71,7 +75,7 @@ export function adminOrigin(): string | null {
   const host = adminHost();
   if (!host) return null;
   const local = host === "localhost" || host.endsWith(".localhost");
-  return local ? `http://${host}:${process.env.PORT ?? 3000}` : `https://${host}`;
+  return local ? `http://${host}:${process.env.PORT ?? 3001}` : `https://${host}`;
 }
 
 /** An admin path as it reads on the admin host: the log-in page is its "/login". */
@@ -90,14 +94,14 @@ export function appHost(): string | null {
  *  (<project>-git-<branch>-<team>.vercel.app), so Google sign-in has one
  *  fixed redirect URI per branch. */
 export function defaultOrigin(): string | undefined {
-  if (process.env.NODE_ENV === "development") return `http://${appHost() ?? "localhost"}:${process.env.PORT ?? 3000}`;
+  if (process.env.NODE_ENV === "development") return `http://${appHost() ?? "localhost"}:${process.env.PORT ?? 3001}`;
   if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_BRANCH_URL) return `https://${process.env.VERCEL_BRANCH_URL}`;
   return undefined;
 }
 
 /** Where "home" is from a portal page, given the request's Host header.
  *  On the app host "/" is the portal's own front door (log in), so this
- *  points at the marketing site: app.localhost:3000 → localhost:3000,
+ *  points at the marketing site: app.localhost:3001 → localhost:3001,
  *  app.psychmind.org → www.psychmind.org. NEXT_PUBLIC_MARKETING_URL wins. */
 export function marketingHome(requestHost: string | null, proto = "https"): string {
   if (process.env.NEXT_PUBLIC_MARKETING_URL) return process.env.NEXT_PUBLIC_MARKETING_URL;

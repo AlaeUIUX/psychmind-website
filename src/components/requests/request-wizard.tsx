@@ -5,7 +5,6 @@ import { ArrowLeftIcon, LoaderCircleIcon, MapPinIcon, MonitorIcon, SendIcon, Use
 import Link from "next/link";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
-import { CrisisStrip } from "@/components/app/crisis-strip";
 import { useAuthPanel } from "@/components/auth/auth-context";
 import { AuthField, AuthTitle, FormAlert, HoverArrow, TextInput } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";
@@ -397,7 +396,6 @@ export function RequestWizard({ target, patient, resume }: { target: RequestTarg
               Skip for now
             </Button>
           </div>
-          <CrisisStrip />
         </>
       )}
 

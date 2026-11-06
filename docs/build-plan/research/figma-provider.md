@@ -917,7 +917,7 @@ In preview context there is also a "Go back to results" pill on the banner (onbo
 
 ## 11. Reference IDs and screenshots
 
-- Section screenshot of `255:1412` and local crops: `C:\Users\HomePC\Desktop\Psychmind\figma\screenshots\` (`s4_top.png`, `s4_mid_left.png`, `s4_mid_right.png`, `s4_bot_left.png`, `s4_bot_right.png`, `section-4-hires.png`).
+- Section screenshot of `255:1412` and local crops: `D:\Claude\Psychmind\figma\screenshots\` (`s4_top.png`, `s4_mid_left.png`, `s4_mid_right.png`, `s4_bot_left.png`, `s4_bot_right.png`, `section-4-hires.png`).
 - **Key container IDs:**
   - Access `255:1413`
   - Provider creator `255:1539`

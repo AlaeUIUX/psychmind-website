@@ -1,5 +1,5 @@
 import { and, count, eq } from "drizzle-orm";
-import { CheckIcon, CtaArrowIcon, PencilIcon, UserRoundIcon } from "@/components/ui/hugeicons";
+import { CheckIcon, CtaArrowIcon, PencilIcon, UserRoundIcon, XIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "cn";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { providerProfile, sessionRequest } from "@/db/schema";
 import { dayOf, parseRange } from "@/lib/analytics/range";
-import { isListed, shownListing, stripeConfigured } from "@/lib/billing";
+import { hasSubscription, isListed, shownListing, stripeConfigured } from "@/lib/billing";
 import { sectionStatuses } from "@/lib/provider/completeness";
 import { accountHealth, needsAttention, type HealthTone } from "@/lib/provider/health";
 import { profilePath } from "@/lib/provider/links";
@@ -48,12 +48,15 @@ export default async function ProviderHome() {
   const { user } = await requireRole("provider", "/provider");
   const state = await loadProviderState(user.id);
   const [row] = await db.select({ pastDueSince: providerProfile.pastDueSince }).from(providerProfile).where(eq(providerProfile.id, state.id));
-  const { listing, graceDays } = await providerOverview(user.id, state, row?.pastDueSince ?? null);
+  const { listing, graceDays, billing } = await providerOverview(user.id, state, row?.pastDueSince ?? null);
   const [{ n: newRequests } = { n: 0 }] = await db
     .select({ n: count() })
     .from(sessionRequest)
     .where(and(eq(sessionRequest.profileId, state.id), eq(sessionRequest.status, "new")));
   const approved = state.status === "approved";
+  const rejected = state.status === "rejected";
+  const suspended = state.status === "suspended";
+  const subscribed = hasSubscription(billing.status);
   // In the directory now (approval alone lists them until billing is connected).
   const inDirectory = approved && isListed(shownListing(listing));
   const name = (state.displayAsBusiness && state.businessName) || [state.firstName, state.lastName].filter(Boolean).join(" ") || user.name;
@@ -69,6 +72,11 @@ export default async function ProviderHome() {
     graceDays,
     billingConnected: stripeConfigured(),
     newRequests,
+    plan: {
+      subscribed,
+      ended: billing.status === "canceled",
+      endsAt: billing.cancelAtPeriodEnd ? billing.periodEnd : null,
+    },
   });
   const attention = needsAttention(health);
 
@@ -76,23 +84,27 @@ export default async function ProviderHome() {
   const week = parseRange({}, dayOf());
   const stats = approved ? await providerAnalytics(week) : null;
 
-  // TODO(client): checklist copy.
-  const steps = [
+  // TODO(client): checklist copy. A rejected or suspended provider's road
+  // stops at the step it stopped on, without a "current" step.
+  const steps: Step[] = [
     { label: "Build your profile", done: state.status !== "draft", href: `/provider/onboarding/${state.onboardingStep}` },
-    { label: "Get verified by our team", done: approved, href: null },
-    // Nothing to activate until billing is connected.
-    ...(stripeConfigured()
-      ? [{ label: "Activate your listing", done: listing === "live" || listing === "grace" || listing === "paused", href: "/provider/billing" }]
+    { label: "Get verified by our team", done: approved || suspended, href: null, stopped: rejected ? "We couldn't verify your profile" : undefined },
+    // Nothing to activate until billing is connected, or ever for founding providers.
+    ...(stripeConfigured() && !state.founding
+      ? [{ label: "Activate your listing", done: listing === "live" || listing === "grace" || listing === "paused" || (suspended && subscribed), href: "/provider/billing" }]
       : []),
-    { label: "Appear in search", done: inDirectory, href: null },
+    { label: "Appear in search", done: inDirectory, href: null, stopped: suspended ? "Suspended" : undefined },
   ];
+  // TODO(client): "Not verified" and "Suspended".
   const status = inDirectory
     ? { variant: "success" as const, dot: "bg-emerald-500", label: "Live" }
     : state.status === "submitted"
       ? { variant: "info" as const, dot: "bg-sky-500", label: "In review" }
-      : approved
-        ? { variant: "warning" as const, dot: "bg-amber-500", label: "Not listed" }
-        : { variant: "neutral" as const, dot: "bg-warm-400", label: "Not visible yet" };
+      : rejected || suspended
+        ? { variant: "danger" as const, dot: "bg-red-500", label: rejected ? "Not verified" : "Suspended" }
+        : approved
+          ? { variant: "warning" as const, dot: "bg-amber-500", label: "Not listed" }
+          : { variant: "neutral" as const, dot: "bg-warm-400", label: "Not visible yet" };
 
   return (
     <>
@@ -202,12 +214,13 @@ export default async function ProviderHome() {
   );
 }
 
-type Step = { label: string; done: boolean; href: string | null };
+type Step = { label: string; done: boolean; href: string | null; /** Why the road stops here. */ stopped?: string };
 
 /** The road to being listed: done steps get a green check, the current one a
- *  pulsing dot (the same timeline as the "submitted" screen). */
+ *  pulsing dot (the same timeline as the "submitted" screen), and a step the
+ *  road stopped on a red cross with the reason. */
 function GettingListed({ steps }: { steps: Step[] }) {
-  const current = steps.findIndex((s) => !s.done);
+  const current = steps.some((s) => s.stopped) ? -1 : steps.findIndex((s) => !s.done);
   return (
     <section aria-labelledby="progress-title" className={cn(frameCard, "flex flex-col gap-4 p-4 sm:p-5")}>
       <h2 id="progress-title" className="type-ui-heading text-text-primary">
@@ -215,7 +228,7 @@ function GettingListed({ steps }: { steps: Step[] }) {
       </h2>
       <ol className="grid gap-4 sm:grid-cols-2 lg:flex lg:gap-0">
         {steps.map((step, i) => {
-          const status = step.done ? "done" : i === current ? "current" : "todo";
+          const status = step.done ? "done" : step.stopped ? "stopped" : i === current ? "current" : "todo";
           return (
             <li key={step.label} className="relative flex gap-3 lg:flex-1 lg:pr-6">
               <span
@@ -224,20 +237,23 @@ function GettingListed({ steps }: { steps: Step[] }) {
                   status === "done" && "bg-emerald-600 text-white",
                   status === "current" && "border-2 border-amber-500 bg-white",
                   status === "todo" && "border-2 border-warm-200 bg-white",
+                  status === "stopped" && "bg-red-50 text-red-600 ring-1 ring-red-200",
                 )}
               >
                 {status === "done" && <CheckIcon aria-hidden className="size-3.5" strokeWidth={3} />}
+                {status === "stopped" && <XIcon aria-hidden className="size-3.5" strokeWidth={2.5} />}
                 {status === "current" && <span className="size-2 animate-pulse rounded-full bg-amber-500" />}
               </span>
               <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
                 <span className={cn("type-ui-label", status === "todo" ? "text-text-tertiary" : "text-text-primary")}>{step.label}</span>
+                {status === "stopped" && <span className="type-ui-caption text-red-700">{step.stopped}</span>}
                 {status === "current" && step.href && (
                   <Link href={step.href} className="w-fit type-ui-caption font-medium text-blue-700 underline-offset-4 hover:underline">
                     Continue &rarr;
                   </Link>
                 )}
               </div>
-              <span className="sr-only">{status === "done" ? "Done" : status === "current" ? "In progress" : "Not started"}</span>
+              <span className="sr-only">{status === "done" ? "Done" : status === "current" ? "In progress" : status === "stopped" ? "Stopped" : "Not started"}</span>
             </li>
           );
         })}

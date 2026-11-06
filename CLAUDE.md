@@ -9,13 +9,13 @@ PsychMind is a US directory that connects people with licensed mental-health pro
 ## Commands
 
 ```bash
-npm run dev          # next dev (Turbopack)
+npm run dev          # next dev on :3001 (Turbopack); pinned so it never takes the Agency Website's :3000
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint
 npm test             # vitest unit tests (tests/unit)
 npm run test:e2e     # playwright, desktop + 375px (tests/e2e); starts next dev on :3100
                      # if a dev server is already running here, Next refuses a second one:
-                     # E2E_BASE_URL=http://localhost:3000 npm run test:e2e
+                     # E2E_BASE_URL=http://localhost:3001 npm run test:e2e
 npm run build
 ```
 
@@ -39,6 +39,10 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - **Billing:** the Better Auth Stripe plugin, loaded only when `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_BASE` are set.
   - Listing and grace rules: `src/lib/billing.ts`.
   - Test-mode setup (product, keys, webhook, local Stripe CLI): `docs/live-testing.md` §C.
+  - Suspending a provider pauses collection on their subscription (`server/billing/pause.ts`, invoices voided) and unsuspending resumes it. Anyone with a subscription sees Manage billing, whatever their status (`hasSubscription()`).
+  - The dashboard banner covers canceling ("ends on …"), an ended plan (Reactivate) and "You're live again" for 3 days after a suspension or failed payment ends (`liveAgain()`, from the audit log). Back from checkout before the webhook, Billing shows "confirming" and refreshes itself.
+  - Extra practice locations can't be bought online yet (price D9): the team adds them on the provider's admin page (`setExtraLocations`, audited).
+- **Founding providers** (owner request, 2026-11-05; `server/founding.ts`): one shared link, `/founding/{code}`, made and switched on or off in Admin → Settings (`founding_link`, audited). The first 51 providers who join through it get `provider_profile.founding_at` and are listed free, for good, once verified (`listingState` and `listedCondition`); Billing and the onboarding price say so. Signed out, the link leaves its code in the `pm_founding` cookie, and `ensureProfile` claims the spot when that provider's profile loads, so it survives email confirmation and Google. A taken spot is never given back.
 - **Email:** `src/server/email.ts` sends through Resend, or writes to the local outbox at `/dev/mail` when `EMAIL_TRANSPORT=outbox` or when there's no key.
 - **Email confirmation links** return through `/auth/verified?next=…` (the `callbackURL` in `server/auth/actions.ts`). It carries on when the link signed them in; otherwise it opens log in with what happened: expired (`?link=expired`), broken (`?link=invalid`), or already confirmed (`?verified=1`).
 - **Uploads:** `/api/uploads` and `/api/files/[id]` check ownership and sniff file bytes. Bytes live in `.data/uploads` locally and in the private `file_blob` table on Vercel (`STORAGE_DRIVER`). Supabase Storage replaces that at scale.
@@ -83,6 +87,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
   - The same email to the same provider within a day isn't sent twice. Requests are rate-limited per IP and per email, and have a honeypot field.
   - Patients see theirs under "My requests" (`/account`). Providers see theirs at `/provider/requests` and can mark them contacted. Providers reply outside the app.
   - Requests to sample providers are a demo: saved, never emailed.
+  - **Requests address** (Settings → Send session requests to, `server/requests/request-email.ts`): a new address is held in `provider_profile.request_email_pending` and gets a one-time link (`tokens.ts`, 24 hours) to `/request-email/confirm`, a button that works signed out, since the inbox is often an assistant's. `request_email` is only ever a confirmed address, so requests never reach an unconfirmed one.
 
 - **Analytics** (in-house; `lib/analytics`, `server/analytics`, `/api/events`, `components/analytics`):
   - Pages report counts in batches with `sendBeacon` (`lib/analytics/client.ts`): page views, searches, impressions (a result card at least half on screen for 0.6 s), quick looks and full profile views. Saves are counted on the server; session requests come from `session_request`.
@@ -103,6 +108,7 @@ Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix, GSAP + Lenis (
 - `src/proxy.ts` and `src/lib/hosts.ts` route each request to the right host. The admin portal is a third host when `ADMIN_HOST` is set (production `dev.psychmind.org`; locally try `dev.localhost`); `appUrl()` sends `/admin` links there.
 - **Locally**, open the portal at `http://app.localhost:<port>`. `APP_HOST=off` serves it from `localhost` instead, which Google sign-in needs.
 - **Vercel previews** serve everything from one host and use the branch URL as the auth origin (`defaultOrigin()`).
+- **`/guides/google-sign-in`** is the client's step-by-step for Google sign-in (create the Google Cloud project, add the developer as Owner). Public but `noindex`; check its menu names against Google Cloud when editing.
 - **`/dev/setup`** shows what a deployment has configured and the exact Google redirect URI. The guide is `docs/live-testing.md`.
 - **Portal UI** uses the `.app-ui` scope from `globals.css` (the auth shell, onboarding and `AppShell`, so every dashboard):
   - the public site's Inter (since 2026-10-29), `type-ui-*` roles and product-sized controls; dashboard numbers (`type-ui-figure`, `type-ui-hero-figure`: stat tiles, the billing price) are Geist Mono through `--font-figure`;
@@ -189,7 +195,7 @@ The Decap CMS for company blog posts lives at `/cms` (`public/cms`). `/admin` is
 - **Auth checks in layers:** RLS on every table, plus a role check in the server-only data access layer. The service-role key is used only in webhooks and cron.
 - **Rate limits:** every write a stranger can trigger is rate-limited (`rateLimit()`).
 - **Data layer checks its own role.** Admin data functions call `requireRole("admin")` themselves; a layout's check alone isn't enough (Next can skip layouts on client navigation).
-- **Crisis access:** every patient-facing app screen offers 988.
+- **Crisis access:** every patient-facing app screen offers 988. The auth shell's footer carries it (`CrisisStrip tone="quiet"`) for log in, sign up and every request step; the admin entry passes `crisis={false}`.
 - **Legal safeguards** (`docs/legal/README.md`, guarded by `tests/unit/legal-safeguards.test.ts`):
   - every account passes the 18+ age screen, including Google sign-up and the raw endpoint;
   - visitors' browsers contact no other host (fonts via `next/font`, other images via `selfHosted()`, CSP enforces it);

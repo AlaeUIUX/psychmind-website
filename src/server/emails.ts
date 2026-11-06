@@ -425,6 +425,22 @@ export function sessionRequestSentEmail(to: string, providerName: string, cta: {
   };
 }
 
+/** To a new requests address (an assistant, a practice inbox): requests only
+ *  come here once it's confirmed (server/requests/request-email.ts).
+ *  TODO(client): copy. */
+export function requestEmailConfirmEmail(to: string, providerName: string, url: string): Email {
+  return {
+    to,
+    subject: "Confirm this address for PsychMind session requests",
+    ...layout({
+      heading: "Confirm this address for session requests",
+      body: `${escape(providerName)} would like their PsychMind session requests sent to this address. Each request includes the person's name, contact details and note, so please confirm only if this is the right inbox. The link expires in 24 hours.`,
+      cta: { label: "Confirm this address", url },
+      footnote: "If you weren't expecting this, ignore this email and no requests will be sent here.",
+    }),
+  };
+}
+
 // Changing your email or password, and account recovery when the old inbox
 // is gone (server/account/email-change.ts, server/account/recovery.ts).
 // TODO(client): copy for every email below.

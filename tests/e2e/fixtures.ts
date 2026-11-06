@@ -35,7 +35,9 @@ export const saveAdminSecret = (secret: string) => {
 /** Opens the newest email sent to `email` in the dev mailbox and follows its first link. */
 export async function followEmailLink(page: Page, email: string) {
   await expect(async () => {
-    await page.goto("/dev/mail");
+    // Not waiting for "load": that waits on every email's iframe and images,
+    // which takes long enough under a parallel run to time this out.
+    await page.goto("/dev/mail", { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("dev-mail").filter({ hasText: email }).first()).toBeVisible({ timeout: 1000 });
   }).toPass({ timeout: 15_000 });
   const href = await page.getByTestId("dev-mail").filter({ hasText: email }).first().getByTestId("dev-mail-link").first().getAttribute("href");
@@ -58,7 +60,8 @@ export async function signUp(page: Page, role: "patient" | "provider", email: st
   await fillBirthDate(page);
   await page.getByLabel("Password", { exact: true }).fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  // Every worker signs up at once at the start of a run, and password hashing is slow then.
+  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible({ timeout: 20_000 });
   await followEmailLink(page, email);
 }
 

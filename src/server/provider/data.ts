@@ -5,6 +5,7 @@ import { providerLicense, providerLocation, providerProfile, subscription, uploa
 import type { BillingSnapshot, SubscriptionStatus } from "@/lib/billing";
 import { REVIEW_FIELD_LABEL, REVIEW_FIELDS, showValue, type PendingChanges } from "@/lib/provider/review";
 import type { ProviderState, UploadMeta } from "@/lib/provider/state";
+import { claimFoundingFromCookie } from "@/server/founding";
 
 // Reads for the provider area. Callers must already have checked who's
 // asking (see src/server/auth/session.ts); these functions take a user id.
@@ -20,14 +21,20 @@ const toMeta = (u: typeof upload.$inferSelect): UploadMeta => ({
 export async function ensureProfile(userId: string) {
   await dbReady;
   const [existing] = await db.select().from(providerProfile).where(eq(providerProfile.userId, userId));
-  if (existing) return existing;
+  if (existing) return withFounding(userId, existing);
   const [owner] = await db.select({ firstName: user.firstName, lastName: user.lastName }).from(user).where(eq(user.id, userId));
   const [created] = await db
     .insert(providerProfile)
     .values({ userId, firstName: owner?.firstName ?? "", lastName: owner?.lastName ?? "" })
     .onConflictDoNothing()
     .returning();
-  return created ?? (await db.select().from(providerProfile).where(eq(providerProfile.userId, userId)))[0];
+  return withFounding(userId, created ?? (await db.select().from(providerProfile).where(eq(providerProfile.userId, userId)))[0]);
+}
+
+/** A provider who opened the founding link before signing up claims their spot here. */
+async function withFounding(userId: string, profile: typeof providerProfile.$inferSelect) {
+  if (profile.foundingAt || !(await claimFoundingFromCookie(userId, profile.id))) return profile;
+  return { ...profile, foundingAt: new Date() };
 }
 
 export async function loadProviderState(userId: string): Promise<ProviderState> {
@@ -73,6 +80,7 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
 
   return {
     id: p.id,
+    founding: !!p.foundingAt,
     publicId: p.publicId,
     isSample: p.isSample,
     externalPhotoUrl: p.externalPhotoUrl,
@@ -80,6 +88,7 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     status: p.status,
     onboardingStep: p.onboardingStep,
     reviewNote: p.reviewNote,
+    submittedAt: p.submittedAt,
     needsReview: p.needsReview,
     inReview,
     extraLocations: p.extraLocations,
@@ -137,7 +146,10 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
 /** The provider's current subscription, as the listing rules need it. */
 export async function loadBilling(userId: string, pastDueSince: Date | null): Promise<BillingSnapshot & { plan: string | null }> {
   await dbReady;
-  const subs = await db.select().from(subscription).where(eq(subscription.referenceId, userId));
+  const [subs, [profile]] = await Promise.all([
+    db.select().from(subscription).where(eq(subscription.referenceId, userId)),
+    db.select({ foundingAt: providerProfile.foundingAt }).from(providerProfile).where(eq(providerProfile.userId, userId)),
+  ]);
   // Prefer a live subscription over old canceled ones.
   const rank = (s: string | null) => ["active", "trialing", "past_due", "unpaid", "paused"].indexOf(s ?? "");
   const sub = subs.sort((a, b) => (rank(a.status) === -1 ? 99 : rank(a.status)) - (rank(b.status) === -1 ? 99 : rank(b.status)))[0];
@@ -147,5 +159,6 @@ export async function loadBilling(userId: string, pastDueSince: Date | null): Pr
     pastDueSince,
     periodEnd: sub?.periodEnd ?? null,
     cancelAtPeriodEnd: !!sub?.cancelAtPeriodEnd,
+    founding: !!profile?.foundingAt,
   };
 }

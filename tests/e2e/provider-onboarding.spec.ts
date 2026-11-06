@@ -1,6 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Page } from "@playwright/test";
 import path from "node:path";
-import { adminPage, signUp, TEST_PASSWORD, uniqueEmail } from "./fixtures";
+import { adminPage, followEmailLink, signUp, TEST_PASSWORD, uniqueEmail } from "./fixtures";
 
 // The full provider journey against the local app (PGlite + /dev/mail):
 // sign up → verify email → 9-step onboarding with uploads → submit →
@@ -18,6 +18,25 @@ async function saveAndContinue(page: Page, nextHeading: string | RegExp) {
   await page.getByRole("button", { name: "Save and continue" }).click();
   // Generous: saving (with uploads) is slow while the whole suite shares one dev server.
   await expect(page.getByRole("heading", { level: 1, name: nextHeading })).toBeVisible({ timeout: 30_000 });
+}
+
+/** A guest sends `provider` a session request, skipping the note. */
+async function requestAsGuest(browser: Browser, provider: string, name: string, email: string) {
+  const guest = await browser.newContext();
+  const g = await guest.newPage();
+  await g.goto("/providers");
+  const href = await g.getByTestId("provider-card").filter({ hasText: provider }).getByRole("link", { name: /See profile/ }).getAttribute("href");
+  await g.goto(href!.replace("/providers/", "/request/"));
+  await g.getByRole("button", { name: "Confirm" }).click();
+  await g.getByRole("button", { name: "Continue" }).click();
+  await g.getByRole("button", { name: "Skip for now" }).click();
+  await g.getByRole("radio", { name: /Continue as guest/ }).click();
+  await g.getByLabel("Your name").fill(name);
+  await g.getByLabel("Email").fill(email);
+  await g.getByRole("button", { name: "Confirm", exact: true }).click();
+  await g.getByRole("button", { name: "Confirm request" }).click();
+  await expect(g.getByText("We sent an email on your behalf!")).toBeVisible({ timeout: 15_000 });
+  await guest.close();
 }
 
 /** The test provider, until the last step deletes them. */
@@ -325,6 +344,51 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
+  // After the analytics step, which counts the requests made so far.
+  await test.step("a new requests address gets nothing until its inbox confirms it", async () => {
+    const desk = uniqueEmail("desk");
+    const field = page.getByLabel("Send session requests to");
+    const save = page.locator("form").filter({ has: field }).getByRole("button", { name: "Save", exact: true });
+    await page.goto("/provider/settings");
+    await field.fill(desk);
+    await save.click();
+    const waiting = page.getByTestId("request-email-pending");
+    await expect(waiting).toContainText(`Waiting for ${desk} to confirm.`);
+    await expect(waiting).toContainText(email);
+
+    // Until then, requests still go to the account email.
+    const early = uniqueEmail("early");
+    await requestAsGuest(browser, `Sara ${last}`, "Early Patient", early);
+    await page.goto("/dev/mail");
+    await expect(page.getByTestId("dev-mail").filter({ hasText: "New session request" }).filter({ hasText: early }).getByTestId("dev-mail-to")).toHaveText(email);
+
+    // Whoever reads that inbox confirms it, signed out; the link works once.
+    const inbox = await browser.newContext();
+    const d = await inbox.newPage();
+    await followEmailLink(d, desk);
+    await expect(d.getByTestId("request-email-address")).toHaveText(desk);
+    await d.getByRole("button", { name: "Confirm this address" }).click();
+    await expect(d.getByRole("heading", { name: "This address is confirmed" })).toBeVisible();
+    await d.reload();
+    await expect(d.getByRole("heading", { name: "This link has expired" })).toBeVisible();
+    await inbox.close();
+
+    await page.goto("/provider/settings");
+    await expect(waiting).toHaveCount(0);
+    await expect(field).toHaveValue(desk);
+    const later = uniqueEmail("later");
+    await requestAsGuest(browser, `Sara ${last}`, "Later Patient", later);
+    await page.goto("/dev/mail");
+    await expect(page.getByTestId("dev-mail").filter({ hasText: "New session request" }).filter({ hasText: later }).getByTestId("dev-mail-to")).toHaveText(desk);
+
+    // Back to the account email at once, without a link.
+    await page.goto("/provider/settings");
+    await field.fill("");
+    await save.click();
+    await expect(page.getByText("Saved. New requests go to this address.")).toBeVisible();
+    await expect(waiting).toHaveCount(0);
+  });
+
   await test.step("View profile opens the whole profile in a new tab", async () => {
     await page.goto("/provider/profile");
     const view = page.getByRole("link", { name: "View profile" });
@@ -425,6 +489,44 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await expect(page.getByText("The Florida license number doesn't match the board's record.").first()).toBeVisible();
     await page.goto("/provider/profile?section=credentials");
     await expect(page.getByText("Not verified").first()).toBeVisible();
+  });
+
+  await test.step("suspended, the road stops there; lifted, they're told they're live again", async () => {
+    // Nothing waits for review now, so they're under All providers, not the queue.
+    const admin = await adminPage(browser);
+    await admin.goto("/admin/providers");
+    await admin.getByRole("link", { name: new RegExp(`Sara ${renamed}`) }).first().click();
+    await expect(admin.getByRole("heading", { level: 1, name: `Sara ${renamed}` })).toBeVisible();
+    const providerUrl = admin.url();
+    await admin.getByRole("button", { name: "Suspend" }).click();
+    await admin.getByLabel(/Note for the provider/).fill("We're checking a complaint about this profile.");
+    await admin.getByRole("button", { name: "Confirm decision" }).click();
+    await expect(admin.getByText("Decision saved")).toBeVisible();
+
+    await page.goto("/provider");
+    await expect(page.getByText("Your profile is suspended")).toBeVisible();
+    // The badge and the road say so, with no step still "in progress".
+    await expect(page.getByText("Suspended", { exact: true }).first()).toBeVisible();
+    const road = page.getByRole("region", { name: "Getting listed" });
+    await expect(road).toContainText("Suspended");
+    await expect(road.getByText("In progress")).toHaveCount(0);
+
+    await admin.goto(providerUrl);
+    await admin.getByRole("button", { name: "Unsuspend" }).click();
+    await admin.getByRole("button", { name: "Confirm decision" }).click();
+    await expect(admin.getByText("Decision saved")).toBeVisible();
+
+    await page.goto("/provider");
+    await expect(page.getByText("You're live again")).toBeVisible();
+
+    // Extra practice locations come from the team for now (their price waits on D9).
+    await admin.goto(providerUrl);
+    await admin.getByLabel("Extra locations").fill("2");
+    await admin.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(admin.getByText("Locations saved")).toBeVisible();
+    await admin.context().close();
+    await page.goto("/provider/billing");
+    await expect(page.getByText(/of 5 used$/)).toBeVisible();
   });
 
   await test.step("provider deletes their account and their files go with it", async () => {

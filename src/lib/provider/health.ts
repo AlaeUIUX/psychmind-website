@@ -28,9 +28,13 @@ export type HealthInput = {
   /** Stripe is set up, so billing decides the listing. */
   billingConnected: boolean;
   newRequests: number;
+  /** Their plan: billing (or can be managed), ended (canceled), or set to end on a date. */
+  plan?: { subscribed: boolean; ended: boolean; endsAt: Date | null };
 };
 
 const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+/** Billing dates read in New York time, like the analytics days. */
+const dayFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
 
 export function accountHealth(h: HealthInput): HealthRow[] {
   const draft = h.status === "draft" || h.status === "changes_requested";
@@ -41,7 +45,9 @@ export function accountHealth(h: HealthInput): HealthRow[] {
     live: { status: "Live in search", tone: "good" },
     grace: { status: `Payment failed: visible for ${days(h.graceDays)} more`, tone: "attention", action: { href: "/provider/billing", label: "Update payment" } },
     paused: { status: "Hidden until your bill is paid", tone: "attention", action: { href: "/provider/billing", label: "Update payment" } },
-    unpaid: { status: "Verified, not listed yet", tone: "attention", action: { href: "/provider/billing", label: "Activate" } },
+    unpaid: h.plan?.ended
+      ? { status: "Your plan ended", tone: "attention", action: { href: "/provider/billing", label: "Reactivate" } }
+      : { status: "Verified, not listed yet", tone: "attention", action: { href: "/provider/billing", label: "Activate" } },
     not_verified: { status: "Not visible yet", tone: "waiting" },
     blocked: { status: "Not listed", tone: "attention", action: { href: "/contact", label: "Contact us" } },
   };
@@ -76,14 +82,23 @@ export function accountHealth(h: HealthInput): HealthRow[] {
   rows.push({ key: "licenses", label: "Licenses", ...licenses });
 
   if (h.billingConnected) {
+    const endsAt = h.plan?.endsAt;
     const billing: Omit<HealthRow, "key" | "label"> =
       h.listing === "live"
-        ? { status: "Active", tone: "good" }
+        ? endsAt
+          ? { status: `Canceled, ends ${dayFmt.format(endsAt)}`, tone: "waiting", action: { href: "/provider/billing", label: "Manage" } }
+          : { status: "Active", tone: "good" }
         : h.listing === "grace" || h.listing === "paused"
           ? { status: "Payment needed", tone: "attention", action: { href: "/provider/billing", label: "Update payment" } }
-          : h.status === "approved"
-            ? { status: "Not active", tone: "attention", action: { href: "/provider/billing", label: "Activate" } }
-            : { status: "Starts once you're verified", tone: "waiting" };
+          : h.listing === "blocked"
+            ? h.plan?.subscribed
+              ? { status: "Paused, no charges while you're not listed", tone: "waiting", action: { href: "/provider/billing", label: "Manage" } }
+              : { status: "Not active", tone: "waiting" }
+            : h.status === "approved"
+              ? h.plan?.ended
+                ? { status: "Ended", tone: "attention", action: { href: "/provider/billing", label: "Reactivate" } }
+                : { status: "Not active", tone: "attention", action: { href: "/provider/billing", label: "Activate" } }
+              : { status: "Starts once you're verified", tone: "waiting" };
     rows.push({ key: "billing", label: "Billing", ...billing });
   }
 

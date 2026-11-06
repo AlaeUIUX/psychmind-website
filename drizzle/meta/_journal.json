@@ -127,6 +127,20 @@
       "when": 1793363507604,
       "tag": "0017_profile_change_review",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793449157309,
+      "tag": "0018_request_email_pending",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793971018637,
+      "tag": "0019_founding_providers",
+      "breakpoints": true
     }
   ]
 }

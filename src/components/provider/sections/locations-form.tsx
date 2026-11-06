@@ -57,8 +57,10 @@ function LicenseComplianceCard() {
   );
 }
 
-/** Figma P5c "Upgrade your plan". Buying extra locations needs Stripe (billing page). */
-function UpgradeDialog({ billingHref }: { billingHref: string }) {
+/** Figma P5c "Upgrade your plan". Extra locations can't be bought online yet
+ *  (their price waits on the client, D9): the team adds them from the admin
+ *  console (Admin → provider → Practice locations). */
+function UpgradeDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -81,16 +83,16 @@ function UpgradeDialog({ billingHref }: { billingHref: string }) {
             <p className="type-small text-text-tertiary">{BASE_PLAN.extraLocationLabel}</p>
           </li>
         </ul>
-        {/* TODO(client): extra locations are bought once the listing is active. */}
+        {/* TODO(client): copy, until extra locations can be bought online. */}
         <p className="type-small text-text-tertiary">
-          You can add extra locations from Billing once your profile is verified and your listing is active.
+          Extra locations can&apos;t be added online yet. Contact us with the states you need, and our team will add them to your plan.
         </p>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Go back</Button>
           </DialogClose>
           <Button asChild variant="inverse" className="bg-warm-950 text-white hover:bg-warm-800">
-            <a href={billingHref}>Go to billing</a>
+            <a href="/contact">Contact us</a>
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -312,7 +314,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
             Your base plan includes 3 licensed states. Upgrade to add more locations and expand your patient reach.
           </p>
           <div>
-            <UpgradeDialog billingHref="/provider/billing" />
+            <UpgradeDialog />
           </div>
         </div>
       )}

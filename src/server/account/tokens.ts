@@ -4,11 +4,11 @@ import { and, eq, gt } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { verification } from "@/db/schema";
 
-// One-time links (changing your email, confirming a blog subscription) in Better
-// Auth's `verification` table.
+// One-time links (changing your email, confirming a blog subscription or a
+// provider's requests address) in Better Auth's `verification` table.
 // Only a hash of the token is stored, so a database leak can't be replayed.
 
-export type TokenPurpose = "email-change-start" | "email-change-confirm" | "blog-subscribe";
+export type TokenPurpose = "email-change-start" | "email-change-confirm" | "blog-subscribe" | "request-email";
 
 const hash = (token: string) => createHash("sha256").update(token).digest("base64url");
 const identifier = (purpose: TokenPurpose, token: string) => `${purpose}:${hash(token)}`;

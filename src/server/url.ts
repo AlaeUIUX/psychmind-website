@@ -14,7 +14,7 @@ export async function appUrl(path = "/") {
     const h = await headers();
     const host = h.get("x-forwarded-host") ?? h.get("host");
     const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-    base = host ? `${proto}://${host}` : "http://localhost:3000";
+    base = host ? `${proto}://${host}` : "http://localhost:3001";
   }
   return new URL(path, base).toString();
 }

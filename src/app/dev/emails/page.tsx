@@ -22,6 +22,7 @@ import {
   recoveryDeclinedEmail,
   recoveryOwnerAlertEmail,
   recoveryReceivedEmail,
+  requestEmailConfirmEmail,
   resetPasswordEmail,
   sessionRequestEmail,
   sessionRequestSentEmail,
@@ -80,6 +81,7 @@ const GROUPS: { group: string; emails: [name: string, email: Email][] }[] = [
         ),
       ],
       ["Request sent (to the patient)", sessionRequestSentEmail(PATIENT, "Maya Ellison", { label: "See your requests", url: `${APP}/account` })],
+      ["Confirm a new requests address", requestEmailConfirmEmail("front-desk@example.com", "Maya Ellison", `${APP}/request-email/confirm?token=sample`)],
     ],
   },
   {

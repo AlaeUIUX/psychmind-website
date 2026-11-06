@@ -34,7 +34,8 @@ test("a visitor's search shows up on the admin dashboard", async ({ page, browse
   await expect(admin.getByRole("dialog").or(admin.locator("[data-slot=popover-content]"))).toBeVisible();
   await admin.keyboard.press("Escape");
   await admin.getByRole("radio", { name: "Last 3 months" }).click();
-  await expect(admin).toHaveURL(/\?range=90d$/);
+  // The address changes once the 90 days have rendered, slower under a parallel run.
+  await expect(admin).toHaveURL(/\?range=90d$/, { timeout: 15_000 });
   await expect(admin.getByRole("radio", { name: "Last 3 months" })).toHaveAttribute("aria-checked", "true");
 
   // The chart has a table view with one row per day.

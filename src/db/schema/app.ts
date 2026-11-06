@@ -88,8 +88,12 @@ export const providerProfile = pgTable(
 
     // Practice details
     gender: text("gender"),
-    /** Where session requests are emailed (an assistant, say); the account email when empty. */
+    /** Where session requests are emailed (an assistant, say); the account email when empty.
+     *  Only ever a confirmed address (server/requests/request-email.ts). */
     requestEmail: text("request_email"),
+    /** A new requests address waiting for its inbox to confirm it; requests keep
+     *  going to `requestEmail` (or the account email) until then. */
+    requestEmailPending: text("request_email_pending"),
     feeIndividual: integer("fee_individual"),
     feeCouples: integer("fee_couples"),
     slidingScale: boolean("sliding_scale").notNull().default(false),
@@ -116,6 +120,9 @@ export const providerProfile = pgTable(
 
     // Billing visibility (kept in sync from Stripe events)
     pastDueSince: timestamp("past_due_since", { withTimezone: true }),
+    /** A founding provider (joined through the founding link): listed free,
+     *  for good, once approved. Set once, never by billing (server/founding.ts). */
+    foundingAt: timestamp("founding_at", { withTimezone: true }),
 
     ...timestamps,
   },
@@ -180,6 +187,17 @@ export const upload = pgTable("upload", {
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull(),
   size: integer("size").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** The founding link (owner request, 2026-11-05): one shared link the team
+ *  sends early providers. Its first `cap` sign-ups are listed free, for good.
+ *  At most one row; a new code replaces the old (server/founding.ts). */
+export const foundingLink = pgTable("founding_link", {
+  id: text("id").primaryKey().default("main"),
+  code: text("code").notNull(),
+  cap: integer("cap").notNull().default(51),
+  active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

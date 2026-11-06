@@ -11,6 +11,8 @@ export type ProviderState = {
   id: string;
   publicId: string;
   isSample: boolean;
+  /** Joined through the founding link: listed free, for good (server/founding.ts). */
+  founding?: boolean;
   /** Sample providers' hotlinked photo (real providers upload theirs). */
   externalPhotoUrl: string | null;
   /** Where session requests are emailed; null = the account email. */
@@ -18,6 +20,8 @@ export type ProviderState = {
   status: ProviderStatus;
   onboardingStep: string;
   reviewNote: string | null;
+  /** When it was last sent for verification. */
+  submittedAt: Date | null;
   needsReview: boolean;
   /** Verified providers' changes waiting for an admin (lib/provider/review.ts):
    *  each with the verified value it would replace. The fields below already

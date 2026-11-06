@@ -88,20 +88,34 @@ export default async function OnboardingWelcomePage() {
         <div className="flex animate-ui-enter flex-col gap-5 rounded-2xl border border-warm-200 bg-white p-6 shadow-[0_1px_2px_rgb(28_25_23/0.04),0_16px_32px_-24px_rgb(28_25_23/0.25)]" style={{ "--i": 2 } as React.CSSProperties}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
-              <p className="flex items-baseline gap-1.5">
-                <span className="type-hero-title">{BASE_PLAN.priceLabel}</span>
-                <span className="type-ui-small text-warm-500">{BASE_PLAN.period}</span>
-              </p>
-              <p className="type-ui-label text-warm-800">{BASE_PLAN.summary}</p>
+              {state.founding ? (
+                <>
+                  {/* TODO(client): founding provider copy (owner request, 2026-11-05). */}
+                  <p className="type-hero-title">Free</p>
+                  <p className="type-ui-label text-warm-800">Founding provider · {BASE_PLAN.summary.replace("Base plan · ", "")}</p>
+                </>
+              ) : (
+                <>
+                  <p className="flex items-baseline gap-1.5">
+                    <span className="type-hero-title">{BASE_PLAN.priceLabel}</span>
+                    <span className="type-ui-small text-warm-500">{BASE_PLAN.period}</span>
+                  </p>
+                  <p className="type-ui-label text-warm-800">{BASE_PLAN.summary}</p>
+                </>
+              )}
             </div>
             <span className="rounded-md bg-emerald-50 px-2 py-1 type-ui-caption font-medium text-emerald-800 ring-1 ring-emerald-200 ring-inset">
               {/* TODO(client) */}
-              Nothing to pay today
+              {state.founding ? "Free, for good" : "Nothing to pay today"}
             </span>
           </div>
-          <p className="type-ui-small text-warm-600">{BASE_PLAN.blurb}</p>
+          <p className="type-ui-small text-warm-600">
+            {state.founding
+              ? "As one of PsychMind's first providers, your listing is free, for good. Our team still verifies every profile before it appears in search."
+              : BASE_PLAN.blurb}
+          </p>
           <ul className="grid gap-x-4 gap-y-2.5 border-t border-warm-100 pt-4 sm:grid-cols-2">
-            {BASE_PLAN.features.map((f, i) => {
+            {BASE_PLAN.features.filter((f) => !(state.founding && f === "Cancel anytime")).map((f, i) => {
               const Icon = featureIcons[i] ?? BadgeCheckIcon;
               return (
                 <li key={f} className="flex items-center gap-2 type-ui-small text-warm-700">

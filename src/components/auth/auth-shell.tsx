@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
+import { CrisisStrip } from "@/components/app/crisis-strip";
 import { AuthPanelProvider } from "./auth-context";
 import { AuthTopLink } from "./auth-top-link";
 import { marketingHome } from "@/lib/hosts";
@@ -13,7 +14,9 @@ import { PortalPanel } from "./portal-panel";
 // On very wide screens the panel stops growing at 900px; the form side takes
 // the extra room and keeps its content in a centred column. Used by the
 // (auth) pages and by the admin log-in.
-export async function AuthShell({ children }: { children: ReactNode }) {
+// `crisis`: 988 in the footer, under every log-in, sign-up and request step
+// (patient-facing screens offer 988); the admin log-in turns it off.
+export async function AuthShell({ children, crisis = true }: { children: ReactNode; crisis?: boolean }) {
   // Rendered per request so the Content-Security-Policy nonce reaches every
   // script (a pre-built page can't carry one; see lib/csp.ts).
   await connection();
@@ -49,8 +52,9 @@ export async function AuthShell({ children }: { children: ReactNode }) {
               </div>
             </main>
 
-            <footer className="px-6 pb-6 text-[12px] text-warm-500 sm:px-10">
-              <p>
+            <footer className="flex flex-col gap-4 px-6 pb-6 sm:px-10">
+              {crisis && <CrisisStrip tone="quiet" />}
+              <p className="text-[12px] text-warm-500">
                 <Link href="/terms" className="hover:text-warm-800">
                   Terms
                 </Link>

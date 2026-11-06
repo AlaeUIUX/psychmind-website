@@ -46,3 +46,18 @@ export function objectPronoun(pronouns?: string | null) {
   if (p.startsWith("he")) return "him";
   return "them";
 }
+
+/** What saving the "Send session requests to" setting does. Requests carry
+ *  patients' names, contact details and notes, so a new address only starts
+ *  getting them once its inbox confirms it (server/requests/request-email.ts).
+ *  - `account`: empty or the account email; requests go there now, nothing pending.
+ *  - `unchanged`: the address already confirmed; any pending one is dropped.
+ *  - `confirm`: a new address; it waits for its link. */
+export type RequestEmailPlan = { kind: "account" } | { kind: "unchanged" } | { kind: "confirm"; email: string };
+
+export function planRequestEmail(input: string, accountEmail: string, confirmed: string | null): RequestEmailPlan {
+  const email = input.trim().toLowerCase();
+  if (!email || email === accountEmail.trim().toLowerCase()) return { kind: "account" };
+  if (confirmed && email === confirmed.trim().toLowerCase()) return { kind: "unchanged" };
+  return { kind: "confirm", email };
+}

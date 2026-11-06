@@ -70,4 +70,23 @@ describe("accountHealth", () => {
   it("says recent edits are in review without losing Verified", () => {
     expect(row(accountHealth({ ...listed, needsReview: true }), "verification")).toMatchObject({ tone: "waiting", status: "Verified · recent changes in review" });
   });
+
+  it("offers to reactivate a plan that ended", () => {
+    const rows = accountHealth({ ...listed, listing: "unpaid", plan: { subscribed: false, ended: true, endsAt: null } });
+    expect(row(rows, "listing")).toMatchObject({ status: "Your plan ended", action: { label: "Reactivate" } });
+    expect(row(rows, "billing")).toMatchObject({ status: "Ended", tone: "attention" });
+  });
+
+  it("shows when a canceled plan ends, without calling it a problem", () => {
+    const endsAt = new Date("2026-11-30T17:00:00Z");
+    const rows = accountHealth({ ...listed, plan: { subscribed: true, ended: false, endsAt } });
+    expect(row(rows, "listing").tone).toBe("good");
+    expect(row(rows, "billing")).toMatchObject({ status: "Canceled, ends Nov 30", tone: "waiting" });
+  });
+
+  it("tells a suspended subscriber their billing is paused", () => {
+    const rows = accountHealth({ ...listed, status: "suspended", listing: "blocked", plan: { subscribed: true, ended: false, endsAt: null } });
+    expect(row(rows, "billing")).toMatchObject({ tone: "waiting", action: { label: "Manage" } });
+    expect(row(rows, "billing").status).toMatch(/^Paused/);
+  });
 });

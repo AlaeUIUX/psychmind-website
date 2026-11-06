@@ -1,7 +1,8 @@
-import { BellIcon, ChevronRightIcon, EyeIcon, PencilLineIcon } from "@/components/ui/hugeicons";
+import { ArrowUpRightIcon, BellIcon, ChevronRightIcon, EyeIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LocalTime } from "@/components/app/local-time";
 import { SubmittedPreview } from "@/components/onboarding/submitted-preview";
 import { Button } from "@/components/ui/button";
 import { toProfileView } from "@/lib/provider/state";
@@ -9,8 +10,6 @@ import { requireRole } from "@/server/auth/session";
 import { loadProviderState } from "@/server/provider/data";
 
 export const metadata: Metadata = { title: "Profile submitted — PsychMind", robots: { index: false } };
-
-const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 function maskEmail(email: string) {
   const [name, domain] = email.split("@");
@@ -27,7 +26,8 @@ export default async function SubmittedPage() {
   if (state.status !== "submitted") redirect("/provider");
 
   const steps = [
-    { title: "Profile submitted", meta: dateFmt.format(new Date()), state: "done" as const },
+    // When they sent it, in their own time zone (not the time of this visit).
+    { title: "Profile submitted", meta: state.submittedAt ? <LocalTime value={state.submittedAt} style="datetime" /> : null, state: "done" as const },
     { title: "License verification", meta: "In review · usually 1–2 business days", state: "current" as const },
     { title: "Activate your listing", meta: "After you're verified", state: "todo" as const },
   ];
@@ -91,12 +91,18 @@ export default async function SubmittedPage() {
 
         <div className="animate-ui-enter overflow-hidden rounded-2xl border border-warm-200 bg-white" style={{ "--i": 4 } as React.CSSProperties}>
           <p className="border-b border-warm-100 px-5 py-3 type-ui-label text-warm-800">While you wait</p>
+          {/* No "keep editing" row: the profile is locked while it's in review
+              (saveProviderSection). The preview opens the whole profile in a new tab. */}
           {[
-            { href: "/provider", icon: EyeIcon, title: "Preview your public profile", body: "See exactly what patients will see." },
-            { href: "/provider/profile", icon: PencilLineIcon, title: "Polish your profile", body: "You can keep editing anything except your licenses." },
-            { href: "/provider/settings", icon: BellIcon, title: "Account settings", body: "Your email and sign-in details." },
-          ].map(({ href, icon: Icon, title, body }) => (
-            <Link key={href + title} href={href} className="group flex items-center gap-3 border-b border-warm-100 px-5 py-3.5 last:border-0 hover:bg-warm-50">
+            { href: "/provider/preview", icon: EyeIcon, title: "Preview your public profile", body: "See exactly what patients will see.", newTab: true },
+            { href: "/provider/settings", icon: BellIcon, title: "Account settings", body: "Your email and sign-in details.", newTab: false },
+          ].map(({ href, icon: Icon, title, body, newTab }) => (
+            <Link
+              key={href + title}
+              href={href}
+              {...(newTab ? { target: "_blank", rel: "noopener" } : {})}
+              className="group flex items-center gap-3 border-b border-warm-100 px-5 py-3.5 last:border-0 hover:bg-warm-50"
+            >
               <span className="flex size-8 items-center justify-center rounded-lg bg-warm-100 text-warm-600">
                 <Icon aria-hidden className="size-4" />
               </span>
@@ -104,7 +110,12 @@ export default async function SubmittedPage() {
                 <span className="type-ui-label text-warm-900">{title}</span>
                 <span className="type-ui-caption text-warm-500">{body}</span>
               </span>
-              <ChevronRightIcon aria-hidden className="size-4 text-warm-400 transition-transform group-hover:translate-x-0.5" />
+              {newTab ? (
+                <ArrowUpRightIcon aria-hidden className="size-4 text-warm-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              ) : (
+                <ChevronRightIcon aria-hidden className="size-4 text-warm-400 transition-transform group-hover:translate-x-0.5" />
+              )}
+              {newTab && <span className="sr-only">(opens in a new tab)</span>}
             </Link>
           ))}
         </div>
@@ -113,7 +124,8 @@ export default async function SubmittedPage() {
           <Button asChild className="h-10">
             <Link href="/provider">Go to dashboard</Link>
           </Button>
-          <a href="mailto:support@psychmind.org" className="type-ui-small text-warm-600 underline-offset-4 hover:text-warm-900 hover:underline">
+          {/* hello@psychmind.co, as on the legal pages. TODO(client): confirm .co or .org. */}
+          <a href="mailto:hello@psychmind.co" className="type-ui-small text-warm-600 underline-offset-4 hover:text-warm-900 hover:underline">
             Questions? Email support
           </a>
         </div>

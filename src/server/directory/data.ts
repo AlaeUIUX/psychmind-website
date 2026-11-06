@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, exists, gt, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { db, dbReady } from "@/db";
 import { providerLicense, providerLocation, providerProfile, savedProvider, subscription } from "@/db/schema";
@@ -21,7 +21,7 @@ export type DirectoryProvider = ProfileView & {
 /** Listed = approved and, once billing is connected, paying (or in the
  *  3-day grace period after a failed renewal). Until Stripe is set up,
  *  approval alone lists a provider so verification can be tried end to end.
- *  Sample providers are always listed. */
+ *  Sample and founding providers (server/founding.ts) are listed once approved, without paying. */
 export function listedCondition() {
   const approved = eq(providerProfile.status, "approved");
   if (!stripeConfigured()) return approved;
@@ -39,7 +39,7 @@ export function listedCondition() {
         ),
       ),
   );
-  return and(approved, or(eq(providerProfile.isSample, true), paying));
+  return and(approved, or(eq(providerProfile.isSample, true), isNotNull(providerProfile.foundingAt), paying));
 }
 
 type ProfileRow = typeof providerProfile.$inferSelect;

@@ -18,8 +18,8 @@ Open **`/dev/setup`** at any point. It shows what's connected and the exact URLs
    - **Contact email:** your address.
 3. In **Audience**, keep the status on **Testing**. Under **Test users**, add every Google account that should be able to sign in (yours, Brenda's). While in Testing, only these accounts can sign in.
 4. Open **Clients** and choose **Create client**. Pick **Web application** and name it "PsychMind local".
-   - **Authorized JavaScript origins:** `http://localhost:3000`
-   - **Authorized redirect URIs:** `http://localhost:3000/api/auth/callback/google`
+   - **Authorized JavaScript origins:** `http://localhost:3001`
+   - **Authorized redirect URIs:** `http://localhost:3001/api/auth/callback/google`
 5. Choose **Create**, then copy the **Client ID** and **Client secret**.
 
 > Google only accepts `http://localhost` for local testing, not `app.localhost`. That's why the next step turns the portal subdomain off locally.
@@ -32,13 +32,13 @@ GOOGLE_CLIENT_SECRET=…the client secret
 APP_HOST=off
 ```
 
-`APP_HOST=off` serves the portal from `http://localhost:3000` instead of `http://app.localhost:3000`. Remove the line to get the subdomain back.
+`APP_HOST=off` serves the portal from `http://localhost:3001` instead of `http://app.localhost:3001`. Remove the line to get the subdomain back.
 
 ### 3. Try it
 
 1. Restart the dev server. Make sure it's on port 3000, since the Google client lists that port.
-2. Open `http://localhost:3000/dev/setup`. **Google sign-in** should say **On**.
-3. Open `http://localhost:3000/login` and choose **Continue with Google**.
+2. Open `http://localhost:3001/dev/setup`. **Google sign-in** should say **On**.
+3. Open `http://localhost:3001/login` and choose **Continue with Google**.
 
 | Start from | Result |
 |---|---|
@@ -132,7 +132,7 @@ Then redeploy. `/dev/setup` (locally) shows "Payments: Stripe" once all three ar
 
 Add the same three values to `.env.local`, except the webhook secret: local webhooks come from the Stripe CLI.
 1. Run `stripe login`.
-2. Run `stripe listen --forward-to http://app.localhost:3000/api/auth/stripe/webhook`.
+2. Run `stripe listen --forward-to http://app.localhost:3001/api/auth/stripe/webhook`.
 3. Use the `whsec_…` it prints as `STRIPE_WEBHOOK_SECRET`, then restart `npm run dev`.
 
 ### 4. Try it

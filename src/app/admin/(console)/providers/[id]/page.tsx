@@ -2,10 +2,12 @@ import { ArrowRightIcon, ExternalLinkIcon, FileTextIcon } from "@/components/ui/
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DecisionPanel } from "@/components/admin/decision-panel";
+import { ExtraLocationsForm } from "@/components/admin/extra-locations-form";
 import { STATUS_BADGE } from "@/components/admin/provider-table";
 import { PageHeader } from "@/components/app/page-header";
 import { ProviderProfileView } from "@/components/provider/profile-view";
 import { StatusPill } from "@/components/app/status-pill";
+import { locationLimit } from "@/lib/provider/schema";
 import { fileUrl, toProfileView, type ProviderState, type UploadMeta } from "@/lib/provider/state";
 import { stateName } from "@/lib/taxonomy";
 import { providerHistory, providerOwnerEmail } from "@/server/admin/data";
@@ -34,7 +36,12 @@ export default async function AdminProviderPage({ params }: { params: Promise<{ 
         breadcrumbs={[{ label: "Verification queue", href: "/admin/queue" }, { label: name }]}
         title={name}
         description={email ?? undefined}
-        actions={<StatusPill tone={badge.variant}>{badge.label}</StatusPill>}
+        actions={
+          <span className="flex items-center gap-2">
+            {state.founding && <StatusPill dot={false}>Founding</StatusPill>}
+            <StatusPill tone={badge.variant}>{badge.label}</StatusPill>
+          </span>
+        }
       />
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,440px)_1fr]">
@@ -102,6 +109,15 @@ export default async function AdminProviderPage({ params }: { params: Promise<{ 
               ))}
               {!state.licenses.length && <p className="type-small text-text-tertiary">No licenses yet.</p>}
             </ul>
+          </section>
+
+          {/* TODO(client): copy. Extra locations can't be bought online yet (D9). */}
+          <section className="flex flex-col gap-3 rounded-card border border-warm-200 bg-white p-6">
+            <h2 className="type-title text-text-primary">Practice locations</h2>
+            <p className="type-small text-text-secondary">
+              {state.locations.length} of {locationLimit(state.extraLocations)} used. The plan includes {locationLimit(0)}; add more here when a provider asks.
+            </p>
+            <ExtraLocationsForm profileId={state.id} extra={state.extraLocations} />
           </section>
 
           <section className="flex flex-col gap-3 rounded-card border border-warm-200 bg-white p-6">

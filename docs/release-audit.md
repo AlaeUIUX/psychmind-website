@@ -18,6 +18,15 @@ Every finding below was checked again against `b1ab8fe` (the design-language pas
   - Re-verification (D12): once verified, a new name, title, business name, NPI or license waits for an admin while the public profile keeps the verified details, and a new state stays hidden until its license is verified (`lib/provider/review.ts`).
   - The profile editor lost its cramped side preview; "View profile" opens the full profile in a new tab (`/provider/preview`).
 
+## Milestone 1 fixes, 2026-10-31
+
+Every Milestone 1 item the build owns is done; Google sign-in in production (an accounts task) is the one left.
+
+- **Blocker 2 (988):** the auth shell's footer carries a quiet 988 strip on log in, sign up and every request step; the admin log-in leaves it out.
+- **Blocker 3 (billing):** suspending pauses collection on the Stripe subscription and unsuspending resumes it (`server/billing/pause.ts`); anyone with a subscription sees Manage billing. Untested against Stripe until test mode is set up.
+- **Providers:** the missing banners (canceling, ended, "live again"), the rejected and suspended Overview, the billing gaps (a "confirming" return from checkout, the "Live" badge with Stripe off, extra locations through the team), the requests address confirmed by a link (migration 0018), and the submitted page.
+- **Tests:** a full Playwright run on a fresh server; the provider journey now also suspends, unsuspends and adds extra locations. Two test-only timing fixes: the dev mailbox check no longer waits for every email's iframe, and the admin range check waits up to 15 s.
+
 ## How it was checked
 
 - **Every page loaded** at 1280 and 375 px: signed out, as a new patient, as a new provider, and as an admin (local test accounts). All 66 views render with no page errors and no horizontal scroll. Role redirects work (a patient opening `/provider` or `/admin` lands on `/account`), and unknown providers, requests and admin ids give a 404.

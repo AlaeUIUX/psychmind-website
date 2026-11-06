@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/app/status-banner";
 import { Button } from "@/components/ui/button";
-import type { ListingState } from "@/lib/billing";
+import type { BillingSnapshot, ListingState } from "@/lib/billing";
 import type { ProviderStatus } from "@/lib/provider/types";
+
+/** Billing dates read in New York time, like the analytics days. */
+const dateFmt = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "America/New_York" });
 
 // The account-status banner on every provider dashboard page — one state at
 // a time, most urgent first (build plan: provider state machine).
@@ -14,6 +17,8 @@ export function ProviderBanner({
   reviewNote,
   onboardingStep,
   needsReview,
+  billing,
+  liveAgain,
 }: {
   status: ProviderStatus;
   listing: ListingState;
@@ -21,6 +26,9 @@ export function ProviderBanner({
   reviewNote: string | null;
   onboardingStep: string;
   needsReview: boolean;
+  billing: Pick<BillingSnapshot, "status" | "cancelAtPeriodEnd" | "periodEnd">;
+  /** Back in search after a suspension or a failed payment (lib/billing.ts liveAgain). */
+  liveAgain: boolean;
 }) {
   const action = (href: string, label: string) => (
     <Button asChild size="sm" variant="primary">
@@ -64,6 +72,14 @@ export function ProviderBanner({
   // Approved: what matters now is billing.
   switch (listing) {
     case "unpaid":
+      // A plan they canceled has run out (a canceled subscription reads as unpaid).
+      if (billing.status === "canceled") {
+        return (
+          <StatusBanner tone="warning" title="Your listing has ended" action={action("/provider/billing", "Reactivate")}>
+            Your plan was canceled, so your profile is no longer in search. Reactivate it to start receiving session requests again.
+          </StatusBanner>
+        );
+      }
       return (
         <StatusBanner tone="success" title="You're verified" action={action("/provider/billing", "Activate your listing")}>
           Activate your listing to appear in search and start receiving session requests.
@@ -96,9 +112,24 @@ export function ProviderBanner({
           </StatusBanner>
         );
       }
-      return reviewNote ? (
-        <StatusBanner tone="warning" title="We couldn't approve your recent changes" action={action("/provider/profile", "Review your profile")}>
-          <span className="whitespace-pre-line">{reviewNote}</span>
+      if (reviewNote) {
+        return (
+          <StatusBanner tone="warning" title="We couldn't approve your recent changes" action={action("/provider/profile", "Review your profile")}>
+            <span className="whitespace-pre-line">{reviewNote}</span>
+          </StatusBanner>
+        );
+      }
+      // Canceled in Stripe's portal: listed until the period they paid for ends.
+      if (listing === "live" && billing.cancelAtPeriodEnd && billing.periodEnd) {
+        return (
+          <StatusBanner tone="info" title={`Your listing ends on ${dateFmt.format(billing.periodEnd)}`} action={action("/provider/billing", "Manage billing")}>
+            You canceled your plan. You&apos;ll stay in search until then. Changed your mind? Resume it from Manage billing.
+          </StatusBanner>
+        );
+      }
+      return liveAgain ? (
+        <StatusBanner tone="success" title="You're live again">
+          Your profile is back in search, and patients can send you session requests.
         </StatusBanner>
       ) : null;
   }

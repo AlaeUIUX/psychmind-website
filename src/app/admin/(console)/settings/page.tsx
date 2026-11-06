@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { hasPasswordLogin } from "@/server/account/data";
 import { signOutAdmin } from "@/server/auth/actions";
 import { requireRole } from "@/server/auth/session";
+import { FoundingLinkCard } from "@/components/admin/founding-link-card";
+import { foundingLinkRow, foundingTaken } from "@/server/founding";
+import { appUrl } from "@/server/url";
 
 export const metadata: Metadata = { title: "Settings — PsychMind admin" };
 
@@ -17,13 +20,15 @@ export const metadata: Metadata = { title: "Settings — PsychMind admin" };
 // TODO(client): copy.
 export default async function AdminSettingsPage() {
   const { user } = await requireRole("admin", "/admin/settings");
-  const [hasPassword, notifications] = await Promise.all([hasPasswordLogin(user.id), notificationSettings({ id: user.id, email: user.email, role: "admin" })]);
+  const [hasPassword, notifications, link, taken] = await Promise.all([hasPasswordLogin(user.id), notificationSettings({ id: user.id, email: user.email, role: "admin" }), foundingLinkRow(), foundingTaken()]);
+  const foundingUrl = link ? await appUrl(`/founding/${link.code}`) : null;
   return (
     <>
-      <PageHeader breadcrumbs={[{ label: "Admin" }, { label: "Settings" }]} title="Settings" description="Your admin login." />
+      <PageHeader breadcrumbs={[{ label: "Admin" }, { label: "Settings" }]} title="Settings" description="Your admin login, and the founding link." />
       <div className="flex flex-col gap-6">
         <LoginSettings email={user.email} hasPassword={hasPassword} twoFactorEnabled role="admin" signOutAction={signOutAdmin} />
         <NotificationSettings settings={notifications} alwaysSent={ALWAYS_SENT.admin} />
+        <FoundingLinkCard url={foundingUrl} active={link?.active ?? false} taken={taken} cap={link?.cap ?? 51} />
         <section className="flex max-w-[640px] flex-col gap-4 rounded-card border border-warm-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-8">
           <div className="flex max-w-[440px] flex-col gap-1">
             <h2 className="type-small font-medium text-text-primary">Two-step login</h2>
