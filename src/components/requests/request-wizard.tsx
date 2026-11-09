@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowLeftIcon, LoaderCircleIcon, MapPinIcon, MonitorIcon, SendIcon, UserIcon, UserKeyIcon, UserPlusIcon, UserRoundIcon } from "@/components/ui/hugeicons";
+import { ArrowLeftIcon, LoaderCircleIcon, MapPinIcon, MonitorIcon, UserIcon, UserKeyIcon, UserPlusIcon, UserRoundIcon } from "@/components/ui/hugeicons";
 import Link from "next/link";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
@@ -18,8 +18,10 @@ import type { RequestTarget } from "@/server/requests/data";
 // "Request a session" (Figma B1–B7) in the portal shell: five short steps,
 // then "You're all set". Guests leave their name, phone and email; signed-in
 // patients have them filled in and the request saved to "My requests".
-// Choices survive a detour through log in / sign up (sessionStorage, this
-// tab only). Copy is Figma's; anything new is marked TODO(client).
+// Choices survive a detour through log in / sign up: kept in localStorage,
+// because the email-confirmation link opens a new tab, for as long as that
+// link lasts (24 hours), and cleared once the request is sent. Copy is
+// Figma's; anything new is marked TODO(client).
 
 type Patient = { name: string; email: string } | null;
 type Choice = "login" | "signup" | "guest";
@@ -28,6 +30,44 @@ type Errors = Partial<Record<keyof RequestInput, string>>;
 
 const STEPS = 5;
 const storageKey = (publicId: string) => `psychmind:request:${publicId}`;
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+type SavedDraft = Pick<Draft, "sessionType" | "format" | "note">;
+
+function saveDraft(publicId: string, d: SavedDraft) {
+  try {
+    localStorage.setItem(storageKey(publicId), JSON.stringify({ sessionType: d.sessionType, format: d.format, note: d.note, savedAt: Date.now() }));
+  } catch {}
+}
+
+function readDraft(publicId: string): Partial<SavedDraft> | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey(publicId)) ?? "null") as (Partial<SavedDraft> & { savedAt?: number }) | null;
+    if (!saved || typeof saved.savedAt !== "number" || Date.now() - saved.savedAt > DRAFT_TTL_MS) {
+      clearDraft(publicId);
+      return null;
+    }
+    return saved;
+  } catch {
+    return null;
+  }
+}
+
+// The note can be personal: drop any draft past its time, for any provider.
+function sweepDrafts() {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith("psychmind:request:")) continue;
+      const savedAt = (JSON.parse(localStorage.getItem(key) ?? "null") as { savedAt?: number } | null)?.savedAt;
+      if (typeof savedAt !== "number" || Date.now() - savedAt > DRAFT_TTL_MS) localStorage.removeItem(key);
+    }
+  } catch {}
+}
+
+function clearDraft(publicId: string) {
+  try {
+    localStorage.removeItem(storageKey(publicId));
+  } catch {}
+}
 
 function Dashes({ step }: { step: number }) {
   return (
@@ -118,9 +158,11 @@ function Done({ target, patient, result }: { target: RequestTarget; patient: Pat
       </div>
     );
   }
+  // Dee's answer (2026-11-09): no promise of an email, link or calendar
+  // invite. The request is in the provider's dashboard; they answer asap.
   const steps = [
-    ["Check your inbox", "You'll receive a confirmation with the session link and a calendar invite."],
-    ["Most providers respond within 2-3 business days?", "You’ll be contacted  directly by email or phone to confirm everything."],
+    [`Sent to ${target.first}'s dashboard`, `Your request is waiting for ${target.first} in their PsychMind dashboard.`],
+    [`${target.first} will answer as soon as possible`, "They'll reach out to you directly to confirm everything."],
     ...(patient ? [] : [["Want to track your requests?", "Create a free account to manage requests and save provider profiles."]]),
   ];
   return (
@@ -128,24 +170,11 @@ function Done({ target, patient, result }: { target: RequestTarget; patient: Pat
       <AuthTitle
         eyebrow="Request confirmed"
         title="You're all set"
-        description={
-          patient
-            ? `${target.first} has received your request and will reach out to you directly within 48 hours.`
-            : "You’ll be contacted by the provider directly by email or phone to confirm everything."
-        }
+        description={`Your request has been sent to ${target.first}'s dashboard, and they'll answer as soon as possible.`}
       />
-      {result.demo ? (
+      {result.demo && (
         // TODO(client): copy.
-        <FormAlert tone="info" message={`${target.name} is a sample provider, so no email was sent. With a real provider, this is where they'd get your request.`} />
-      ) : (
-        <div className="flex items-start gap-4 rounded-xl border border-warm-200 bg-warm-50 p-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <p className="type-ui-heading text-warm-900">We sent an email on your behalf!</p>
-            <p className="truncate type-ui-body font-medium text-blue-700">{result.email}</p>
-            <p className="type-ui-small text-warm-600">You’ll be contacted directly by email or phone to confirm everything.</p>
-          </div>
-          <SendIcon className="mt-1 size-6 shrink-0 text-warm-400" />
-        </div>
+        <FormAlert tone="info" message={`${target.name} is a sample provider, so the request went nowhere. With a real provider, it would be in their dashboard now.`} />
       )}
       <ol className="flex flex-col">
         {steps.map(([title, body], i) => (
@@ -203,14 +232,20 @@ export function RequestWizard({ target, patient, resume }: { target: RequestTarg
 
   // Back from logging in or signing up: pick up where they left off.
   useEffect(() => {
+    sweepDrafts();
     if (!resume) return;
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(storageKey(target.publicId)) ?? "null") as Partial<Draft> | null;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring this tab's draft once, on arrival
-      if (saved) setDraft((d) => ({ ...d, sessionType: saved.sessionType ?? d.sessionType, format: saved.format ?? d.format, note: saved.note ?? d.note }));
-      setStep(4);
-    } catch {}
-  }, [resume, target.publicId]);
+    const saved = readDraft(target.publicId);
+    const pick = (value: unknown, allowed: string[], fallback: string) => (typeof value === "string" && allowed.includes(value) ? value : fallback);
+    if (saved)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring the saved draft once, on arrival
+      setDraft((d) => ({
+        ...d,
+        sessionType: pick(saved.sessionType, target.sessionTypes, d.sessionType),
+        format: pick(saved.format, target.formats, d.format),
+        note: typeof saved.note === "string" ? saved.note : d.note,
+      }));
+    setStep(4);
+  }, [resume, target.publicId, target.sessionTypes, target.formats]);
 
   // The portal panel shows the request filling in.
   useEffect(() => {
@@ -232,9 +267,7 @@ export function RequestWizard({ target, patient, resume }: { target: RequestTarg
   };
 
   const detour = (to: "login" | "signup") => {
-    try {
-      sessionStorage.setItem(storageKey(target.publicId), JSON.stringify({ sessionType: draft.sessionType, format: draft.format, note: draft.note }));
-    } catch {}
+    saveDraft(target.publicId, draft);
     const back = encodeURIComponent(`/request/${target.href.split("/").pop()}?resume=1`);
     window.location.assign(to === "login" ? `/login?next=${back}` : `/signup/patient?next=${back}`);
   };
@@ -251,12 +284,18 @@ export function RequestWizard({ target, patient, resume }: { target: RequestTarg
   const submit = () =>
     startTransition(async () => {
       setError(undefined);
-      // The server validates every field again.
-      const res = await sendSessionRequest({ publicId: target.publicId, ...draft } as RequestInput);
+      // The server validates every field again. A dropped connection keeps
+      // everything they entered and says so, instead of losing the page.
+      let res: SendResult;
+      try {
+        res = await sendSessionRequest({ publicId: target.publicId, ...draft } as RequestInput);
+      } catch {
+        // TODO(client): copy.
+        setError("We couldn't send your request. Check your connection and try again. Nothing you entered was lost.");
+        return;
+      }
       if (res.ok) {
-        try {
-          sessionStorage.removeItem(storageKey(target.publicId));
-        } catch {}
+        clearDraft(target.publicId);
         setResult(res);
         window.scrollTo({ top: 0 });
         return;

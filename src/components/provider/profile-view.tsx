@@ -395,7 +395,7 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
             </div>
           </div>
 
-          {(p.feeIndividual != null || p.feeCouples != null || p.slidingScale || preview) && (
+          {(p.feeIndividual != null || p.feeCouples != null || p.slidingScale || !!p.insurance?.length || preview) && (
             <>
               <hr className="border-warm-200" />
               <Region name="fees" highlight={highlight}>
@@ -413,7 +413,16 @@ export function ProviderProfileView({ profile: p, mode = "public", actions, high
                   </div>
                 )}
                 {p.slidingScale && <p className="type-caption text-text-tertiary">Sliding scale available</p>}
-                {p.feeIndividual == null && p.feeCouples == null && !p.slidingScale && (
+                {!!p.insurance?.length && (
+                  // TODO(client): "Insurance" label.
+                  <div className="flex flex-col gap-1 border-t border-warm-100 pt-2.5">
+                    <dt className="type-overline text-text-tertiary">Insurance</dt>
+                    <dd className="type-small text-text-primary">
+                      {p.insurance.map((v) => (v === "out_of_network" ? "Out of network (superbill)" : labelOf("insurance", v))).join(", ")}
+                    </dd>
+                  </div>
+                )}
+                {p.feeIndividual == null && p.feeCouples == null && !p.slidingScale && !p.insurance?.length && (
                   <div className="flex items-center justify-between">
                     <dt className="type-overline text-text-tertiary">Session fees</dt>
                     <dd aria-hidden className="h-3 w-16 rounded-pill bg-warm-200" />

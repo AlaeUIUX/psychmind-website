@@ -92,6 +92,34 @@ export const GENDERS = [
   { value: "undisclosed", label: "Prefer not to say" }, // draft
 ] as const satisfies readonly Option[];
 
+/** Insurance (Dee, 2026-11-09: model it on how large US therapist directories
+ *  do it for now). Providers tick the plans they're in network with, plus
+ *  "Out of network" if they give clients a superbill to claim back; patients
+ *  filter by their plan. A DRAFT list of common US plans. TODO(client): approve. */
+export const INSURANCE = [
+  { value: "out_of_network", label: "Out of network" },
+  { value: "aetna", label: "Aetna" },
+  { value: "ambetter", label: "Ambetter" },
+  { value: "anthem", label: "Anthem" },
+  { value: "bcbs", label: "Blue Cross Blue Shield" },
+  { value: "carelon", label: "Carelon Behavioral Health" },
+  { value: "cigna", label: "Cigna and Evernorth" },
+  { value: "compsych", label: "ComPsych" },
+  { value: "humana", label: "Humana" },
+  { value: "kaiser", label: "Kaiser Permanente" },
+  { value: "magellan", label: "Magellan" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "medicare", label: "Medicare" },
+  { value: "mhn", label: "MHN (Health Net)" },
+  { value: "molina", label: "Molina Healthcare" },
+  { value: "optum", label: "Optum" },
+  { value: "oscar", label: "Oscar Health" },
+  { value: "oxford", label: "Oxford Health Plans" },
+  { value: "tricare", label: "TRICARE" },
+  { value: "uhc", label: "UnitedHealthcare" },
+  { value: "wellcare", label: "Wellcare" },
+] as const satisfies readonly Option[];
+
 /** Figma P5 "Session format at this location". */
 export const SESSION_FORMATS = [
   { value: "online", label: "Online" },
@@ -123,6 +151,7 @@ const maps = {
   genders: lookup(GENDERS),
   formats: lookup(SESSION_FORMATS),
   states: lookup(US_STATES),
+  insurance: lookup(INSURANCE),
 };
 
 /** Display label for a stored value; custom (provider-typed) values print as-is. */

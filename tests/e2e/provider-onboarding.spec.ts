@@ -35,7 +35,7 @@ async function requestAsGuest(browser: Browser, provider: string, name: string, 
   await g.getByLabel("Email").fill(email);
   await g.getByRole("button", { name: "Confirm", exact: true }).click();
   await g.getByRole("button", { name: "Confirm request" }).click();
-  await expect(g.getByText("We sent an email on your behalf!")).toBeVisible({ timeout: 15_000 });
+  await expect(g.getByText("You're all set")).toBeVisible({ timeout: 15_000 });
   await guest.close();
 }
 
@@ -226,7 +226,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await g.getByRole("button", { name: "Confirm", exact: true }).click();
     await expect(g.getByRole("heading", { name: "Review your request" })).toBeVisible();
     await g.getByRole("button", { name: "Confirm request" }).click();
-    await expect(g.getByText("We sent an email on your behalf!")).toBeVisible({ timeout: 15_000 });
+    await expect(g.getByText("You're all set")).toBeVisible({ timeout: 15_000 });
 
     // The same request again the same day isn't emailed twice.
     await g.goto(href!.replace("/providers/", "/request/"));
@@ -281,7 +281,7 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await g.getByLabel("Email").fill(quietEmail);
     await g.getByRole("button", { name: "Confirm", exact: true }).click();
     await g.getByRole("button", { name: "Confirm request" }).click();
-    await expect(g.getByText("We sent an email on your behalf!")).toBeVisible({ timeout: 15_000 });
+    await expect(g.getByText("You're all set")).toBeVisible({ timeout: 15_000 });
     await guest.close();
 
     await page.goto("/provider/requests");

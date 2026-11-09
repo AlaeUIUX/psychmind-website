@@ -1,3 +1,4 @@
+import { INSURANCE } from "@/lib/taxonomy";
 import type { SampleProvider } from "./sample-data";
 
 // What gets stored for each sample provider, derived the same way every time
@@ -88,6 +89,17 @@ function licenseNumber(s: SampleProvider, state: string, seed: number) {
 
 const photoUrl = (photo: string) => `https://images.unsplash.com/${photo}?auto=format&fit=crop&crop=faces&w=480&h=480&q=80`;
 
+const PLANS = INSURANCE.map((i) => i.value).filter((v) => v !== "out_of_network");
+
+/** A spread of plans per sample, so the insurance filter has something to
+ *  count. Migration 0020 sets the same lists on samples already in a database:
+ *  change both together. */
+export function sampleInsurance(index: number): string[] {
+  if (index % 5 === 4) return ["out_of_network"];
+  const picked = Array.from({ length: 2 + (index % 3) }, (_, k) => PLANS[(index * 7 + k * 3) % PLANS.length]);
+  return index % 2 === 0 ? [...picked, "out_of_network"] : picked;
+}
+
 export const sampleEmail = (index: number) => `sample-${String(index + 1).padStart(2, "0")}@${SAMPLE_DOMAIN}`;
 
 /** Everything stored for sample number `index` (0-based), minus ids and timestamps. */
@@ -122,6 +134,7 @@ export function sampleRows(s: SampleProvider, index: number) {
       feeIndividual: s.fees[0],
       feeCouples: s.fees[1],
       slidingScale: !!s.sliding,
+      insurance: sampleInsurance(index),
       acceptingNewClients: !s.full,
       education: s.education.map(([degree, school, year]) => ({ degree, school, year })),
       npiNumber: npi(index + 1),

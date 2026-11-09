@@ -33,6 +33,10 @@ export const searchParsers = {
   gender: list,
   language: list,
   age: list,
+  /** Session type: individuals, couples, families, groups (Dee, 2026-11-09). */
+  session: list,
+  /** Insurance plans, or "out_of_network" (Dee, 2026-11-09). */
+  insurance: list,
   /** Price per session range, USD. */
   min: parseAsInteger,
   max: parseAsInteger,
@@ -55,6 +59,8 @@ export function loadSearchFilters(params: Record<string, string | string[] | und
     gender: clip(raw.gender),
     language: clip(raw.language),
     age: clip(raw.age),
+    session: clip(raw.session),
+    insurance: clip(raw.insurance),
     min: raw.min != null && raw.min >= 0 ? Math.min(raw.min, 100_000) : null,
     max: raw.max != null && raw.max >= 0 ? Math.min(raw.max, 100_000) : null,
   };
@@ -74,6 +80,8 @@ export function activeFilterCount(f: SearchFilters) {
     f.gender.length +
     f.language.length +
     f.age.length +
+    f.session.length +
+    f.insurance.length +
     (f.min != null || f.max != null ? 1 : 0) +
     (f.sliding ? 1 : 0)
   );
@@ -88,6 +96,8 @@ export const EMPTY_FILTERS: SearchFilters = {
   gender: [],
   language: [],
   age: [],
+  session: [],
+  insurance: [],
   min: null,
   max: null,
   sliding: false,

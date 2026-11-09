@@ -113,6 +113,7 @@ async function buildState(p: typeof providerProfile.$inferSelect): Promise<Provi
     feeIndividual: p.feeIndividual,
     feeCouples: p.feeCouples,
     slidingScale: p.slidingScale,
+    insurance: p.insurance,
     acceptingNewClients: p.acceptingNewClients,
     education: p.education,
     npiNumber: want("npiNumber", verifiedValues.npiNumber),

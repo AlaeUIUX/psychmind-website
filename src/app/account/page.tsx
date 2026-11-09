@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CrisisStrip } from "@/components/app/crisis-strip";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
-import { SavedProviderCard } from "@/components/directory/saved-provider-card";
+import { SavedProviderCard, UnavailableSavedCard } from "@/components/directory/saved-provider-card";
 import { MyRequests } from "@/components/requests/my-requests";
 import { Button } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
@@ -36,9 +36,7 @@ export default async function AccountPage() {
         </div>
         {saved.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {saved.map((p) => (
-              <SavedProviderCard key={p.id} p={p} />
-            ))}
+            {saved.map((s) => (s.available ? <SavedProviderCard key={s.p.id} p={s.p} /> : <UnavailableSavedCard key={s.p.id} p={s.p} />))}
           </div>
         ) : (
           <EmptyState art={<HeartIcon />} title="No saved providers yet" action={<Button asChild><Link href="/providers">Find a provider</Link></Button>}>

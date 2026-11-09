@@ -3,6 +3,7 @@ import {
   AGE_GROUPS,
   BASE_PLAN_LOCATIONS,
   GENDERS,
+  INSURANCE,
   SESSION_FORMATS,
   SESSION_PARTICIPANTS,
   US_STATES,
@@ -82,6 +83,7 @@ export const practiceSchema = z.object({
   feeIndividual: money,
   feeCouples: money,
   slidingScale: z.boolean(),
+  insurance: z.array(z.enum(values(INSURANCE))).max(INSURANCE.length).default([]),
   acceptingNewClients: z.boolean(),
   education: z
     .array(

@@ -128,6 +128,7 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
   }
   // The date of birth isn't one of the endpoint's typed fields: it's checked
   // again by its own hook (server/auth/index.ts), then dropped.
+  const next = role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account");
   const body = {
     name: `${v.firstName} ${v.lastName}`,
     email: v.email,
@@ -137,7 +138,7 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
     dateOfBirth: isoDate(age.birth),
     // The verification link signs them in and returns them here, by way of
     // /auth/verified, which explains an expired or already-used link.
-    callbackURL: `/auth/verified?next=${encodeURIComponent(role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account"))}`,
+    callbackURL: `/auth/verified?next=${encodeURIComponent(next)}`,
   };
   try {
     const result = await auth.api.signUpEmail({ body, headers: await headers() });
@@ -161,7 +162,7 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
     return { error: authMessage(err), values };
   }
   await setPendingEmail(v.email);
-  redirect("/verify-email");
+  redirect(verifyEmailPage(next));
 }
 
 export async function signUpPatient(_prev: AuthState, form: FormData) {
@@ -240,7 +241,7 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
     const message = authMessage(err);
     if (message === "EMAIL_NOT_VERIFIED") {
       await setPendingEmail(parsed.data.email);
-      redirect("/verify-email");
+      redirect(verifyEmailPage(next));
     }
     return { error: message, values };
   }
@@ -350,13 +351,20 @@ export async function resetPassword(_prev: AuthState, form: FormData): Promise<A
   redirect("/login?reset=1");
 }
 
+// The confirm screen keeps ?next= (a request in progress, say) so the
+// original tab, a resent link and the link itself all lead back to it.
+function verifyEmailPage(next: string | null) {
+  return next ? `/verify-email?next=${encodeURIComponent(next)}` : "/verify-email";
+}
+
 export async function resendVerification(_prev: AuthState, form: FormData): Promise<AuthState> {
-  const parsed = z.object({ email }).safeParse(Object.fromEntries(form));
+  const parsed = z.object({ email }).safeParse({ email: form.get("email") });
+  const next = safeNext(form.get("next"));
   if (!parsed.success) return { fieldErrors: issues(parsed.error) };
   if (await limited("verify", parsed.data.email, 3, "10 m")) return { error: TOO_MANY };
   await dbReady;
   try {
-    await auth.api.sendVerificationEmail({ body: { email: parsed.data.email, callbackURL: "/auth/verified" }, headers: await headers() });
+    await auth.api.sendVerificationEmail({ body: { email: parsed.data.email, callbackURL: next ? `/auth/verified?next=${encodeURIComponent(next)}` : "/auth/verified" }, headers: await headers() });
   } catch (err) {
     const message = authMessage(err);
     if (message.startsWith("Too many")) return { error: message };

@@ -51,36 +51,54 @@ function AddCustom({ placeholder, button, onAdd }: { placeholder: string; button
   );
 }
 
-function LanguagePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+/** Pick several from a long list (search, tick, remove as chips): languages here, insurance on Practice. */
+export function MultiPicker({
+  options,
+  value,
+  onChange,
+  placeholder,
+  searchPlaceholder,
+  emptyText,
+  listLabel,
+}: {
+  options: readonly Option[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder: string;
+  searchPlaceholder: string;
+  emptyText: string;
+  listLabel: string;
+}) {
   const [open, setOpen] = useState(false);
+  const label = (v: string) => options.find((o) => o.value === v)?.label ?? v;
   return (
     <div className="flex flex-col gap-3">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button type="button" variant="secondary" className="w-full justify-between font-normal text-text-placeholder">
-            Choose a language
+            {placeholder}
             <PlusIcon />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
           <Command>
-            <CommandInput placeholder="Search languages…" />
+            <CommandInput placeholder={searchPlaceholder} />
             <CommandList>
-              <CommandEmpty>No language found.</CommandEmpty>
+              <CommandEmpty>{emptyText}</CommandEmpty>
               <CommandGroup>
-                {LANGUAGES.map((l) => {
-                  const on = value.includes(l.value);
+                {options.map((o) => {
+                  const on = value.includes(o.value);
                   return (
                     <CommandItem
-                      key={l.value}
-                      value={l.value}
+                      key={o.value}
+                      value={o.label}
                       onSelect={() => {
-                        onChange(on ? value.filter((v) => v !== l.value) : [...value, l.value]);
+                        onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value]);
                         setOpen(false);
                       }}
                     >
                       <CheckIcon className={on ? "opacity-100" : "opacity-0"} />
-                      {l.label}
+                      {o.label}
                     </CommandItem>
                   );
                 })}
@@ -90,14 +108,14 @@ function LanguagePicker({ value, onChange }: { value: string[]; onChange: (v: st
         </PopoverContent>
       </Popover>
       {value.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Languages you hold sessions in">
-          {value.map((lang) => (
-            <li key={lang} className="flex h-9 items-center gap-1 rounded-pill border border-warm-800 bg-warm-800 pr-1 pl-3.5 text-sm font-medium text-white">
-              {lang}
+        <ul className="flex flex-wrap gap-2" aria-label={listLabel}>
+          {value.map((v) => (
+            <li key={v} className="flex h-9 items-center gap-1 rounded-pill border border-warm-800 bg-warm-800 pr-1 pl-3.5 text-sm font-medium text-white">
+              {label(v)}
               <button
                 type="button"
-                aria-label={`Remove ${lang}`}
-                onClick={() => onChange(value.filter((v) => v !== lang))}
+                aria-label={`Remove ${label(v)}`}
+                onClick={() => onChange(value.filter((x) => x !== v))}
                 className="flex size-7 items-center justify-center rounded-full hover:bg-white/15"
               >
                 <XIcon className="size-3.5" />
@@ -107,6 +125,20 @@ function LanguagePicker({ value, onChange }: { value: string[]; onChange: (v: st
         </ul>
       )}
     </div>
+  );
+}
+
+function LanguagePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  return (
+    <MultiPicker
+      options={LANGUAGES}
+      value={value}
+      onChange={onChange}
+      placeholder="Choose a language"
+      searchPlaceholder="Search languages…"
+      emptyText="No language found."
+      listLabel="Languages you hold sessions in"
+    />
   );
 }
 

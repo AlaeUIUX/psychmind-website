@@ -7,7 +7,7 @@ import { EMPTY_FILTERS, searchParsers, type SearchFilters } from "@/lib/search/f
 // Search state is the URL. Changing a filter rewrites the query string and
 // the server sends back new results; `pending` is true until they arrive.
 
-type ListKey = "specialty" | "approach" | "gender" | "language" | "age";
+type ListKey = "specialty" | "approach" | "gender" | "language" | "age" | "session" | "insurance";
 
 export type SearchControls = {
   filters: SearchFilters;

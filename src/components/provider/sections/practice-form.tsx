@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { practiceSchema, type PracticeInput } from "@/lib/provider/schema";
-import { GENDERS } from "@/lib/taxonomy";
+import { GENDERS, INSURANCE } from "@/lib/taxonomy";
+import { MultiPicker } from "./expertise-form";
 import { FormErrorSummary } from "@/components/forms/form-error-summary";
 import { SectionFooter, type SectionProps, errorAt, useSectionForm } from "./shared";
 
@@ -26,6 +27,7 @@ export function PracticeForm({ state, mode, onPreview, backHref, nextHref }: Sec
       feeIndividual: toNumber(v.feeIndividual),
       feeCouples: toNumber(v.feeCouples),
       slidingScale: !!v.slidingScale,
+      insurance: v.insurance ?? [],
       acceptingNewClients: v.acceptingNewClients !== false,
       education: (v.education ?? [])
         .filter((ed) => ed?.degree || ed?.school)
@@ -45,6 +47,7 @@ export function PracticeForm({ state, mode, onPreview, backHref, nextHref }: Sec
       feeIndividual: state.feeIndividual ?? "",
       feeCouples: state.feeCouples ?? "",
       slidingScale: state.slidingScale,
+      insurance: (state.insurance ?? []) as PracticeInput["insurance"],
       acceptingNewClients: state.acceptingNewClients,
       education: state.education.map((e) => ({ ...e, year: e.year ?? "" })),
     },
@@ -108,6 +111,24 @@ export function PracticeForm({ state, mode, onPreview, backHref, nextHref }: Sec
             <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
             I offer a sliding scale for people with limited income
           </label>
+        )}
+      />
+      {/* TODO(client): label and hint. */}
+      <Controller
+        control={control}
+        name="insurance"
+        render={({ field }) => (
+          <FormRow id="insurance" label="Insurance" optional hint="The plans you're in network with. Choose “Out of network” if you give clients a superbill to claim back.">
+            <MultiPicker
+              options={INSURANCE}
+              value={field.value ?? []}
+              onChange={field.onChange}
+              placeholder="Choose a plan"
+              searchPlaceholder="Search plans…"
+              emptyText="No plan found."
+              listLabel="Insurance you accept"
+            />
+          </FormRow>
         )}
       />
       <Controller

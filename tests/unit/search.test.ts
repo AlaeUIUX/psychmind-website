@@ -175,3 +175,33 @@ describe("loadSearchFilters", () => {
     expect(loadSearchFilters({ format: "anything" }).format).toBe("online");
   });
 });
+
+describe("session type and insurance filters", () => {
+  const couples = provider("couples", { sessionParticipants: ["individuals", "couples"], insurance: ["aetna", "cigna"], locations: sara.locations, licenses: sara.licenses });
+  const solo = provider("solo", { sessionParticipants: ["individuals"], insurance: ["out_of_network"], locations: sara.locations, licenses: sara.licenses });
+  const none = provider("none", { sessionParticipants: ["groups"], locations: sara.locations, licenses: sara.licenses });
+  const run = (over: Partial<EngineFilters>) => searchDirectory([couples, solo, none], { ...EMPTY_FILTERS, format: null, ...over });
+
+  it("matches any chosen session type", () => {
+    expect(names(run({ session: ["couples"] }).results)).toEqual(["couples"]);
+    expect(names(run({ session: ["couples", "groups"] }).results).sort()).toEqual(["couples", "none"]);
+  });
+
+  it("matches any chosen plan, and out of network as its own option", () => {
+    expect(names(run({ insurance: ["cigna"] }).results)).toEqual(["couples"]);
+    expect(names(run({ insurance: ["out_of_network"] }).results)).toEqual(["solo"]);
+  });
+
+  it("counts each option and says what a close match misses", () => {
+    const r = run({ insurance: ["cigna"] });
+    expect(r.facets.insurance).toMatchObject({ aetna: 1, cigna: 1, out_of_network: 1 });
+    expect(r.facets.session).toMatchObject({ individuals: 1, couples: 1 });
+    expect(r.close.find((c) => c.provider.id === "solo")?.misses).toEqual(["Doesn't take Cigna and Evernorth"]);
+  });
+
+  it("reads both from the URL", () => {
+    const f = loadSearchFilters({ session: "couples,families", insurance: "aetna" });
+    expect(f.session).toEqual(["couples", "families"]);
+    expect(f.insurance).toEqual(["aetna"]);
+  });
+});

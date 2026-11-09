@@ -21,7 +21,7 @@ import { parseQuery, type TextQuery } from "./text";
 // - Fewer than 10 matches: providers who miss exactly one other filter are
 //   offered as close matches, labelled with what they miss.
 
-export type Group = "where" | "q" | "specialty" | "approach" | "gender" | "language" | "age" | "price" | "sliding";
+export type Group = "where" | "q" | "specialty" | "approach" | "gender" | "language" | "age" | "session" | "insurance" | "price" | "sliding";
 
 export type Ranked = {
   provider: DirectoryProvider;
@@ -33,7 +33,7 @@ export type Ranked = {
   where?: string;
 };
 
-export type Facets = Record<"specialty" | "approach" | "gender" | "language" | "age" | "format", Record<string, number>>;
+export type Facets = Record<"specialty" | "approach" | "gender" | "language" | "age" | "session" | "insurance" | "format", Record<string, number>>;
 
 export type SearchResult = {
   results: Ranked[];
@@ -60,7 +60,7 @@ type Evaluated = {
   fits: { in_person: boolean; online: boolean };
 };
 
-const RELAXABLE: Group[] = ["q", "specialty", "approach", "gender", "language", "age", "price", "sliding"];
+const RELAXABLE: Group[] = ["q", "specialty", "approach", "gender", "language", "age", "session", "insurance", "price", "sliding"];
 const CLOSE_WHEN_FEWER_THAN = 10;
 
 function searchableText(p: DirectoryProvider) {
@@ -159,6 +159,8 @@ function evaluate(p: DirectoryProvider, index: number, f: SearchFilters, place: 
   anyOf(f.gender, p.gender ? [p.gender] : [], "gender", 1);
   anyOf(f.language, p.languages ?? [], "language", 1);
   anyOf(f.age, p.ageGroups ?? [], "age", 1);
+  anyOf(f.session, p.sessionParticipants ?? [], "session", 1);
+  anyOf(f.insurance, p.insurance ?? [], "insurance", 1);
   if (!inPrice(feeFrom(p), f)) fails.push("price");
   if (f.sliding && !p.slidingScale) fails.push("sliding");
 
@@ -175,6 +177,9 @@ function evaluate(p: DirectoryProvider, index: number, f: SearchFilters, place: 
     fits: { in_person: locationFit(p, "in_person", place).ok, online: locationFit(p, "online", place).ok },
   };
 }
+
+/** "A, B or C": joins labels that may contain "and" themselves ("Cigna and Evernorth"). */
+const orJoin = (labels: string[]) => (labels.length < 2 ? (labels[0] ?? "") : `${labels.slice(0, -1).join(", ")} or ${labels[labels.length - 1]}`);
 
 function missLabel(group: Group, e: Evaluated, f: SearchFilters, query: TextQuery | null): string {
   const p = e.provider;
@@ -194,6 +199,12 @@ function missLabel(group: Group, e: Evaluated, f: SearchFilters, query: TextQuer
       const ages = f.age.map((a) => AGE_GROUPS.find((g) => g.value === a)?.label.toLowerCase().replace(" +18", "") ?? a);
       return `Doesn't see ${listJoin(ages).replace(/ and ([^,]*)$/, " or $1")}`;
     }
+    case "session":
+      return `Doesn't see ${listJoin(f.session.map((v) => labelOf("participants", v).toLowerCase())).replace(/ and ([^,]*)$/, " or $1")}`;
+    case "insurance":
+      return f.insurance.length === 1 && f.insurance[0] === "out_of_network"
+        ? "Doesn't offer out-of-network billing"
+        : `Doesn't take ${orJoin(f.insurance.map((v) => labelOf("insurance", v)))}`;
     case "price": {
       const fee = feeFrom(p);
       if (fee == null) return "No session fee listed";
@@ -230,7 +241,7 @@ function rank(list: Evaluated[], sort: SearchFilters["sort"]) {
 const toRanked = (e: Evaluated, misses?: string[]): Ranked => ({ provider: e.provider, matched: e.matched, where: e.where, misses });
 
 function countFacets(all: Evaluated[]): Facets {
-  const facets: Facets = { specialty: {}, approach: {}, gender: {}, language: {}, age: {}, format: {} };
+  const facets: Facets = { specialty: {}, approach: {}, gender: {}, language: {}, age: {}, session: {}, insurance: {}, format: {} };
   const add = (bucket: Record<string, number>, values: (string | null | undefined)[]) => {
     for (const v of new Set(values)) if (v) bucket[v] = (bucket[v] ?? 0) + 1;
   };
@@ -242,6 +253,8 @@ function countFacets(all: Evaluated[]): Facets {
     if (passesExcept("gender")) add(facets.gender, [p.gender]);
     if (passesExcept("language")) add(facets.language, p.languages ?? []);
     if (passesExcept("age")) add(facets.age, p.ageGroups ?? []);
+    if (passesExcept("session")) add(facets.session, p.sessionParticipants ?? []);
+    if (passesExcept("insurance")) add(facets.insurance, p.insurance ?? []);
     if (passesExcept("where")) {
       if (e.fits.in_person) facets.format.in_person = (facets.format.in_person ?? 0) + 1;
       if (e.fits.online) facets.format.online = (facets.format.online ?? 0) + 1;

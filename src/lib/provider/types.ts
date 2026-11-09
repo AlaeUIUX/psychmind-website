@@ -28,6 +28,8 @@ export type ProfileView = {
   feeIndividual?: number | null;
   feeCouples?: number | null;
   slidingScale?: boolean;
+  /** Insurance plans in network, and "out_of_network" (lib/taxonomy INSURANCE). */
+  insurance?: string[];
   acceptingNewClients?: boolean;
   education?: { degree: string; school: string; year: number | null }[];
   yearsExperience?: number | null;

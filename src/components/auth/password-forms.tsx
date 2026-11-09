@@ -150,7 +150,7 @@ export function ResetPasswordForm({ token, invalid }: { token?: string; invalid?
 
 // Not in Figma: email verification after sign-up, with resend + webmail shortcut.
 // TODO(client): copy.
-export function VerifyEmailPanel({ email }: { email: string }) {
+export function VerifyEmailPanel({ email, next }: { email: string; next?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(resendVerification, null);
   const resent = state?.values?.sent === "1";
   const router = useRouter();
@@ -160,7 +160,7 @@ export function VerifyEmailPanel({ email }: { email: string }) {
     const check = async () => {
       if (document.visibilityState !== "visible") return;
       const { data } = await authClient.getSession().catch(() => ({ data: null }));
-      if (data?.user?.emailVerified) router.replace("/auth/continue");
+      if (data?.user?.emailVerified) router.replace(next ?? "/auth/continue");
     };
     const t = setInterval(check, 4000);
     window.addEventListener("focus", check);
@@ -168,7 +168,7 @@ export function VerifyEmailPanel({ email }: { email: string }) {
       clearInterval(t);
       window.removeEventListener("focus", check);
     };
-  }, [router]);
+  }, [router, next]);
   return (
     <div className="flex flex-col gap-7">
       <AuthTitle eyebrow="Almost done" title="Confirm your email" description="Open the link we sent to finish creating your account." />
@@ -177,6 +177,7 @@ export function VerifyEmailPanel({ email }: { email: string }) {
       <FormAlert message={resent ? "We sent a new link. It can take a minute to arrive." : undefined} tone="success" />
       <form action={action} className="type-ui-small text-warm-600">
         <input type="hidden" name="email" value={email} />
+        {next && <input type="hidden" name="next" value={next} />}
         Didn&apos;t receive it? Check your spam folder or <ResendButton>send it again</ResendButton>.
       </form>
       <p className="type-ui-small text-warm-600">

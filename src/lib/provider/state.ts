@@ -49,6 +49,7 @@ export type ProviderState = {
   feeIndividual: number | null;
   feeCouples: number | null;
   slidingScale: boolean;
+  insurance: string[];
   acceptingNewClients: boolean;
   education: { degree: string; school: string; year: number | null }[];
   npiNumber: string;
@@ -106,6 +107,7 @@ export function toProfileView(s: ProviderState): ProfileView {
     feeIndividual: s.feeIndividual,
     feeCouples: s.feeCouples,
     slidingScale: s.slidingScale,
+    insurance: s.insurance,
     acceptingNewClients: s.acceptingNewClients,
     education: s.education,
     yearsExperience: s.yearsExperience,

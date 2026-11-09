@@ -29,7 +29,7 @@ export type TrackerGroup = {
   items: TrackerItem[];
 };
 
-export const REVIEWED = "2026-11-06";
+export const REVIEWED = "2026-11-09";
 
 const AUDIT = "docs/release-audit.md";
 
@@ -109,13 +109,13 @@ export const TRACKER: TrackerGroup[] = [
       { status: "done", owner: "build", title: "Duplicate, spam and rate protection on requests", detail: "One email per patient and provider per day, limits per IP and per email, and a honeypot." },
       { status: "done", owner: "build", title: "Provider requests inbox", detail: "Mark as contacted, and choose the address requests go to.", where: "/provider/requests" },
       { status: "done", owner: "build", title: "50 sample providers", detail: "Labelled, noindex, never emailed, ranked last. Added or removed from Admin → All providers." },
-      { status: "todo", owner: "build", title: "Keep the request draft through log-in, sign-up and errors", detail: "The draft lives in tab-only sessionStorage, and the confirmation link opens a new tab, which lands on step 4 with the defaults and no note. submit() has no try/catch, so a network error drops it too (plan slice 10: keep the draft).", where: "src/components/requests/request-wizard.tsx" },
-      { status: "todo", owner: "build", title: "Keep saved providers who leave the directory", detail: "They should stay on the patient's list, labelled unavailable. Today they drop off, and a request's \"Profile\" link then 404s.", where: "docs/TODO.md" },
-      { status: "todo", owner: "client", blocker: true, title: "Request confirmation copy", detail: "Figma promises a session link and a calendar invite, which the flow doesn't send. \"2-3 business days?\" has a stray \"?\" and disagrees with \"48 hours\". Also: \"We sent an email on your behalf!\" when the provider turned request emails off.", where: "docs/TODO.md" },
-      { status: "todo", owner: "client", title: "Health details in search URLs", detail: "Specialty and the free-text \"What's on your mind?\" sit in the search URL, so they reach logs and browser history. CLAUDE.md says no health details in URLs; the plan asked for shareable filter URLs. Decide which wins (and say so in the privacy policy).", where: "src/lib/search/filters.ts" },
-      { status: "todo", owner: "client", title: "Insurance filter (D2)", detail: "Hidden until the client says how insurance should work." },
-      { status: "todo", owner: "client", title: "\"Session type\" filter", detail: "Individuals, couples, families, groups. Not in Figma's filters; add it only if the client wants it." },
-      { status: "todo", owner: "client", title: "Launch states (D4)", detail: "Which US states first. It affects licensing, online search and the real provider list." },
+      { status: "done", owner: "build", title: "Keep the request draft through log-in, sign-up and errors", detail: "Session type, format and note are kept in localStorage for 24 hours (as long as the confirmation link lasts), so the link's new tab picks them up; cleared once sent, expired drafts swept. ?next= now survives the confirm screen, its resend and an unconfirmed log-in, and a dropped connection on send keeps everything with a message (TODO(client) copy).", where: "src/components/requests/request-wizard.tsx" },
+      { status: "done", owner: "build", title: "Keep saved providers who leave the directory", detail: "Built: they stay on the patient's list as \"Currently unavailable\" (name and title only, no photo; Saved still un-saves) and come back when listed again. A profile link to anyone listed before, from a saved list, a request or an old share, now says \"{name} is currently unavailable\" (noindex) instead of not found; never-approved profiles still 404. Copy TODO(client). Walked through locally: paying, invoice failed (grace), unavailable, and back.", where: "src/server/directory/data.ts" },
+      { status: "done", owner: "client", title: "Request confirmation copy", detail: "Dee, 2026-11-09: no email promises. The sent screen now says the request is in the provider's dashboard and they'll answer as soon as possible (no session link, calendar invite or \"We sent an email on your behalf!\"). Emails themselves are unchanged.", where: "src/components/requests/request-wizard.tsx" },
+      { status: "done", owner: "client", title: "Health details in search URLs", detail: "Dee, 2026-11-09: keep them as they are (shareable filter links, free text included). The privacy policy should say so (Legal pages item).", where: "src/lib/search/filters.ts" },
+      { status: "done", owner: "build", title: "Insurance", detail: "Dee, 2026-11-09: modelled on the big US therapist directories. Providers pick in-network plans plus \"Out of network\" (superbill) under Fees & background; the profile lists them; search filters by plan with counts. 20 common plans, draft list TODO(client). Samples get a spread of plans (migration 0021).", where: "src/lib/taxonomy.ts" },
+      { status: "done", owner: "build", title: "\"Session type\" filter", detail: "Dee, 2026-11-09: added. Individuals, couples, families, groups, from what providers already give on their profile.", where: "src/components/search/filters-panel.tsx" },
+      { status: "done", owner: "client", title: "Launch states (D4)", detail: "Dee, 2026-11-09: all states. Every state and DC is already open; nothing to change." },
     ],
   },
   {

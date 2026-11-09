@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, exists, gt, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNotNull, not, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { db, dbReady } from "@/db";
 import { providerLicense, providerLocation, providerProfile, savedProvider, subscription } from "@/db/schema";
@@ -20,11 +20,32 @@ export type DirectoryProvider = ProfileView & {
 
 /** Listed = approved and, once billing is connected, paying (or in the
  *  3-day grace period after a failed renewal). Until Stripe is set up,
- *  approval alone lists a provider so verification can be tried end to end.
+ *  approval alone lists a provider so verification can be tried end to end
+ *  (unless a subscription record says their payments lapsed).
  *  Sample and founding providers (server/founding.ts) are listed once approved, without paying. */
 export function listedCondition() {
   const approved = eq(providerProfile.status, "approved");
-  if (!stripeConfigured()) return approved;
+  const free = or(eq(providerProfile.isSample, true), isNotNull(providerProfile.foundingAt));
+  if (!stripeConfigured()) {
+    // Without Stripe, approval lists a provider, unless a subscription record
+    // says their payments lapsed (still past due after the grace period):
+    // the same "paused" their dashboard shows them (lib/billing listingState).
+    const lapsed = exists(
+      db
+        .select({ one: sql`1` })
+        .from(subscription)
+        .where(
+          and(
+            eq(subscription.referenceId, providerProfile.userId),
+            or(
+              inArray(subscription.status, ["unpaid", "paused"]),
+              and(eq(subscription.status, "past_due"), sql`coalesce(${providerProfile.pastDueSince}, now()) <= now() - interval '3 days'`),
+            ),
+          ),
+        ),
+    );
+    return and(approved, or(free, not(lapsed)));
+  }
   const paying = exists(
     db
       .select({ one: sql`1` })
@@ -39,7 +60,7 @@ export function listedCondition() {
         ),
       ),
   );
-  return and(approved, or(eq(providerProfile.isSample, true), isNotNull(providerProfile.foundingAt), paying));
+  return and(approved, or(free, paying));
 }
 
 type ProfileRow = typeof providerProfile.$inferSelect;
@@ -86,6 +107,7 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       feeIndividual: p.feeIndividual,
       feeCouples: p.feeCouples,
       slidingScale: p.slidingScale,
+      insurance: p.insurance,
       acceptingNewClients: p.acceptingNewClients,
       education: p.education,
       yearsExperience: p.yearsExperience,
@@ -156,14 +178,58 @@ export async function savedProfileIds(userId: string): Promise<string[]> {
   return rows.map((r) => r.id);
 }
 
-/** The patient's saved providers that are still listed, newest first. */
-export async function savedProviders(userId: string): Promise<DirectoryProvider[]> {
+/** A provider who was listed once but isn't now (paused, unpaid, suspended,
+ *  or taking a break): only who they are, nothing else from the profile, and
+ *  no photo, which is only served while they're listed. */
+export type UnavailableProvider = Pick<
+  DirectoryProvider,
+  "id" | "publicId" | "href" | "isSample" | "firstName" | "lastName" | "businessName" | "displayAsBusiness" | "titleCredentials" | "pronouns" | "photoUrl"
+>;
+
+function unavailable(p: ProfileRow): UnavailableProvider {
+  return {
+    id: p.id,
+    publicId: p.publicId,
+    href: profilePath({ ...p, businessName: p.businessName }),
+    isSample: p.isSample,
+    firstName: p.firstName,
+    lastName: p.lastName,
+    businessName: p.businessName,
+    displayAsBusiness: p.displayAsBusiness,
+    titleCredentials: p.titleCredentials,
+    pronouns: p.pronouns,
+    photoUrl: null,
+  };
+}
+
+export type SavedEntry = { available: true; p: DirectoryProvider } | { available: false; p: UnavailableProvider };
+
+/** The patient's saved providers, newest first. Those who've left the
+ *  directory stay on the list, marked unavailable, so the patient can still
+ *  find them (and unsave them); they come back by themselves when listed again. */
+export async function savedProviders(userId: string): Promise<SavedEntry[]> {
   await dbReady;
   const rows = await db
-    .select({ profile: providerProfile })
+    .select({ profile: providerProfile, listed: sql<boolean>`coalesce((${listedCondition()}), false)` })
     .from(savedProvider)
     .innerJoin(providerProfile, eq(providerProfile.id, savedProvider.profileId))
-    .where(and(eq(savedProvider.userId, userId), listedCondition()))
+    .where(eq(savedProvider.userId, userId))
     .orderBy(desc(savedProvider.createdAt));
-  return hydrate(rows.map((r) => r.profile));
+  const listed = new Map((await hydrate(rows.filter((r) => r.listed).map((r) => r.profile))).map((p) => [p.id, p]));
+  return rows.map(({ profile }): SavedEntry => {
+    const p = listed.get(profile.id);
+    return p ? { available: true, p } : { available: false, p: unavailable(profile) };
+  });
+}
+
+/** A profile link to someone who was listed before but isn't now: the
+ *  profile page says they're unavailable instead of "not found". Never for
+ *  a profile that was never approved, so drafts stay invisible. */
+export async function getUnavailableProvider(publicId: string): Promise<UnavailableProvider | null> {
+  await dbReady;
+  const [row] = await db
+    .select()
+    .from(providerProfile)
+    .where(and(eq(providerProfile.publicId, publicId), isNotNull(providerProfile.approvedAt)));
+  return row ? unavailable(row) : null;
 }

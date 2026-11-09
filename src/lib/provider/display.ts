@@ -3,13 +3,15 @@ import type { ProfileView } from "./types";
 
 // How a provider's details read on cards, the quick view and the profile.
 
-export function displayName(p: ProfileView) {
+type NameParts = Pick<ProfileView, "firstName" | "lastName" | "businessName" | "displayAsBusiness">;
+
+export function displayName(p: NameParts) {
   if (p.displayAsBusiness && p.businessName) return p.businessName;
   return [p.firstName, p.lastName].filter(Boolean).join(" ");
 }
 
 /** "Sara" (or the business name) for "About Sara", "Save Sara"… */
-export function shortName(p: ProfileView) {
+export function shortName(p: NameParts) {
   return p.displayAsBusiness && p.businessName ? p.businessName : (p.firstName ?? "");
 }
 

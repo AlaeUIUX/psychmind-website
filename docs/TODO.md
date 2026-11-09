@@ -5,16 +5,6 @@ each section. The slice plan lives in `build-plan/BUILD-PLAN.md`.
 
 ## Next
 
-- **Request success copy when a provider turned request emails off.** The
-  patient still sees Figma's "We sent an email on your behalf!", but the
-  request only lands in the provider's Requests inbox. Ask the client whether
-  to keep the wording.
-- **Request copy to confirm with the client** (Figma B6/B7 says things the
-  flow doesn't do). "You'll receive a confirmation with the session link and
-  a calendar invite": we send a confirmation, but no session link or invite.
-  "Most providers respond within 2-3 business days?" has a stray "?" and
-  disagrees with "within 48 hours" on the account version. Both are shown
-  verbatim until the client decides.
 - **Remove the sample providers before real providers launch** (Admin → All
   providers → Remove samples). They're labelled and can't be booked, but they
   shouldn't sit next to real providers for long.

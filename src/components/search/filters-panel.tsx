@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Facets } from "@/lib/search/engine";
 import type { SearchFilters } from "@/lib/search/filters";
-import { APPROACHES, GENDERS, LANGUAGES, SPECIALTIES } from "@/lib/taxonomy";
+import { APPROACHES, GENDERS, INSURANCE, LANGUAGES, SESSION_PARTICIPANTS, SPECIALTIES } from "@/lib/taxonomy";
 import { FormatSwitch } from "./bar";
 import { fromMode, toMode } from "./search-bar";
 
@@ -307,6 +307,28 @@ export function FiltersPanel({ filters, update, facets, price, showFormat = true
           selected={filters.age}
           counts={facets.age}
           onToggle={(v) => update({ age: toggled(filters.age, v) })}
+        />
+      </Section>
+
+      {/* Dee, 2026-11-09. TODO(client): headings. */}
+      <Section title="Session type">
+        <Chips
+          label="Session type"
+          options={SESSION_PARTICIPANTS.map((s) => ({ value: s.value, label: s.label }))}
+          selected={filters.session}
+          counts={facets.session}
+          onToggle={(v) => update({ session: toggled(filters.session, v) })}
+        />
+      </Section>
+
+      <Section title="Insurance">
+        <Checklist
+          name="insurance"
+          options={INSURANCE.map((i) => ({ value: i.value, label: i.label }))}
+          selected={filters.insurance}
+          counts={facets.insurance}
+          onToggle={(v) => update({ insurance: toggled(filters.insurance, v) })}
+          search={{ label: "Search insurance", placeholder: "e.g: Aetna" }}
         />
       </Section>
 

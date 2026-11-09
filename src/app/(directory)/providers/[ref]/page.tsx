@@ -14,7 +14,8 @@ import { Container, Section } from "@/components/ui/section";
 import { displayName, licensedStates, locationLabel, shortName } from "@/lib/provider/display";
 import { decodeSegment, parseProfileRef } from "@/lib/provider/links";
 import { getSession } from "@/server/auth/session";
-import { getDirectoryProvider, isProviderSaved } from "@/server/directory/data";
+import { getDirectoryProvider, getUnavailableProvider, isProviderSaved } from "@/server/directory/data";
+import { ProviderUnavailable } from "./unavailable";
 
 // A provider's public profile (Figma P1 / P1m), opened in a new tab from the
 // results. The link carries the provider's public id: /providers/{name}-{id}.
@@ -24,11 +25,21 @@ const providerFor = cache(async (ref: string) => {
   return id ? getDirectoryProvider(id) : null;
 });
 
+// Listed before, not now: an "unavailable" page instead of not found.
+const unavailableFor = cache(async (ref: string) => {
+  const id = parseProfileRef(ref);
+  return id ? getUnavailableProvider(id) : null;
+});
+
 type Props = { params: Promise<{ ref: string }>; searchParams: Promise<{ save?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = await providerFor((await params).ref);
-  if (!p) return { title: "Provider not found — PsychMind", robots: { index: false } };
+  const { ref } = await params;
+  const p = await providerFor(ref);
+  if (!p) {
+    const gone = await unavailableFor(ref);
+    return { title: gone ? `${displayName(gone)} is unavailable — PsychMind` : "Provider not found — PsychMind", robots: { index: false } };
+  }
   const name = displayName(p);
   const where = locationLabel(p);
   return {
@@ -44,7 +55,12 @@ export default async function ProviderProfilePage({ params, searchParams }: Prop
   const session = await getSession();
   const [{ ref }, { save }] = await Promise.all([params, searchParams]);
   const p = await providerFor(ref);
-  if (!p) notFound();
+  if (!p) {
+    const gone = await unavailableFor(ref);
+    if (!gone) notFound();
+    const saved = session?.user.role === "patient" ? await isProviderSaved(session.user.id, gone.id) : false;
+    return <ProviderUnavailable p={gone} saved={saved} />;
+  }
   // Old or hand-typed names still work; the address bar shows the current one.
   if (`/providers/${decodeSegment(ref)}` !== p.href) permanentRedirect(save ? `${p.href}?save=1` : p.href);
 

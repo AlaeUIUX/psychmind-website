@@ -97,6 +97,8 @@ export const providerProfile = pgTable(
     feeIndividual: integer("fee_individual"),
     feeCouples: integer("fee_couples"),
     slidingScale: boolean("sliding_scale").notNull().default(false),
+    /** Insurance plans in network, plus "out_of_network" (lib/taxonomy INSURANCE). */
+    insurance: text("insurance").array().notNull().default(sql`'{}'::text[]`),
     acceptingNewClients: boolean("accepting_new_clients").notNull().default(true),
     education: jsonb("education").$type<{ degree: string; school: string; year: number | null }[]>().notNull().default([]),
 

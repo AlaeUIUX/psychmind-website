@@ -53,6 +53,8 @@ function chipsFor(f: SearchFilters): Chip[] {
     ...f.gender.map((v) => ({ key: `g-${v}`, label: labelOf("genders", v), icon: <UserRoundIcon className="size-3.5" />, remove: { gender: without(f.gender, v) } })),
     ...f.language.map((v) => ({ key: `l-${v}`, label: v, icon: <GlobeIcon className="size-3.5" />, remove: { language: without(f.language, v) } })),
     ...f.age.map((v) => ({ key: `y-${v}`, label: labelOf("ages", v).replace(" +18", ""), remove: { age: without(f.age, v) } })),
+    ...f.session.map((v) => ({ key: `t-${v}`, label: labelOf("participants", v), remove: { session: without(f.session, v) } })),
+    ...f.insurance.map((v) => ({ key: `i-${v}`, label: labelOf("insurance", v), remove: { insurance: without(f.insurance, v) } })),
     (f.min != null || f.max != null) && {
       key: "price",
       label: f.min != null && f.max != null ? `${f.min}–${f.max} USD` : f.min != null ? `From ${f.min} USD` : `Up to ${f.max} USD`,
