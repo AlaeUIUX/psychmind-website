@@ -1,5 +1,6 @@
 "use server";
 
+import { hashPassword } from "better-auth/crypto";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
@@ -121,14 +122,15 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
   // Nobody signs up as an admin: their account is made for them, with a
   // temporary password by email. Answer like any other sign-up so this form
   // doesn't reveal which addresses are admins.
+  // Same redirect, and comparable work, as any other sign-up.
+  const next = role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account");
   if (isAdminEmail(v.email)) {
-    await ensureAdminAccounts({ force: true });
+    await Promise.all([ensureAdminAccounts({ force: true }), hashPassword(v.password)]);
     await setPendingEmail(v.email);
-    redirect("/verify-email");
+    redirect(verifyEmailPage(next));
   }
   // The date of birth isn't one of the endpoint's typed fields: it's checked
   // again by its own hook (server/auth/index.ts), then dropped.
-  const next = role === "provider" ? "/provider/onboarding" : (safeNext(form.get("next")) ?? "/account");
   const body = {
     name: `${v.firstName} ${v.lastName}`,
     email: v.email,

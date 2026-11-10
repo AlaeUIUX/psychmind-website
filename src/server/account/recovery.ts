@@ -1,4 +1,5 @@
 import "server-only";
+import { isAdminEmail } from "@/server/auth/admin-emails";
 import { generateRandomString } from "better-auth/crypto";
 import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { db, dbReady } from "@/db";
@@ -58,7 +59,8 @@ export async function createRecoveryRequest(input: RecoveryInput) {
     })
     .returning({ id: accountRecoveryRequest.id });
 
-  const allAdmins = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.role, "admin"));
+  // Only people still on ADMIN_EMAILS (someone taken off keeps the role until their next request).
+  const allAdmins = (await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.role, "admin"))).filter((a) => isAdminEmail(a.email));
   const optedOut = await optedOutOf("admin_recovery", allAdmins.map((a) => a.id));
   const admins = allAdmins.filter((a) => !optedOut.has(a.id));
   const [reviewUrl, helpUrl, settingsUrl] = await Promise.all([appUrl(`/admin/recovery/${row.id}`), appUrl("/contact"), appUrl("/admin/settings")]);

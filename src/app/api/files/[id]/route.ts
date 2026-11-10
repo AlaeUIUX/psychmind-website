@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { db, dbReady } from "@/db";
 import { auditLog, providerProfile, upload } from "@/db/schema";
-import { getSession } from "@/server/auth/session";
+import { getSession, isActiveAdmin } from "@/server/auth/session";
 import { getFile } from "@/server/storage";
 
 // Serves an uploaded file after checking who's asking:
@@ -17,7 +17,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
   const session = await getSession();
   const isOwner = session?.user.id === file.ownerId;
-  const isAdmin = session?.user.role === "admin";
+  // The same bar as the recovery IDs: listed, two-step on, temporary password replaced.
+  const isAdmin = !!session && isActiveAdmin(session.user);
 
   let allowed = isOwner || isAdmin;
   if (!allowed && (file.kind === "photo" || file.kind === "banner")) {

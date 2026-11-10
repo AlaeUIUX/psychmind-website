@@ -44,6 +44,11 @@ export function proxy(request: NextRequest) {
   if (branchHost && isAppPath(path) && host !== branchHost) return redirectToHost(request, branchHost);
 
   const admin = adminHost();
+  // The CMS (a third-party script) and its GitHub sign-in never run on the
+  // team's host, where they could act with an admin's session.
+  if (admin && host === admin && (path === "/cms" || path.startsWith("/cms/") || path === "/api/auth" || path === "/api/callback")) {
+    return new NextResponse("Not found", { status: 404 });
+  }
   if (admin && !isSharedPath(path)) {
     if (host === admin) return adminPortal(request, path);
     if (isAdminPath(path)) return redirectToHost(request, admin, adminHostPath(path));

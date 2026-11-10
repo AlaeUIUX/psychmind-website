@@ -1,5 +1,6 @@
 "use server";
 
+import { isAdminEmail } from "@/server/auth/admin-emails";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
@@ -327,7 +328,8 @@ export async function submitForVerification(input: unknown): Promise<ActionResul
   await db.insert(auditLog).values({ actorId: me.id, action: "provider.submitted", targetType: "provider_profile", targetId: state.id });
 
   // Emails are best-effort: a mail outage mustn't undo the submission.
-  const allAdmins = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.role, "admin"));
+  // Only people still on ADMIN_EMAILS (someone taken off keeps the role until their next request).
+  const allAdmins = (await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.role, "admin"))).filter((a) => isAdminEmail(a.email));
   const optedOut = await optedOutOf("admin_submissions", allAdmins.map((a) => a.id));
   const admins = allAdmins.filter((a) => !optedOut.has(a.id));
   const [dashboardUrl, reviewUrl, settingsUrl] = await Promise.all([appUrl("/provider"), appUrl(`/admin/providers/${state.id}`), appUrl("/admin/settings")]);

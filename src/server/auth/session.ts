@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { dbReady } from "@/db";
+import { isAdminEmail } from "./admin-emails";
 import { auth } from "./index";
 
 // The authoritative auth checks. proxy.ts only redirects visitors without a
@@ -46,10 +47,25 @@ export function mustChangePassword(user: object) {
   return (user as { mustChangePassword?: boolean | null }).mustChangePassword === true;
 }
 
+/** An admin who may see private documents: still on ADMIN_EMAILS, two-step
+ *  login on, temporary password replaced. For route handlers, which can't
+ *  redirect like requireRole. */
+export function isActiveAdmin(user: { role?: string | null; email: string } & object) {
+  return user.role === "admin" && isAdminEmail(user.email) && hasTwoFactor(user) && !mustChangePassword(user);
+}
+
 /** Signed in, email verified, and the right role — otherwise redirect. */
 export async function requireRole(role: Role, next?: string) {
   // Admins have their own log-in page.
   const session = await requireSession(next, role === "admin" ? "/admin/login" : "/login");
+  // Taken off ADMIN_EMAILS: no longer an admin, on this very request, and
+  // signed out everywhere (sessions renew on use, so waiting for the next
+  // sign-in could mean never).
+  if (session.user.role === "admin" && !isAdminEmail(session.user.email)) {
+    const { revokeRemovedAdmin } = await import("@/server/admin/accounts");
+    await revokeRemovedAdmin(session.user.id);
+    redirect(role === "admin" ? "/admin/login" : "/login");
+  }
   if (!session.user.emailVerified) redirect("/verify-email");
   if (session.user.role !== role) redirect(homeFor(session.user.role));
   // First log-in with a temporary password: replace it before anything else.

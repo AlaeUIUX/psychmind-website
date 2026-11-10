@@ -58,8 +58,12 @@ export async function sendSessionRequest(input: RequestInput): Promise<SendResul
     return { ok: false, error: `${target.first} doesn't offer that kind of session. Please go back and choose again.` };
   }
 
-  // The same person asking the same provider again within a day: no second email.
-  if (await recentRequest(recipient.profileId, email)) return { ok: true, email, demo: target.isSample, duplicate: true };
+  // The same person asking the same provider again within a day: no second
+  // email. Only a signed-in patient (whose address is proven) is told so: a
+  // guest's email is just what they typed, so telling a guest "you already
+  // asked" would let anyone check whether someone contacted this provider.
+  // Guests always see the normal confirmation, and nothing more is sent.
+  if (await recentRequest(recipient.profileId, email)) return { ok: true, email, demo: target.isSample, duplicate: !!patient };
 
   await dbReady;
   const [row] = await db

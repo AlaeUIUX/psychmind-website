@@ -99,6 +99,7 @@ export const auth = betterAuth({
     // Signing up with a taken address looks like any sign-up (no account is
     // revealed); the owner gets a note to log in or reset instead.
     onExistingUserSignUp: async ({ user }) => {
+      if (isAdminEmail(user.email)) return;
       const origin = (process.env.BETTER_AUTH_URL || defaultOrigin() || "").replace(/\/$/, "");
       after(() =>
         sendEmail(existingAccountEmail(user.email, `${origin}/login`, `${origin}/forgot-password`)).catch((err) =>
@@ -125,6 +126,9 @@ export const auth = betterAuth({
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID!,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          // Only the redirect flow: a raw ID token posted to /sign-in/social
+          // would skip the callback, where the age and admin checks run.
+          disableIdTokenSignIn: true,
           // Google gives first/last name; keep them for the profile.
           mapProfileToUser: (profile) => ({ firstName: profile.given_name, lastName: profile.family_name }),
         },
@@ -154,16 +158,17 @@ export const auth = betterAuth({
           // form's date of birth is checked in hooks.before below; a new
           // Google account needs the cookie the screen leaves (server/auth/age.ts).
           // Admin accounts are inserted directly (server/admin/accounts.ts) and skip this.
-          let ageConfirmedAt: Date | undefined;
-          if (ctx?.path === "/sign-up/email") ageConfirmedAt = new Date();
-          else if (ctx?.path?.includes("/callback")) {
-            const cookies = ctx.request?.headers.get("cookie") ?? ctx.headers?.get("cookie");
+          // Every other path (Google's callback, and any future one) needs
+          // the cookie the age screen leaves, so none can skip it.
+          if (ctx?.path !== "/sign-up/email") {
+            const cookies = ctx?.request?.headers.get("cookie") ?? ctx?.headers?.get("cookie");
             if (!isValidAgeOkToken(readCookie(cookies, AGE_OK_COOKIE))) {
               throw new APIError("FORBIDDEN", { code: "AGE_REQUIRED", message: "Create your account from the sign-up page first." });
             }
-            ageConfirmedAt = new Date();
           }
-          return { data: { ...newUser, role: isAdminEmail(newUser.email) ? "admin" : "patient", ...(ageConfirmedAt && { ageConfirmedAt }) } };
+          // Never "admin": team accounts are made by ensureAdminAccounts, with
+          // a temporary password sent to the address itself.
+          return { data: { ...newUser, role: "patient", ageConfirmedAt: new Date() } };
         },
       },
     },
@@ -171,22 +176,33 @@ export const auth = betterAuth({
       create: {
         before: async (session, ctx) => {
           const [owner] = await db
-            .select({ role: userTable.role, email: userTable.email, emailVerified: userTable.emailVerified })
+            .select({ role: userTable.role, email: userTable.email, emailVerified: userTable.emailVerified, twoFactorEnabled: userTable.twoFactorEnabled })
             .from(userTable)
             .where(eq(userTable.id, session.userId));
           if (!owner) return;
           const listed = isAdminEmail(owner.email);
-          // Two-step login only guards password sign-in, so admins can't use
-          // Google: their sign-in must always pass the authenticator check.
-          if (ctx?.path.includes("/callback") && (owner.role === "admin" || listed)) {
+          // Two-step login only guards password sign-in, so no session that
+          // came through Google (or any social path) for an admin, or for
+          // anyone who turned two-step login on.
+          const social = !!ctx?.path && (ctx.path.includes("/callback") || ctx.path.startsWith("/sign-in/social") || ctx.path.includes("oauth"));
+          if (social && (owner.role === "admin" || listed)) {
             throw new APIError("FORBIDDEN", { message: "Admins sign in with their email, password and authenticator code." });
           }
-          // ADMIN_EMAILS is the source of truth, checked at every sign-in: a
-          // listed (verified) account becomes admin even if it signed up
-          // before being listed, and an admin taken off the list loses it.
-          if (listed && owner.emailVerified && owner.role !== "admin") {
-            await db.update(userTable).set({ role: "admin" }).where(eq(userTable.id, session.userId));
-          } else if (!listed && owner.role === "admin") {
+          if (social && owner.twoFactorEnabled) {
+            throw new APIError("FORBIDDEN", { message: "Your account uses two-step login. Log in with your email, password and code." });
+          }
+          // ADMIN_EMAILS is the source of truth. A listed account that isn't
+          // an admin yet (it existed before the address was listed) is never
+          // promoted with the password it has: it gets a temporary password
+          // by email, like any new admin, and this sign-in stops here.
+          if (listed && owner.role !== "admin") {
+            const { promoteListedAccount } = await import("@/server/admin/accounts");
+            await promoteListedAccount(session.userId);
+            throw new APIError("FORBIDDEN", { message: "This address is now a team account. We've emailed it a temporary password: log in at the admin log-in." });
+          }
+          // An admin taken off the list loses it (requireRole also checks on
+          // every request, so this is the second line).
+          if (!listed && owner.role === "admin") {
             await db.update(userTable).set({ role: "patient" }).where(eq(userTable.id, session.userId));
           }
         },
@@ -201,6 +217,11 @@ export const auth = betterAuth({
       // direct POST to /api/auth/sign-up/email can't skip it. The date is
       // checked and dropped; Better Auth ignores body fields it doesn't know.
       if (ctx.path === "/sign-up/email") {
+        const email = String((ctx.body as { email?: unknown } | undefined)?.email ?? "");
+        if (isAdminEmail(email)) {
+          const { ensureAdminAccounts } = await import("@/server/admin/accounts");
+          await ensureAdminAccounts({ force: true });
+        }
         const birth = parseIsoDate((ctx.body as { dateOfBirth?: unknown } | undefined)?.dateOfBirth);
         if (!birth) throw new APIError("BAD_REQUEST", { code: "DATE_OF_BIRTH_REQUIRED", message: "Enter your date of birth." });
         if (!isAdult(birth)) throw new APIError("FORBIDDEN", { code: "AGE_REQUIREMENT", message: `You must be ${MIN_AGE} or older to create an account.` });

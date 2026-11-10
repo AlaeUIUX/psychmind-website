@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { db, dbReady } from "@/db";
 import { accountRecoveryRequest, auditLog } from "@/db/schema";
-import { getSession, hasTwoFactor, mustChangePassword } from "@/server/auth/session";
+import { getSession, isActiveAdmin } from "@/server/auth/session";
 import { getFile } from "@/server/storage";
 
 // The photo ID sent with an account recovery request. Admins only (with
@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const session = await getSession();
   const user = session?.user;
-  if (!user || user.role !== "admin" || !hasTwoFactor(user) || mustChangePassword(user)) return new NextResponse("Not found", { status: 404 });
+  if (!user || !isActiveAdmin(user)) return new NextResponse("Not found", { status: 404 });
 
   await dbReady;
   const [request] = await db

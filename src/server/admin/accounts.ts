@@ -1,6 +1,6 @@
 import "server-only";
 import { hashPassword } from "better-auth/crypto";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db, dbReady } from "@/db";
 import { account, auditLog, session, twoFactor, user } from "@/db/schema";
 import { temporaryPassword } from "@/lib/admin/temporary-password";
@@ -65,6 +65,51 @@ export async function ensureAdminAccounts({ force = false } = {}) {
     await emailAccess(email, temp, expiresAt, "new").catch((err) => console.error("admin access email failed", err));
   }
   return created;
+}
+
+/** A listed address whose account existed before it was listed (or that
+ *  someone registered for it). It becomes an admin only the way new admins
+ *  do: a temporary password sent to the address, two-step login set up from
+ *  scratch, every existing session ended. Its old password stops working. */
+export async function promoteListedAccount(userId: string) {
+  await dbReady;
+  const [target] = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.id, userId));
+  if (!target || !listedAdminEmails().includes(target.email)) return false;
+  const temp = temporaryPassword();
+  const expiresAt = expiry();
+  const hash = await hashPassword(temp);
+  await db.transaction(async (tx) => {
+    const updated = await tx
+      .update(account)
+      .set({ password: hash })
+      .where(and(eq(account.userId, target.id), eq(account.providerId, "credential")))
+      .returning({ id: account.id });
+    if (!updated.length) {
+      await tx.insert(account).values({ id: crypto.randomUUID(), accountId: target.id, providerId: "credential", userId: target.id, password: hash });
+    }
+    // Any Google link goes too: admins sign in with email, password and code.
+    await tx.delete(account).where(and(eq(account.userId, target.id), ne(account.providerId, "credential")));
+    await tx
+      .update(user)
+      .set({ role: "admin", emailVerified: true, mustChangePassword: true, tempPasswordExpiresAt: expiresAt, twoFactorEnabled: false })
+      .where(eq(user.id, target.id));
+    await tx.delete(twoFactor).where(eq(twoFactor.userId, target.id));
+    await tx.delete(session).where(eq(session.userId, target.id));
+    await tx.insert(auditLog).values({ actorId: null, action: "admin.promoted", targetType: "user", targetId: target.id, meta: {} });
+  });
+  await emailAccess(target.email, temp, expiresAt, "new").catch((err) => console.error("admin access email failed", err));
+  return true;
+}
+
+/** An admin taken off ADMIN_EMAILS: no longer an admin, and signed out
+ *  everywhere, at once (requireRole calls this on their next request). */
+export async function revokeRemovedAdmin(userId: string) {
+  await dbReady;
+  await db.transaction(async (tx) => {
+    await tx.update(user).set({ role: "patient" }).where(and(eq(user.id, userId), eq(user.role, "admin")));
+    await tx.delete(session).where(eq(session.userId, userId));
+    await tx.insert(auditLog).values({ actorId: null, action: "admin.removed", targetType: "user", targetId: userId, meta: {} });
+  });
 }
 
 /** A fresh temporary password for another admin who's locked out (lost

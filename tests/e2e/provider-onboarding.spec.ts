@@ -228,7 +228,8 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await g.getByRole("button", { name: "Confirm request" }).click();
     await expect(g.getByText("You're all set")).toBeVisible({ timeout: 15_000 });
 
-    // The same request again the same day isn't emailed twice.
+    // The same request again the same day isn't emailed twice, and a guest
+    // isn't told it was a repeat (anyone can type any email, 2026-11-10).
     await g.goto(href!.replace("/providers/", "/request/"));
     await g.getByRole("button", { name: "Confirm" }).click();
     await g.getByRole("button", { name: "Continue" }).click();
@@ -238,7 +239,8 @@ test("provider signs up, onboards, gets approved and reaches billing", async ({ 
     await g.getByLabel("Email").fill(guestEmail);
     await g.getByRole("button", { name: "Confirm", exact: true }).click();
     await g.getByRole("button", { name: "Confirm request" }).click();
-    await expect(g.getByRole("heading", { name: `Sara already has your request` })).toBeVisible({ timeout: 15_000 });
+    await expect(g.getByText("You're all set")).toBeVisible({ timeout: 15_000 });
+    await expect(g.getByText("already has your request")).toHaveCount(0);
     await guest.close();
 
     // One email to the provider (with the details), one confirmation to the guest.

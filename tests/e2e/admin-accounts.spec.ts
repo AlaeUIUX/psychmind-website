@@ -92,6 +92,8 @@ test("signing up with an admin's address creates nothing", async ({ page }) => {
   await page.getByRole("button", { name: "Create account" }).click();
   // Same answer as any sign-up, so the form doesn't reveal who the admins are…
   await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  // The same address bar too: a different redirect would give the admins away.
+  await expect(page).toHaveURL(/\/verify-email\?next=%2Faccount$/);
   // …but no account and no confirmation email.
   await page.waitForTimeout(1500);
   expect(await confirmations()).toBe(before);
