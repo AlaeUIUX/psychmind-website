@@ -47,35 +47,35 @@ export type TrackerUpdate = {
 export const UPDATES: TrackerUpdate[] = [
   {
     date: "2026-11-10",
-    title: "Founders shown as Dani and Bri (not committed yet)",
+    title: "Founders shown as Dani and Bri",
     changes: [
       { milestone: "Milestone 3", item: "Copy for the refreshed pages", status: "todo", note: "The landing's doodle tags, its alt text and the letter's signatures now say Dani and Bri, as the mission page does: the founders chose aliases. Internal notes still call the client Dee." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Blog posts: a spring between parts (not committed yet)",
+    title: "Blog posts: a spring between parts",
     changes: [
       { milestone: "Milestone 3", item: "Blog index and reader", status: "done", note: "Mouse, trackpad and keys: the landing's smooth scroll (Lenis) with its snap; one wheel notch flows a little, then springs to the next part (about a second, a touch of overshoot). One gesture moves one part. Phones keep the browser's own snap, which is the phone's scroll physics (UIKit paging on iOS)." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Blog note in the privacy promise's look (not committed yet)",
+    title: "Blog note in the privacy promise's look",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "The note under the posts (written by people who do the work, not a diagnosis, 988) is now drawn like the landing's privacy promise: grey frame, white card, plain lines, the icon only on hover. On the home page and /blog." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Covers on /blog, and the home grid mixed (not committed yet)",
+    title: "Covers on /blog, and the home grid mixed",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "/blog shows each post's cover beside it (above it on phones). The home grid alternates UI and girl covers (post dates moved, placeholders anyway), and posts now sort by real date, not alphabetically." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Blog cards: title first, author, bigger UI covers (not committed yet)",
+    title: "Blog cards: title first, author, bigger UI covers",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "UI covers shown close up, about 1.5× real size, as on the landing's bento. The search post's cover is now the session format panel (In person, a ZIP, places by distance) instead of the dot diagram. Card captions: the title in medium, then category · read time · author, smaller." },
       { milestone: "Milestone 4", item: "Placeholder blog posts", status: "doing", note: "Every post's author is \"John Doe\" for now, until real authors are named." },
@@ -83,28 +83,28 @@ export const UPDATES: TrackerUpdate[] = [
   },
   {
     date: "2026-11-10",
-    title: "Blog covers, fourth pass: no text, the girl for posts about people (not committed yet)",
+    title: "Blog covers, fourth pass: no text, the girl for posts about people",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Nothing written on the covers any more; the title beside them does that. Product posts keep their UI; the therapy, CBT and anxiety posts show the girl in the landing's dot print (in her boat, where two roads part, under a rain cloud), rendered from the landing's own 3D pieces at /dev/cover-studio." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Blog covers, third pass: real product UI, after incident.io (not committed yet)",
+    title: "Blog covers, third pass: real product UI, after incident.io",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Drawings replaced: each cover now shows what its post is about in our own UI (search bar, credentials card with a loupe, approach filter, request card, dashboard) or a quiet diagram (search's location rings). One 640 × 360 layout scaled like a picture, title larger and set by hand on two lines, a real blur under it, the red almost gone." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Blog covers, second pass: one size, depth, a grid (not committed yet)",
+    title: "Blog covers, second pass: one size, depth, a grid",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Every cover 16:9 with its line the same size and height; white shapes with soft shadows, clouds behind, the drawing fading and blurring under the line; a faint red in the grey; simpler drawings. The home page's Resource center is now a plain grid of same-size cards." },
     ],
   },
   {
     date: "2026-11-10",
-    title: "Blog covers and new posts, after incident.io (not committed yet)",
+    title: "Blog covers and new posts, after incident.io",
     changes: [
       { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Same paper, serif and pencil drawing on every cover; on the home page and at the top of each post." },
       { milestone: "Milestone 4", item: "Placeholder blog posts", status: "doing", note: "Seven full drafts in place. Waiting on your review and real authors for the two provider posts." },
