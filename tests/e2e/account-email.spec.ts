@@ -19,7 +19,7 @@ async function logIn(page: Page, email: string, password = TEST_PASSWORD) {
 
 async function logOut(page: Page) {
   await page.goto("/account/settings");
-  await page.getByRole("button", { name: "Log out" }).first().click();
+  await page.getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page).toHaveURL(/\/login/);
 }
 
@@ -121,7 +121,7 @@ test("lost inbox: the authenticator proves it's you; without one, support", asyn
   await expect(page.getByRole("heading", { name: "Choose your new email" })).toBeVisible();
 });
 
-test("account recovery: support moves the account, then a new password", async ({ page, browser }) => {
+test("account recovery, signed out: the owner is told and can stop it, and the account waits", async ({ page, browser }) => {
   const email = uniqueEmail("closedbox");
   const next = uniqueEmail("rescued");
   await signUp(page, "patient", email, "Theo", "Marsh");
@@ -141,9 +141,48 @@ test("account recovery: support moves the account, then a new password", async (
   await page.getByRole("button", { name: "Send request" }).click();
   await expect(page.getByTestId("recovery-sent-to")).toHaveText(next, { timeout: 30_000 });
 
+  // Nothing reaches the account's inbox until the new address is confirmed.
+  await page.goto("/dev/mail");
+  await expect(page.getByTestId("dev-mail").filter({ hasText: email }).filter({ hasText: "Someone asked to move" })).toHaveCount(0);
+  await followEmailLink(page, next);
+  await page.getByRole("button", { name: "Confirm and send my request" }).click();
+  await expect(page.getByRole("heading", { name: "Your request is with our team" })).toBeVisible();
+
+  // The team sees it, but can't move the account during the owner's 72 hours.
+  const admin = await adminPage(browser);
+  await admin.goto("/admin/recovery");
+  await admin.getByRole("row").filter({ hasText: email }).getByRole("link").click();
+  await expect(admin.getByText(/We give the account's owner 72 hours to object/)).toBeVisible();
+
+  // The owner's "This wasn't me" closes it.
+  await followEmailLink(page, email);
+  await page.getByRole("button", { name: "This wasn't me: cancel the request" }).click();
+  await expect(page.getByRole("heading", { name: "Done. The request is cancelled" })).toBeVisible();
+  await admin.reload();
+  await expect(admin.getByText("Declined. Nothing was changed.")).toBeVisible();
+  await admin.context().close();
+});
+
+test("account recovery, signed in: support moves the account, then a new password", async ({ page, browser }) => {
+  const email = uniqueEmail("closedbox");
+  const next = uniqueEmail("rescued");
+  await signUp(page, "patient", email, "Theo", "Marsh");
+
+  // Signed in (lost the inbox, no authenticator): no waiting period.
+  await page.goto("/account-recovery");
+  await page.getByLabel("A new email we can reach you at").fill(next);
+  await page.getByLabel("Full name").fill("Theo Marsh");
+  await page.getByRole("radio", { name: "I use PsychMind to find care" }).click();
+  await page.getByRole("button", { name: "Send request" }).click();
+  await expect(page.getByTestId("recovery-sent-to")).toHaveText(next, { timeout: 30_000 });
+  await followEmailLink(page, next);
+  await page.getByRole("button", { name: "Confirm and send my request" }).click();
+  await expect(page.getByRole("heading", { name: "Your request is with our team" })).toBeVisible();
+
   // The account's own inbox gets a heads-up.
   await page.goto("/dev/mail");
   await expect(page.getByTestId("dev-mail").filter({ hasText: email }).filter({ hasText: "Someone asked to move" }).first()).toBeVisible();
+  await logOut(page);
 
   const admin = await adminPage(browser);
   await admin.goto("/admin/recovery");

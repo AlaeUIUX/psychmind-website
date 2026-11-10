@@ -1,9 +1,14 @@
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { db, dbReady } from "@/db";
+import { displayName } from "@/lib/provider/display";
 import {
   account,
+  accountRecoveryRequest,
   auditLog,
+  blogSubscriber,
+  emailPreference,
+  notificationOptOut,
   providerLicense,
   providerLocation,
   providerProfile,
@@ -68,6 +73,10 @@ export async function exportAccountData(userId: string) {
     db
       .select({
         provider: providerProfile.publicId,
+        providerFirstName: providerProfile.firstName,
+        providerLastName: providerProfile.lastName,
+        providerBusinessName: providerProfile.businessName,
+        providerDisplayAsBusiness: providerProfile.displayAsBusiness,
         name: sessionRequest.name,
         email: sessionRequest.email,
         phone: sessionRequest.phone,
@@ -82,11 +91,52 @@ export async function exportAccountData(userId: string) {
       .where(eq(sessionRequest.patientId, userId))
       .orderBy(desc(sessionRequest.createdAt)),
     db
-      .select({ provider: providerProfile.publicId, savedAt: savedProvider.createdAt })
+      .select({
+        provider: providerProfile.publicId,
+        providerFirstName: providerProfile.firstName,
+        providerLastName: providerProfile.lastName,
+        providerBusinessName: providerProfile.businessName,
+        providerDisplayAsBusiness: providerProfile.displayAsBusiness,
+        savedAt: savedProvider.createdAt,
+      })
       .from(savedProvider)
       .innerJoin(providerProfile, eq(providerProfile.id, savedProvider.profileId))
       .where(eq(savedProvider.userId, userId)),
   ]);
+
+  // Email choices, recovery requests and account events (the email address
+  // is the key for the first two, so they follow the current address).
+  const address = me?.email ?? "";
+  const [optOuts, emailPrefs, blogSubscription, recoveryRequests, accountEvents] = await Promise.all([
+    db.select({ kind: notificationOptOut.kind, since: notificationOptOut.createdAt }).from(notificationOptOut).where(eq(notificationOptOut.userId, userId)),
+    db.select({ marketingOptOutAt: emailPreference.marketingOptOutAt, createdAt: emailPreference.createdAt }).from(emailPreference).where(eq(emailPreference.email, address)),
+    db.select({ confirmedAt: blogSubscriber.confirmedAt, createdAt: blogSubscriber.createdAt }).from(blogSubscriber).where(eq(blogSubscriber.email, address)),
+    db
+      .select({
+        contactEmail: accountRecoveryRequest.contactEmail,
+        fullName: accountRecoveryRequest.fullName,
+        details: accountRecoveryRequest.details,
+        status: accountRecoveryRequest.status,
+        idFileName: accountRecoveryRequest.idFileName,
+        resolutionNote: accountRecoveryRequest.resolutionNote,
+        createdAt: accountRecoveryRequest.createdAt,
+        resolvedAt: accountRecoveryRequest.resolvedAt,
+      })
+      .from(accountRecoveryRequest)
+      .where(eq(accountRecoveryRequest.userId, userId)),
+    // Changes to the account itself (email, password, two-step login), not who on our team acted.
+    db
+      .select({ action: auditLog.action, at: auditLog.createdAt })
+      .from(auditLog)
+      .where(and(eq(auditLog.targetType, "user"), eq(auditLog.targetId, userId)))
+      .orderBy(desc(auditLog.createdAt)),
+  ]);
+  const named = <T extends { providerFirstName: string; providerLastName: string; providerBusinessName: string | null; providerDisplayAsBusiness: boolean }>(
+    { providerFirstName, providerLastName, providerBusinessName, providerDisplayAsBusiness, ...rest }: T,
+  ) => ({
+    providerName: displayName({ firstName: providerFirstName, lastName: providerLastName, businessName: providerBusinessName, displayAsBusiness: providerDisplayAsBusiness }),
+    ...rest,
+  });
 
   const profile = profileRows[0];
   const [locations, licenses, history] = profile
@@ -122,8 +172,11 @@ export async function exportAccountData(userId: string) {
     sessions,
     files,
     subscriptions,
-    sessionRequests: sentRequests,
-    savedProviders: saved,
+    sessionRequests: sentRequests.map(named),
+    savedProviders: saved.map(named),
+    emailChoices: { turnedOff: optOuts, newsAndTips: emailPrefs[0] ?? null, blogSubscription: blogSubscription[0] ?? null },
+    accountRecoveryRequests: recoveryRequests,
+    accountEvents,
     providerProfile: profile ? { ...profile, locations, licenses, reviewHistory: history } : null,
   };
 }

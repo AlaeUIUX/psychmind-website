@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { StatusPill } from "@/components/app/status-pill";
 import { RECOVERY_BADGE } from "@/lib/recovery";
 import { stateName } from "@/lib/taxonomy";
-import { getRecoveryRequest } from "@/server/account/recovery";
+import { getRecoveryRequest, RECOVERY_HOLD_HOURS, recoveryMovableAt } from "@/server/account/recovery";
 import { isAdminEmail } from "@/server/auth/admin-emails";
 import { requireRole } from "@/server/auth/session";
 
@@ -35,13 +35,20 @@ export default async function AdminRecoveryRequestPage({ params }: { params: Pro
   const { request, account, resolver } = found;
   const badge = RECOVERY_BADGE[request.status];
 
+  // The owner's time to object (server/account/recovery.ts). Copy approved by the owner, 2026-11-10.
+  const movableAt = recoveryMovableAt(request);
+  const waiting = movableAt && movableAt > new Date();
   const blockedReason = !account
     ? "No account uses this email, so there's nothing to move. Decline with a note: they may have typed the wrong address."
     : account.role === "admin"
       ? "This is an admin account. Admins are recovered from Admins → Reset access, not here."
       : isAdminEmail(request.contactEmail)
         ? "The new address is on the admin list and can't be used for this account."
-        : undefined;
+        : !request.contactVerifiedAt
+          ? "The new address hasn't been confirmed yet."
+          : waiting
+            ? `We give the account's owner ${RECOVERY_HOLD_HOURS} hours to object. You can move it from ${dateFmt.format(movableAt)}.`
+            : undefined;
 
   return (
     <>
@@ -60,7 +67,13 @@ export default async function AdminRecoveryRequestPage({ params }: { params: Pro
               <Item label="Name">{request.fullName}</Item>
               <Item label="They are a">{request.claimedRole === "provider" ? "Provider" : "Patient"}</Item>
               <Item label="Account email">{request.accountEmail}</Item>
-              <Item label="New email">{request.contactEmail}</Item>
+              <Item label="New email">
+                {request.contactEmail}
+                <span className="block text-text-tertiary">
+                  {request.contactVerifiedAt ? `Confirmed ${dateFmt.format(request.contactVerifiedAt)}` : "Not confirmed yet"}
+                </span>
+              </Item>
+              {request.disputedAt && <Item label="Owner">Said this wasn&apos;t them, {dateFmt.format(request.disputedAt)}</Item>}
               {request.licenseNumber && <Item label="License number">{request.licenseNumber}</Item>}
               <Item label="Details">{request.details ? <span className="whitespace-pre-line">{request.details}</span> : "—"}</Item>
             </dl>
@@ -116,6 +129,11 @@ export default async function AdminRecoveryRequestPage({ params }: { params: Pro
                 <Item label="Email now">{account.email}</Item>
                 <Item label="Role">{account.role === "provider" ? "Provider" : account.role === "admin" ? "Admin" : "Patient"}</Item>
                 <Item label="Created">{dateFmt.format(account.createdAt)}</Item>
+                <Item label="Sign-ins since the request">
+                  {account.signInsSince
+                    ? `${account.signInsSince}, last ${account.lastSignInSince ? dateFmt.format(account.lastSignInSince) : ""}: someone can still get in`
+                    : "None"}
+                </Item>
                 <Item label="Two-step login">
                   {account.twoFactorEnabled ? (
                     <span className="inline-flex items-center gap-1.5">

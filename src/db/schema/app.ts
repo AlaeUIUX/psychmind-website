@@ -371,6 +371,11 @@ export const accountRecoveryRequest = pgTable(
     details: text("details"),
     /** Signed in when they asked (lost the inbox, no authenticator). */
     signedIn: boolean("signed_in").notNull().default(false),
+    /** When the new contact address was confirmed by link. Until then the
+     *  request isn't in the team's queue and no one else is emailed. */
+    contactVerifiedAt: timestamp("contact_verified_at", { withTimezone: true }),
+    /** When the account's owner said "this wasn't me" (the request closes). */
+    disputedAt: timestamp("disputed_at", { withTimezone: true }),
     idStorageKey: text("id_storage_key"),
     idFileName: text("id_file_name"),
     idMimeType: text("id_mime_type"),
@@ -398,4 +403,21 @@ export const notificationOptOut = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.kind] }), index("notification_opt_out_kind_idx").on(t.kind)],
+);
+
+/** Emails that didn't go out (server/email.ts), listed in Admin → Failed
+ *  emails so the team can follow up. Only the recipient, the subject and the
+ *  sending service's error: never the body. Kept 90 days (the daily job). */
+export const emailFailure = pgTable(
+  "email_failure",
+  {
+    id: id(),
+    recipient: text("recipient").notNull(),
+    subject: text("subject").notNull(),
+    error: text("error").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+    handledById: text("handled_by_id").references(() => user.id, { onDelete: "set null" }),
+  },
+  (t) => [index("email_failure_open_idx").on(t.handledAt, t.createdAt)],
 );

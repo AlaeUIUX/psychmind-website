@@ -4,14 +4,14 @@ import { symmetricDecrypt } from "better-auth/crypto";
 import { and, eq, ne } from "drizzle-orm";
 import Stripe from "stripe";
 import { db, dbReady } from "@/db";
-import { account, auditLog, twoFactor, user } from "@/db/schema";
+import { account, auditLog, session, twoFactor, user } from "@/db/schema";
 import { stripeConfigured } from "@/lib/billing";
 import { auth } from "@/server/auth";
 import { isAdminEmail } from "@/server/auth/admin-emails";
 import { sendEmail } from "@/server/email";
 import { marketingOptedOut, setMarketingOptOut } from "@/server/marketing";
 import { emailChangeConfirmEmail, emailChangedNoticeEmail, emailChangeStartEmail } from "@/server/emails";
-import { appUrl } from "@/server/url";
+import { accountUrl, appUrl } from "@/server/url";
 import { consumeToken, issueToken, readToken } from "./tokens";
 
 // Changing the email on an account, in two proofs:
@@ -43,7 +43,7 @@ export async function checkNewEmail(userId: string, role: string, currentEmail: 
 /** Proof 1, by email: a link to the current address. */
 export async function sendStartLink(userId: string, email: string) {
   const token = await issueToken("email-change-start", userId, userId, LINK_TTL);
-  await sendEmail(emailChangeStartEmail(email, await appUrl(`/change-email?token=${token}`)));
+  await sendEmail(emailChangeStartEmail(email, await accountUrl(`/change-email?token=${token}`, email)));
 }
 
 /** Proof 1, by authenticator: returns the same kind of token the email link
@@ -75,7 +75,7 @@ export const startTokenOwner = (token: string | undefined) => readToken("email-c
 export async function sendConfirmLink(token: string, userId: string, newEmail: string) {
   if ((await consumeToken("email-change-start", token)) !== userId) return false;
   const confirm = await issueToken("email-change-confirm", userId, JSON.stringify({ userId, email: newEmail }), LINK_TTL);
-  await sendEmail(emailChangeConfirmEmail(newEmail, await appUrl(`/change-email/confirm?token=${confirm}`)));
+  await sendEmail(emailChangeConfirmEmail(newEmail, await accountUrl(`/change-email/confirm?token=${confirm}`, newEmail)));
   await db.insert(auditLog).values({ actorId: userId, action: "account.email_change_requested", targetType: "user", targetId: userId });
   return true;
 }
@@ -93,12 +93,19 @@ export async function pendingChange(token: string | undefined) {
 
 /** Moves an account to a new address (after both proofs, or by support):
  *  marks it verified, tells the old address, and keeps Stripe in step. */
-export async function applyEmailChange(userId: string, newEmail: string, actorId: string, bySupport = false) {
+export async function applyEmailChange(userId: string, newEmail: string, actorId: string, bySupport = false, keepSessionId?: string) {
   await dbReady;
   const [before] = await db.select({ email: user.email, stripeCustomerId: user.stripeCustomerId }).from(user).where(eq(user.id, userId));
   if (!before) return false;
   await db.transaction(async (tx) => {
     await tx.update(user).set({ email: newEmail, emailVerified: true }).where(eq(user.id, userId));
+    // Whoever had the old address may be signed in somewhere: end those
+    // sessions (support's recovery ends every session itself).
+    if (!bySupport) {
+      await tx
+        .delete(session)
+        .where(keepSessionId ? and(eq(session.userId, userId), ne(session.id, keepSessionId)) : eq(session.userId, userId));
+    }
     await tx.insert(auditLog).values({
       actorId,
       action: bySupport ? "account.email_changed_by_support" : "account.email_changed",
@@ -119,7 +126,7 @@ export async function applyEmailChange(userId: string, newEmail: string, actorId
 }
 
 /** Proof 2 done: spends the token and changes the email. */
-export async function confirmEmailChange(token: string) {
+export async function confirmEmailChange(token: string, keepSessionId?: string) {
   const value = await consumeToken("email-change-confirm", token);
   if (!value) return { ok: false as const, error: "expired" as const };
   const { userId, email } = JSON.parse(value) as { userId: string; email: string };
@@ -128,6 +135,6 @@ export async function confirmEmailChange(token: string) {
   // Someone may have taken the address since the link was sent.
   const check = await checkNewEmail(userId, current.role, current.email, email);
   if (!check.ok) return { ok: false as const, error: "taken" as const, message: check.error };
-  await applyEmailChange(userId, email, userId);
+  await applyEmailChange(userId, email, userId, false, keepSessionId);
   return { ok: true as const, email, role: current.role };
 }

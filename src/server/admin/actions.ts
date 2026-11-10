@@ -8,6 +8,7 @@ import { auditLog, providerLicense, providerLocation, providerProfile, user } fr
 import { hasPending } from "@/lib/provider/review";
 import { locationLimit } from "@/lib/provider/schema";
 import { requireRole } from "@/server/auth/session";
+import { listingNeedsPayment } from "@/lib/billing";
 import { setBillingPaused } from "@/server/billing/pause";
 import { sendEmail } from "@/server/email";
 import { profileChangesApprovedEmail, profileChangesDeclinedEmail, providerDecisionEmail } from "@/server/emails";
@@ -105,9 +106,13 @@ export async function decideProvider(_prev: DecisionState, form: FormData): Prom
   const billingOk = decision === "suspend" || decision === "unsuspend" ? await setBillingPaused(profile.userId, profileId, decision === "suspend") : true;
 
   const [owner] = await db.select({ email: user.email }).from(user).where(eq(user.id, profile.userId));
-  const emailKind = decision === "approve" ? "approved" : decision === "request_changes" ? "changes_requested" : decision === "reject" ? "rejected" : null;
+  // An approval tells them to activate a plan only when they have to pay
+  // to be listed (lib/billing listingNeedsPayment); otherwise they're live.
+  const founding = !!profile.foundingAt;
+  const approved = listingNeedsPayment(founding) ? "approved" : "approved_live";
+  const emailKind = decision === "approve" ? approved : decision === "request_changes" ? "changes_requested" : decision === "reject" ? "rejected" : null;
   if (owner && emailKind && !(decision === "approve" && profile.status === "approved")) {
-    await sendEmail(providerDecisionEmail(owner.email, emailKind, await appUrl("/provider"))).catch((err) =>
+    await sendEmail(providerDecisionEmail(owner.email, emailKind, await appUrl("/provider"), founding)).catch((err) =>
       console.error("decision email failed", err),
     );
   }

@@ -5,6 +5,16 @@ import { BuildingIcon, CheckIcon, LoaderCircleIcon, MonitorIcon, PencilIcon, Plu
 import { useCallback, useRef, useState, type ComponentType } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 import { FormRow } from "@/components/forms/form-row";
+import {
+  AlertDialog as ConfirmDialog,
+  AlertDialogAction as ConfirmAction,
+  AlertDialogCancel as ConfirmCancel,
+  AlertDialogContent as ConfirmContent,
+  AlertDialogDescription as ConfirmDescription,
+  AlertDialogFooter as ConfirmFooter,
+  AlertDialogHeader as ConfirmHeader,
+  AlertDialogTitle as ConfirmTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -296,6 +306,27 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
 
   const revealRef = useCardReveal(setOpen);
 
+  // Removing a location, or moving a saved one to another state, takes that
+  // state out of search. When its license is verified, say so first: the
+  // license stays on file (server/provider/actions.ts) and comes back with the
+  // state, but search stops showing them there. Copy approved by the owner, 2026-11-10.
+  const verifiedStates = new Set(state.licenses.filter((l) => l.status === "verified").map((l) => l.state));
+  const savedStateOf = (i: number) => state.locations.find((l) => l.id && l.id === values[i]?.id)?.state;
+  const [confirm, setConfirm] = useState<{ kind: "remove" | "state"; index: number; to?: string } | null>(null);
+  const removeAt = (i: number) => {
+    const wasPrimary = values[i]?.isPrimary;
+    remove(i);
+    setOpen(null);
+    if (wasPrimary) setTimeout(() => setValue("locations.0.isPrimary", true, { shouldDirty: true }));
+  };
+  const askRemove = (i: number) => {
+    const st = values[i]?.state;
+    const onlyOne = !values.some((o, j) => j !== i && o?.state === st);
+    if (st && verifiedStates.has(st) && onlyOne) setConfirm({ kind: "remove", index: i });
+    else removeAt(i);
+  };
+  const confirmFrom = confirm ? (confirm.kind === "remove" ? values[confirm.index]?.state : savedStateOf(confirm.index)) : undefined;
+
   const makePrimary = (index: number) =>
     values.forEach((_, i) => setValue(`locations.${i}.isPrimary`, i === index, { shouldDirty: true }));
 
@@ -382,7 +413,15 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
                     name={`locations.${i}.state`}
                     render={({ field }) => (
                       <FormRow id={`loc-${i}-state`} label="State" required error={errorAt(e, `locations.${i}.state`)}>
-                        <Select value={field.value || undefined} onValueChange={(val) => val && field.onChange(val)}>
+                        <Select
+                          value={field.value || undefined}
+                          onValueChange={(val) => {
+                            if (!val) return;
+                            const saved = savedStateOf(i);
+                            if (saved && verifiedStates.has(saved) && field.value === saved && val !== saved) setConfirm({ kind: "state", index: i, to: val });
+                            else field.onChange(val);
+                          }}
+                        >
                           <SelectTrigger id={`loc-${i}-state`} className="w-full" aria-invalid={!!errorAt(e, `locations.${i}.state`)}>
                             <SelectValue placeholder="New York" />
                           </SelectTrigger>
@@ -457,12 +496,7 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
                         variant="ghost"
                         size="sm"
                         className="h-8 px-2.5 text-[13px] text-red-700 hover:text-red-800"
-                        onClick={() => {
-                          const wasPrimary = v.isPrimary;
-                          remove(i);
-                          setOpen(null);
-                          if (wasPrimary) setTimeout(() => setValue("locations.0.isPrimary", true, { shouldDirty: true }));
-                        }}
+                        onClick={() => askRemove(i)}
                       >
                         <Trash2Icon />
                         Remove location
@@ -499,6 +533,35 @@ export function LocationsForm({ state, mode, onPreview, backHref, nextHref }: Se
           Add another location
         </button>
       )}
+
+      <ConfirmDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <ConfirmContent>
+          <ConfirmHeader>
+            <ConfirmTitle>
+              {confirm?.kind === "state" && confirmFrom && confirm.to
+                ? `Move this location from ${stateName(confirmFrom)} to ${stateName(confirm.to)}?`
+                : `Remove your ${confirmFrom ? stateName(confirmFrom) : ""} location?`}
+            </ConfirmTitle>
+            <ConfirmDescription>
+              {confirmFrom ? `Your verified ${stateName(confirmFrom)} license stays on file, but once you save, you won't appear in searches in ${stateName(confirmFrom)} until you add a location there again.` : null}
+              {confirm?.kind === "state" && confirm.to ? ` ${stateName(confirm.to)} needs its own license, which our team verifies before it shows.` : null}
+            </ConfirmDescription>
+          </ConfirmHeader>
+          <ConfirmFooter>
+            <ConfirmCancel>Keep it</ConfirmCancel>
+            <ConfirmAction
+              onClick={() => {
+                if (!confirm) return;
+                if (confirm.kind === "remove") removeAt(confirm.index);
+                else if (confirm.to) setValue(`locations.${confirm.index}.state`, confirm.to as (typeof values)[number]["state"], { shouldDirty: true, shouldValidate: true });
+                setConfirm(null);
+              }}
+            >
+              {confirm?.kind === "state" ? "Change state" : "Remove location"}
+            </ConfirmAction>
+          </ConfirmFooter>
+        </ConfirmContent>
+      </ConfirmDialog>
 
       <SectionFooter mode={mode} backHref={backHref} pending={pending} dirty={formState.isDirty} />
     </form>

@@ -1,7 +1,7 @@
 "use server";
 
 import { isAdminEmail } from "@/server/auth/admin-emails";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, eq, inArray, ne, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
 import { db } from "@/db";
@@ -118,10 +118,14 @@ const samePending = (a: PendingChanges | null | undefined, b: PendingChanges | n
   JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
 
 /** A verified profile waits for an admin while anything is pending: reviewed
- *  fields, or a license that's new or edited. A fresh change also clears the
- *  note from a previous decline. Returns whether it's waiting. */
+ *  fields, or a license that's new or edited. Any save by a verified provider
+ *  also clears the note from a previous decline: they've seen it and acted,
+ *  so the warning banner doesn't stay forever. Returns whether it's waiting. */
 async function refreshReview(profileId: string) {
-  const [p] = await db.select({ pendingChanges: providerProfile.pendingChanges }).from(providerProfile).where(eq(providerProfile.id, profileId));
+  const [p] = await db
+    .select({ pendingChanges: providerProfile.pendingChanges, status: providerProfile.status })
+    .from(providerProfile)
+    .where(eq(providerProfile.id, profileId));
   const licenses = await db
     .select({ status: providerLicense.status, pending: providerLicense.pending })
     .from(providerLicense)
@@ -129,7 +133,7 @@ async function refreshReview(profileId: string) {
   const needsReview = hasPending(p?.pendingChanges) || licenses.some((l) => l.status === "pending" || l.pending);
   await db
     .update(providerProfile)
-    .set(needsReview ? { needsReview, reviewNote: null } : { needsReview })
+    .set(needsReview || p?.status === "approved" ? { needsReview, reviewNote: null } : { needsReview })
     .where(eq(providerProfile.id, profileId));
   return needsReview;
 }
@@ -223,10 +227,17 @@ async function saveSection(section: SectionKey, data: never, profile: Profile, u
         await tx
           .delete(providerLocation)
           .where(and(eq(providerLocation.profileId, profile.id), notInArray(providerLocation.state, states)));
-        // Licenses only make sense for listed states.
+        // Licenses only make sense for listed states, but a verified one is
+        // kept (dormant, not shown publicly) so that adding the state back
+        // restores it instead of starting verification again. Any edit
+        // waiting on a dormant license is dropped.
         await tx
           .delete(providerLicense)
-          .where(and(eq(providerLicense.profileId, profile.id), notInArray(providerLicense.state, states)));
+          .where(and(eq(providerLicense.profileId, profile.id), notInArray(providerLicense.state, states), ne(providerLicense.status, "verified")));
+        await tx
+          .update(providerLicense)
+          .set({ pending: null })
+          .where(and(eq(providerLicense.profileId, profile.id), notInArray(providerLicense.state, states), eq(providerLicense.status, "verified")));
         for (const [i, l] of locations.entries()) {
           const row = {
             profileId: profile.id,
@@ -333,10 +344,11 @@ export async function submitForVerification(input: unknown): Promise<ActionResul
   const optedOut = await optedOutOf("admin_submissions", allAdmins.map((a) => a.id));
   const admins = allAdmins.filter((a) => !optedOut.has(a.id));
   const [dashboardUrl, reviewUrl, settingsUrl] = await Promise.all([appUrl("/provider"), appUrl(`/admin/providers/${state.id}`), appUrl("/admin/settings")]);
-  await Promise.allSettled([
-    sendEmail(providerSubmittedEmail(me.email, dashboardUrl)),
-    ...admins.map((a) => sendEmail(adminNewSubmissionEmail(a.email, reviewUrl, settingsUrl))),
-  ]);
+  // One at a time: a burst of parallel sends can trip the email service's
+  // per-second limit. Failures are recorded by sendEmail (Admin → Failed emails).
+  for (const email of [providerSubmittedEmail(me.email, dashboardUrl), ...admins.map((a) => adminNewSubmissionEmail(a.email, reviewUrl, settingsUrl))]) {
+    await sendEmail(email).catch((err) => console.error("submission email failed", err));
+  }
 
   revalidatePath("/provider", "layout");
   revalidatePath("/admin", "layout");

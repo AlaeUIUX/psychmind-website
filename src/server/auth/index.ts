@@ -15,12 +15,13 @@ import { account, providerProfile, user as userTable } from "@/db/schema";
 import { AGE_OK_COOKIE, isAdult, MIN_AGE, parseIsoDate } from "@/lib/age";
 import { BASE_PLAN, renewalTerms, stripeConfigured } from "@/lib/billing";
 import { adminOrigin, defaultOrigin } from "@/lib/hosts";
-import { rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { afterAccountDeleted, beforeAccountDeleted } from "@/server/account/cleanup";
 import { isAdminEmail } from "./admin-emails";
 import { isValidAgeOkToken, readCookie } from "./age";
 import { sendEmail } from "@/server/email";
 import { existingAccountEmail, resetPasswordEmail, verifyEmail } from "@/server/emails";
+import { onAccountHost } from "@/server/url";
 import { planPrice } from "@/server/billing/price";
 import { onSubscriptionChange, sendSubscriptionConfirmation } from "@/server/billing/sync";
 
@@ -37,6 +38,34 @@ import { onSubscriptionChange, sendSubscriptionConfirmation } from "@/server/bil
 // `role` can never be set by the client: sign-up actions set it server-side.
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
+/** Endpoints only our own server actions call (see hooks.before). */
+const SERVER_ONLY_PATHS = new Set([
+  "/sign-in/email",
+  "/sign-up/email",
+  "/request-password-reset",
+  "/reset-password",
+  "/send-verification-email",
+  "/change-password",
+  "/set-password",
+  "/change-email",
+  "/update-user",
+  "/delete-user",
+  "/revoke-session",
+  "/revoke-sessions",
+  "/revoke-other-sessions",
+  "/link-social",
+  "/unlink-account",
+  "/two-factor/enable",
+  "/two-factor/disable",
+  "/two-factor/get-totp-uri",
+  "/two-factor/generate-backup-codes",
+  "/two-factor/view-backup-codes",
+  "/two-factor/verify-totp",
+  "/two-factor/verify-backup-code",
+  "/two-factor/send-otp",
+  "/two-factor/verify-otp",
+]);
 
 function stripePlugins() {
   if (!stripeConfigured() || !process.env.STRIPE_WEBHOOK_SECRET) return [];
@@ -94,12 +123,17 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
     // Sent after the response (so response time doesn't reveal whether an account exists).
     sendResetPassword: async ({ user, url }) => {
-      after(() => sendEmail(resetPasswordEmail(user.email, url)).catch((err) => console.error("reset email failed", err)));
+      // At most a few a day per address, whoever asks: the answer stays the same,
+      // so nobody can use "Forgot password" to flood someone's inbox (M1-08).
+      if (!(await rateLimit("reset-email-daily", user.email, 5, "1 d")).ok) return;
+      // A team member's link opens on the admin host, where they can sign in.
+      after(() => sendEmail(resetPasswordEmail(user.email, onAccountHost(url, user.email))).catch((err) => console.error("reset email failed", err)));
     },
     // Signing up with a taken address looks like any sign-up (no account is
     // revealed); the owner gets a note to log in or reset instead.
     onExistingUserSignUp: async ({ user }) => {
       if (isAdminEmail(user.email)) return;
+      if (!(await rateLimit("existing-account-email-daily", user.email, 3, "1 d")).ok) return;
       const origin = (process.env.BETTER_AUTH_URL || defaultOrigin() || "").replace(/\/$/, "");
       after(() =>
         sendEmail(existingAccountEmail(user.email, `${origin}/login`, `${origin}/forgot-password`)).catch((err) =>
@@ -118,6 +152,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: 60 * 60 * 24,
     sendVerificationEmail: async ({ user, url }) => {
+      if (!(await rateLimit("verify-email-daily", user.email, 6, "1 d")).ok) return;
       after(() => sendEmail(verifyEmail(user.email, url)).catch((err) => console.error("verification email failed", err)));
     },
   },
@@ -213,6 +248,13 @@ export const auth = betterAuth({
     // authorizeReference doesn't run for a user's own subscription, so who
     // may subscribe is enforced here: verified providers only.
     before: createAuthMiddleware(async (ctx) => {
+      // Our screens call these through server actions (no ctx.request). Over
+      // HTTP they'd skip the actions' own checks and limits, and the two-step
+      // ones would hand out a session's authenticator secret for its password
+      // (audit M1-07, M1-08). The browser keeps what it needs: reading the
+      // session, Google sign-in and its callback, the email links (GET), and
+      // Stripe's webhook.
+      if (ctx.request && SERVER_ONLY_PATHS.has(ctx.path)) throw new APIError("NOT_FOUND");
       // The 18+ age screen guards the endpoint itself, not just our form, so a
       // direct POST to /api/auth/sign-up/email can't skip it. The date is
       // checked and dropped; Better Auth ignores body fields it doesn't know.
@@ -231,7 +273,13 @@ export const auth = betterAuth({
       // (the IP-based limits are in rateLimit below and in the actions).
       if (ctx.path === "/sign-in/email") {
         const email = String((ctx.body as { email?: unknown } | undefined)?.email ?? "").toLowerCase();
-        if (email && !(await rateLimit("auth-signin-account", email, 10, "15 m")).ok) {
+        // Per address and network first (tight), then per address overall
+        // (loose): a stranger can't lock someone out from one place, and
+        // guessing from many places is still slowed down (M1-08).
+        const ip = clientIp(ctx.headers ?? new Headers());
+        const near = email ? await rateLimit("auth-signin-account-ip", `${ip}|${email}`, 8, "15 m") : { ok: true };
+        const far = email && near.ok ? await rateLimit("auth-signin-account", email, 50, "1 h") : { ok: true };
+        if (!near.ok || !far.ok) {
           throw new APIError("TOO_MANY_REQUESTS", { message: "Too many attempts. Please wait a few minutes and try again." });
         }
         // An expired temporary password (new admins) no longer signs in. Only

@@ -76,7 +76,10 @@ async function hydrate(rows: ProfileRow[]): Promise<DirectoryProvider[]> {
       .where(and(inArray(providerLicense.profileId, ids), eq(providerLicense.status, "verified"))),
   ]);
   return rows.map((p) => {
-    const own = licenses.filter((l) => l.profileId === p.id);
+    // A verified license whose location was removed stays on file (dormant)
+    // but isn't public: only states the provider still practises in count.
+    const practised = new Set(locations.filter((l) => l.profileId === p.id).map((l) => l.state));
+    const own = licenses.filter((l) => l.profileId === p.id && practised.has(l.state));
     // A practice shows only in states the provider holds a verified license in:
     // a new state stays off the profile and out of search until our team checks it.
     const verifiedStates = new Set(own.map((l) => l.state));

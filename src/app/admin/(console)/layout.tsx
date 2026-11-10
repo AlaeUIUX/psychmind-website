@@ -5,6 +5,7 @@ import { changelogFor } from "@/lib/changelog";
 import { SIDEBAR_COOKIE } from "@/lib/dashboard";
 import { countOpenRecoveryRequests } from "@/server/account/recovery";
 import { countQueue } from "@/server/admin/data";
+import { countOpenEmailFailures } from "@/server/admin/email-failures";
 import { signOutAdmin } from "@/server/auth/actions";
 import { requireRole } from "@/server/auth/session";
 
@@ -14,7 +15,7 @@ import { requireRole } from "@/server/auth/session";
 // to do so first.
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const { user } = await requireRole("admin", "/admin");
-  const [openRecovery, waiting] = await Promise.all([countOpenRecoveryRequests(), countQueue()]);
+  const [openRecovery, waiting, failedEmails] = await Promise.all([countOpenRecoveryRequests(), countQueue(), countOpenEmailFailures()]);
   return (
     <DashboardShell
       homeHref="/admin"
@@ -29,6 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           items: [
             { href: "/admin/queue", label: "Verification queue", icon: "queue", badge: waiting },
             { href: "/admin/recovery", label: "Account recovery", icon: "recovery", badge: openRecovery },
+            { href: "/admin/emails", label: "Failed emails", icon: "emails", badge: failedEmails },
           ],
         },
         { label: "Directory", items: [{ href: "/admin/providers", label: "All providers", icon: "providers" }] },

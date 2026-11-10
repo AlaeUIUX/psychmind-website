@@ -22,6 +22,8 @@ export type HealthInput = {
   needsReview: boolean;
   sections: SectionStatus[];
   licenses: { status: "pending" | "verified" | "rejected" }[];
+  /** At least one location is in a state with a verified license, so search can show them. */
+  searchable?: boolean;
   /** As the provider is told it (shownListing). */
   listing: ListingState;
   graceDays: number;
@@ -41,6 +43,13 @@ export function accountHealth(h: HealthInput): HealthRow[] {
   const editHref = (key: string) => (draft ? `/provider/onboarding/${key}` : "/provider/profile");
   const rows: HealthRow[] = [];
 
+  // Listed, but no location in a verified state: search has nothing to show.
+  // Copy approved by the owner, 2026-11-10.
+  const unsearchable: Omit<HealthRow, "key" | "label"> = {
+    status: "Not in search: no location in a verified state",
+    tone: "attention",
+    action: { href: editHref("locations"), label: "Check locations" },
+  };
   const listing: Record<ListingState, Omit<HealthRow, "key" | "label">> = {
     live: { status: "Live in search", tone: "good" },
     grace: { status: `Payment failed: visible for ${days(h.graceDays)} more`, tone: "attention", action: { href: "/provider/billing", label: "Update payment" } },
@@ -51,7 +60,8 @@ export function accountHealth(h: HealthInput): HealthRow[] {
     not_verified: { status: "Not visible yet", tone: "waiting" },
     blocked: { status: "Not listed", tone: "attention", action: { href: "/contact", label: "Contact us" } },
   };
-  rows.push({ key: "listing", label: "Listing", ...listing[h.listing] });
+  const listed = h.listing === "live" || h.listing === "grace";
+  rows.push({ key: "listing", label: "Listing", ...(listed && h.searchable === false ? unsearchable : listing[h.listing]) });
 
   const verification: Record<ProviderStatus, Omit<HealthRow, "key" | "label">> = {
     draft: { status: "Submit your profile to be verified", tone: "attention", action: { href: `/provider/onboarding/${h.onboardingStep}`, label: "Continue setup" } },

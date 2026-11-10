@@ -256,10 +256,22 @@ export function providerSubmittedEmail(to: string, dashboardUrl: string): Email 
 
 export function providerDecisionEmail(
   to: string,
-  decision: "approved" | "changes_requested" | "rejected",
+  decision: "approved" | "approved_live" | "changes_requested" | "rejected",
   dashboardUrl: string,
+  founding = false,
 ): Email {
   const copy = {
+    // Listed as soon as they're verified: founding providers, and everyone
+    // while billing isn't connected (lib/billing listingNeedsPayment).
+    // Copy approved by the owner, 2026-11-10.
+    approved_live: {
+      subject: "You're verified on PsychMind",
+      heading: "You're verified, and you're live",
+      body: founding
+        ? "Your credentials have been verified and your profile is now in search. As one of PsychMind's founding providers, your listing is free, for good. Session requests will arrive in your dashboard."
+        : "Your credentials have been verified and your profile is now in search. Session requests will arrive in your dashboard.",
+      cta: "Go to your dashboard",
+    },
     approved: {
       subject: "You're verified on PsychMind",
       heading: "You're verified",
@@ -547,6 +559,20 @@ export function passwordChangedEmail(to: string, resetUrl: string): Email {
   };
 }
 
+/** A password was added to an account that only used Google. Copy approved by the owner, 2026-11-10. */
+export function passwordAddedEmail(to: string, resetUrl: string): Email {
+  return {
+    to,
+    subject: "A password was added to your PsychMind account",
+    ...layout({
+      heading: "Your account now has a password",
+      body: "A password was just added to your PsychMind account, so you can log in with your email as well as with Google. You were logged out everywhere else.",
+      cta: { label: "This wasn't me: reset it", url: resetUrl },
+      footnote: "If you made this change, there's nothing else to do.",
+    }),
+  };
+}
+
 /** To the address they want to be reached at. Says the same whether or not
  *  an account matched. */
 export function recoveryReceivedEmail(to: string): Email {
@@ -562,16 +588,33 @@ export function recoveryReceivedEmail(to: string): Email {
   };
 }
 
-/** To the account's current address: a heads-up, in case it's not them. */
-export function recoveryOwnerAlertEmail(to: string, helpUrl: string): Email {
+/** To the new contact address first: proves it's theirs before the request
+ *  reaches the team or alerts anyone. Copy approved by the owner, 2026-11-10. */
+export function recoveryConfirmContactEmail(to: string, confirmUrl: string): Email {
+  return {
+    to,
+    subject: "Confirm your email to send your recovery request",
+    ...layout({
+      heading: "Confirm this address",
+      body: "To send your account recovery request to our team, confirm that this address is yours. The link works for 24 hours.",
+      cta: { label: "Confirm this address", url: confirmUrl },
+      footnote: "If you didn't ask for this, you can ignore this email: nothing will happen.",
+      reason: "You're receiving this email because this address was given in a PsychMind account recovery request.",
+    }),
+  };
+}
+
+/** To the account's current address: a heads-up, with a button that stops
+ *  the request. Copy approved by the owner, 2026-11-10. */
+export function recoveryOwnerAlertEmail(to: string, disputeUrl: string, holdHours = 72): Email {
   return {
     to,
     subject: "Someone asked to move your PsychMind account",
     ...layout({
       heading: "A request to move your account",
-      body: "Someone asked our support team to move your PsychMind account to a different email address. We check identity before making any change. If this was you, there's nothing to do.",
-      cta: { label: "This wasn't me", url: helpUrl },
-      footnote: "If this wasn't you, tell us and we'll keep your account as it is. It's also a good moment to turn on two-step login in Settings.",
+      body: `Someone asked our support team to move your PsychMind account to a different email address. We check identity before making any change, and we wait at least ${holdHours} hours so you can stop it. If this was you, there's nothing to do.`,
+      cta: { label: "This wasn't me", url: disputeUrl },
+      footnote: "If this wasn't you, press the button: the request is cancelled and your account stays as it is. It's also a good moment to turn on two-step login in Settings.",
     }),
   };
 }

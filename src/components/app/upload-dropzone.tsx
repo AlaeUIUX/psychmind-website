@@ -171,11 +171,11 @@ export function UploadDropzone({
                 )}
               </div>
               {file.status === "error" && onRetry && (
-                <Button variant="ghost" size="icon-sm" aria-label={`Retry ${file.name}`} onClick={() => onRetry(file.id)}>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={`Retry ${file.name}`} onClick={() => onRetry(file.id)}>
                   <RotateCwIcon />
                 </Button>
               )}
-              <Button variant="ghost" size="icon-sm" aria-label={`Remove ${file.name}`} onClick={() => onRemove(file.id)}>
+              <Button type="button" variant="ghost" size="icon-sm" aria-label={`Remove ${file.name}`} onClick={() => onRemove(file.id)}>
                 <XIcon />
               </Button>
             </li>

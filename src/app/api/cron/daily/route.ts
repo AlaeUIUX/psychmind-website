@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { maintainAnalytics } from "@/server/analytics/track";
+import { pruneEmailFailures } from "@/server/admin/email-failures";
 import { sweepBilling } from "@/server/billing/notices";
 import { sendOnboardingReminders } from "@/server/onboarding/reminders";
 import { cleanUpUnsavedUploads } from "@/server/uploads-cleanup";
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
     uploads: await run("uploads", () => cleanUpUnsavedUploads(now)),
     onboardingReminders: await run("onboardingReminders", () => sendOnboardingReminders(now)),
     billing: await run("billing", () => sweepBilling(now)),
+    emailFailures: await run("emailFailures", () => pruneEmailFailures(now)),
     // Also runs on analytics traffic (/api/events); this covers quiet days.
     analytics: await run("analytics", async () => {
       await maintainAnalytics();

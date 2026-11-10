@@ -10,10 +10,11 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { auth } from "@/server/auth";
 import { getSession, hasTwoFactor } from "@/server/auth/session";
 import { sendEmail } from "@/server/email";
-import { passwordChangedEmail } from "@/server/emails";
+import { passwordAddedEmail, passwordChangedEmail } from "@/server/emails";
+import { BREACHED_PASSWORD, isBreachedPassword } from "@/server/auth/breached";
 import { isNotificationKind, type NotificationRole } from "@/lib/notifications";
 import { setNotification } from "@/server/notifications";
-import { appUrl } from "@/server/url";
+import { accountUrl } from "@/server/url";
 import { hasPasswordLogin } from "./data";
 import { checkNewEmail, confirmEmailChange, sendConfirmLink, sendStartLink, startTokenOwner, startWithAuthenticator } from "./email-change";
 
@@ -88,7 +89,10 @@ export type ConfirmEmailState = { ok?: boolean; email?: string; home?: string; e
 export async function confirmNewEmail(_prev: ConfirmEmailState, form: FormData): Promise<ConfirmEmailState> {
   const ip = clientIp(await headers());
   if (!(await rateLimit("email-change-confirm", ip, 20, "10 m")).ok) return { error: TOO_MANY };
-  const result = await confirmEmailChange(String(form.get("token") ?? ""));
+  // Every other device is signed out once the address changes; this one, if
+  // it's the same account, stays signed in (M1-22).
+  const current = await getSession().catch(() => null);
+  const result = await confirmEmailChange(String(form.get("token") ?? ""), current?.session.id);
   if (!result.ok) return { error: result.error === "taken" ? result.message : "This link has expired or was already used. Start again from Settings." };
   const home = result.role === "admin" ? "/admin/settings" : result.role === "provider" ? "/provider/settings" : "/account/settings";
   return { ok: true, email: result.email, home };
@@ -110,6 +114,7 @@ export async function changePassword(_prev: SettingsState, form: FormData): Prom
   else if (parsed.data === currentPassword) fieldErrors.newPassword = "Choose a password you're not using now.";
   if (Object.keys(fieldErrors).length) return { fieldErrors };
   if (!(await rateLimit("password-change", user.id, 5, "10 m")).ok) return { error: TOO_MANY };
+  if (await isBreachedPassword(parsed.data!)) return { fieldErrors: { newPassword: BREACHED_PASSWORD } };
 
   try {
     await auth.api.changePassword({ body: { currentPassword, newPassword: parsed.data!, revokeOtherSessions: true }, headers: await headers() });
@@ -120,7 +125,22 @@ export async function changePassword(_prev: SettingsState, form: FormData): Prom
     return { error: "We couldn't change your password. Please try again." };
   }
   await db.insert(auditLog).values({ actorId: user.id, action: "account.password_changed", targetType: "user", targetId: user.id });
-  await sendEmail(passwordChangedEmail(user.email, await appUrl("/forgot-password"))).catch((err) => console.error("password changed email failed", err));
+  await sendEmail(passwordChangedEmail(user.email, await accountUrl("/forgot-password", user.email))).catch((err) => console.error("password changed email failed", err));
+  return { ok: true };
+}
+
+/** Settings → Login: end every session except this one (a shared computer,
+ *  a lost phone). Copy approved by the owner, 2026-11-10. */
+export async function signOutOtherDevices(): Promise<{ ok: boolean; error?: string }> {
+  const { user } = await signedIn();
+  if (!(await rateLimit("sign-out-others", user.id, 10, "10 m")).ok) return { ok: false, error: TOO_MANY };
+  try {
+    await auth.api.revokeOtherSessions({ headers: await headers() });
+  } catch (err) {
+    console.error("revoke other sessions failed", err);
+    return { ok: false, error: "We couldn't log out your other devices. Please try again." };
+  }
+  await db.insert(auditLog).values({ actorId: user.id, action: "account.signed_out_elsewhere", targetType: "user", targetId: user.id });
   return { ok: true };
 }
 
@@ -131,6 +151,7 @@ export async function setPassword(_prev: SettingsState, form: FormData): Promise
   const parsed = passwordFor(user.role ?? "patient").safeParse(String(form.get("newPassword") ?? ""));
   if (!parsed.success) return { fieldErrors: { newPassword: parsed.error.issues[0].message } };
   if (!(await rateLimit("password-set", user.id, 5, "10 m")).ok) return { error: TOO_MANY };
+  if (await isBreachedPassword(parsed.data)) return { fieldErrors: { newPassword: BREACHED_PASSWORD } };
   try {
     await auth.api.setPassword({ body: { newPassword: parsed.data }, headers: await headers() });
   } catch (err) {
@@ -140,6 +161,9 @@ export async function setPassword(_prev: SettingsState, form: FormData): Promise
     return { error: "We couldn't add a password. Please try again." };
   }
   await db.insert(auditLog).values({ actorId: user.id, action: "account.password_set", targetType: "user", targetId: user.id });
+  // A new way in: other devices are signed out, and the inbox hears about it.
+  await auth.api.revokeOtherSessions({ headers: await headers() }).catch((err) => console.error("revoke other sessions failed", err));
+  await sendEmail(passwordAddedEmail(user.email, await accountUrl("/forgot-password", user.email))).catch((err) => console.error("password added email failed", err));
   return { ok: true };
 }
 

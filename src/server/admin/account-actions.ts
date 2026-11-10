@@ -11,6 +11,7 @@ import { account, auditLog, session as sessionTable, user } from "@/db/schema";
 import { rateLimit } from "@/lib/rate-limit";
 import { auth } from "@/server/auth";
 import { getSession, hasTwoFactor, homeFor, mustChangePassword, requireRole } from "@/server/auth/session";
+import { BREACHED_PASSWORD, isBreachedPassword } from "@/server/auth/breached";
 import { resetAdminAccess } from "./accounts";
 
 // A new admin's first log-in: their name and their own password, replacing
@@ -48,6 +49,7 @@ export async function setAdminPassword(_prev: AdminPasswordState, form: FormData
     return { fieldErrors, values };
   }
   const v = parsed.data;
+  if (await isBreachedPassword(v.password)) return { fieldErrors: { password: BREACHED_PASSWORD }, values };
   const id = current.user.id;
   if (!(await rateLimit("admin-password", id, 10, "10 m")).ok) return { error: "Too many attempts. Please wait a few minutes and try again.", values };
 

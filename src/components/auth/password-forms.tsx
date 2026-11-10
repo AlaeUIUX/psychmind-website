@@ -175,11 +175,23 @@ export function VerifyEmailPanel({ email, next }: { email: string; next?: string
       <SentTo email={email} what="Confirmation link" expires="24 hours" />
       <FormAlert message={state?.error} />
       <FormAlert message={resent ? "We sent a new link. It can take a minute to arrive." : undefined} tone="success" />
-      <form action={action} className="type-ui-small text-warm-600">
-        <input type="hidden" name="email" value={email} />
-        {next && <input type="hidden" name="next" value={next} />}
-        Didn&apos;t receive it? Check your spam folder or <ResendButton>send it again</ResendButton>.
-      </form>
+      {email ? (
+        <form action={action} className="type-ui-small text-warm-600">
+          <input type="hidden" name="email" value={email} />
+          {next && <input type="hidden" name="next" value={next} />}
+          Didn&apos;t receive it? Check your spam folder or <ResendButton>send it again</ResendButton>.
+        </form>
+      ) : (
+        // The address is kept for 30 minutes only (server/auth/pending-email.ts);
+        // after that, ask for it rather than fail silently. Copy approved by the owner, 2026-11-10.
+        <form action={action} className="flex flex-col gap-3">
+          {next && <input type="hidden" name="next" value={next} />}
+          <AuthField id="email" label="Need a new link? Enter your email" error={state?.fieldErrors?.email}>
+            <EmailInput error={state?.fieldErrors?.email} defaultValue={state?.values?.email} />
+          </AuthField>
+          <SubmitButton pendingLabel="Sending…">Send a new link</SubmitButton>
+        </form>
+      )}
       <p className="type-ui-small text-warm-600">
         Wrong email?{" "}
         <Link href="/signup" className="font-medium text-warm-900 underline underline-offset-4">

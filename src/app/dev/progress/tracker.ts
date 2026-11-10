@@ -29,11 +29,74 @@ export type TrackerGroup = {
   items: TrackerItem[];
 };
 
-export const REVIEWED = "2026-11-09";
+export const REVIEWED = "2026-11-10";
 
 const AUDIT = "docs/release-audit.md";
 /** The 2026-11-09 full audit and security plan live outside this public repo. */
 const PRIVATE_AUDIT = "../audit/audit-2026-11-09.md (private)";
+
+/** What each working session changed, newest first, named by the items below
+ *  (owner request, 2026-11-10: report through this page). Add an entry with
+ *  every change that moves an item, and keep the item titles exact. */
+export type TrackerUpdate = {
+  date: string;
+  title: string;
+  changes: { milestone: string; item: string; status: ItemStatus; note?: string }[];
+};
+
+export const UPDATES: TrackerUpdate[] = [
+  {
+    date: "2026-11-10",
+    title: "Failed emails, approved wording (going live)",
+    changes: [
+      { milestone: "Milestone 1", item: "Email failures recorded and visible", status: "done", note: "New Admin → Failed emails page, with a count in the sidebar." },
+      { milestone: "Milestone 1", item: "Patient account recovery: what evidence is enough", status: "todo", note: "Suggested rule ready for your call with Dee." },
+      { milestone: "Milestone 1", item: "Google sign-in in production", status: "todo", note: "Still waiting on Dee." },
+      { milestone: "Milestone 1", item: "Approval email and timeline variants", status: "done", note: "Today's new wording approved by you." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Milestone 1 fixes (going live with the entry above)",
+    changes: [
+      { milestone: "Milestone 1", item: "Safer account recovery", status: "done", note: "Confirm the new address, 72-hour wait, one-click \"This wasn't me\", sign-ins since the request." },
+      { milestone: "Milestone 1", item: "Account security hardening", status: "done", note: "Private endpoints closed, fairer limits, breached-password check, Log out other devices." },
+      { milestone: "Milestone 1", item: "Locations: keep verified licences", status: "done" },
+      { milestone: "Milestone 1", item: "Provider dashboard fixes", status: "done" },
+      { milestone: "Milestone 1", item: "Admin account links on the admin host", status: "done" },
+      { milestone: "Milestone 1", item: "Approval email and timeline variants", status: "done", note: "New wording waits for Dee." },
+      { milestone: "Milestone 1", item: "Email failures recorded and visible", status: "todo", note: "Explained; built in the next entry." },
+      { milestone: "Milestone 4", item: "Billing go-live fixes", status: "todo", note: "Moved from Milestone 1: payments wait on Dee's choice of provider (new item \"Payment provider\")." },
+      { milestone: "Milestone 1", item: "Google sign-in in production", status: "todo", note: "Waiting on Dee's Google Cloud setup." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Security fixes, live on psychmind.org (commit 9762c45)",
+    changes: [
+      { milestone: "Milestone 4", item: "Dependency updates", status: "done", note: "Next.js 16.4.5 and Zod 4.6.7; no critical or high advisories left." },
+      { milestone: "Milestone 1", item: "Close the Google sign-in gaps before the Google keys go live", status: "done", note: "Safe to add the Google keys once Dee finishes her part." },
+      { milestone: "Milestone 3", item: "Admin account hardening", status: "doing", note: "Team-address sign-up, promotion, removed admins and the sign-up redirect fixed; host, reset, audit-trail and session rules still open." },
+      { milestone: "Milestone 2", item: "Guest request privacy", status: "doing", note: "Guests are never told a request is a repeat. Requests in someone else's name still open (needs Dee's OK)." },
+      { milestone: "Milestone 4", item: "Retire or lock down the CMS", status: "doing", note: "Decap pinned with an integrity check and blocked on the admin host. Replacing it is Milestone 3's admin blog." },
+      { milestone: "Milestone 4", item: "Domains and inboxes", status: "todo", note: "psychmind.co isn't ours and needn't be bought: move the legal pages to @psychmind.org once it has inboxes." },
+    ],
+  },
+  {
+    date: "2026-11-09",
+    title: "Milestone 2 finished, and the full audit",
+    changes: [
+      { milestone: "Milestone 2", item: "Keep the request draft through log-in, sign-up and errors", status: "done" },
+      { milestone: "Milestone 2", item: "Keep saved providers who leave the directory", status: "done", note: "Unavailable card and page; billing scenario at /dev/billing-scenario (local)." },
+      { milestone: "Milestone 2", item: "Request confirmation copy", status: "done", note: "Dee's answer: the request is in the provider's dashboard." },
+      { milestone: "Milestone 2", item: "Insurance", status: "done" },
+      { milestone: "Milestone 2", item: "\"Session type\" filter", status: "done" },
+      { milestone: "Milestone 2", item: "Health details in search URLs", status: "done", note: "Kept as they are (Dee)." },
+      { milestone: "Milestone 2", item: "Launch states (D4)", status: "done", note: "All states." },
+      { milestone: "All", item: "2026-11-09 audit", status: "todo", note: "122 findings, filed as new items in every milestone; details in the private audit outside the repo." },
+    ],
+  },
+];
 
 export const TRACKER: TrackerGroup[] = [
   {
@@ -91,14 +154,14 @@ export const TRACKER: TrackerGroup[] = [
       { status: "done", owner: "build", title: "Branded account and provider emails", detail: "Verify email, password reset, submitted, approved, changes requested, rejected, and the staff alert for new submissions. Redesigned 2026-10-30 in the landing's look: stone paper, serif headline, the privacy promise's layers, an ink button, the site footer's sign-off and the boat at sea. Every email can be reviewed at /dev/emails.", where: "/dev/emails" },
       // 2026-11-09 audit (private, outside the repo). Security items name the area only.
       { status: "done", owner: "build", title: "Close the Google sign-in gaps before the Google keys go live", detail: "Fixed 2026-11-10 (audit M1-01, M1-06): Google sign-in only through its redirect flow, the age check on every account-creation path, and no Google session for admins or anyone with two-step login.", where: PRIVATE_AUDIT },
-      { status: "todo", owner: "build", blocker: true, title: "Safer account recovery", detail: "Confirm the new contact address by link, a waiting period before an account moves, a one-click \"this wasn't me\" that stops it, and sign-ins since the request on the admin page (audit M1-02). What evidence recovers a patient account is the client's call.", where: "src/server/account/recovery.ts" },
-      { status: "todo", owner: "build", blocker: true, title: "Email failures recorded and visible", detail: "Verification, password-reset and admin emails fail silently: record failures where the team looks, send fan-outs one at a time, and treat the resend.dev fallback as an error in production (audit M1-03).", where: "src/server/email.ts" },
-      { status: "todo", owner: "build", blocker: true, title: "Billing go-live fixes", detail: "Before Stripe is switched on: an abandoned checkout leaves an \"incomplete\" row that hides Activate for good; \"Stripe on\" must require all three variables; founding providers who already pay; two checkouts both paid; the daily sweep stops on one failed email; the re-check never asks Stripe (audit M1-04, M1-05, M1-09 to M1-12).", where: "src/lib/billing.ts" },
-      { status: "todo", owner: "build", title: "Account security hardening", detail: "Raw auth endpoints and sign-in limits (audit M1-07, M1-08), security emails and \"sign out other devices\" (M1-22), and a breached-password check (M1-23).", where: PRIVATE_AUDIT },
-      { status: "todo", owner: "build", title: "Locations: keep verified licences", detail: "Removing a location or changing its state silently deletes that state's verified licence, which can take a live provider out of search while the Overview says Live. Confirm first and keep the licence (audit M1-13).", where: "src/server/provider/actions.ts" },
-      { status: "todo", owner: "build", title: "Provider dashboard fixes", detail: "The declined-changes banner never clears; Remove and Retry on an upload submit the step; no reminders for changes requested; \"won't be charged\" shown when pausing failed; \"Send it again\" fails after 30 minutes; data export errors and missing tables (audit M1-16 to M1-21).", where: PRIVATE_AUDIT },
-      { status: "todo", owner: "build", title: "Admin account links on the admin host", detail: "An admin's Change email link and password reset land on the main site, where admins can't sign in (audit M1-15).", where: "src/server/url.ts" },
-      { status: "todo", owner: "client", title: "Approval email and timeline variants", detail: "The approval email, onboarding timeline and submitted page tell founding providers, and everyone while billing is off, to \"Activate your listing\" (audit M1-14).", where: "src/server/emails.ts" },
+      { status: "done", owner: "build", title: "Safer account recovery", detail: "Done 2026-11-10 (audit M1-02): the new contact address is confirmed by link before the request reaches the queue; the account's own address then gets a one-click \"This wasn't me\" that cancels it; \"Move account\" waits 72 hours after that (not for requests made while signed in); the admin page shows sign-ins since the request; two admins can't both act. New wording approved by the owner (2026-11-10). Still the client's call: what evidence recovers a patient account.", where: "src/server/account/recovery.ts" },
+      { status: "todo", owner: "client", title: "Patient account recovery: what evidence is enough", detail: "To agree with Dee (suggested 2026-11-10). Patients send no ID, so move a patient account only when all of these hold: the new address is confirmed and the 72 hours passed with no \"This wasn't me\" (built); the name matches the account; they give two details only the owner would know (about when they joined, a provider they saved or contacted, the phone number on a request); with two-step login on, a photo ID too; and no sign-ins since the request. Otherwise decline. Once agreed, the form asks for those details and the admin page lays them side by side." },
+      { status: "done", owner: "build", title: "Email failures recorded and visible", detail: "Done 2026-11-10 (audit M1-03): every email that can't be sent is recorded (recipient, subject and error only, never the body) and listed in Admin → Failed emails, with a count in the sidebar and Mark handled; a warning there when production has no sender address (EMAIL_FROM); alerts to several admins go out one at a time; records are deleted after 90 days.", where: "src/server/email.ts" },
+      { status: "done", owner: "build", title: "Account security hardening", detail: "Done 2026-11-10 (audit M1-07, M1-08, M1-22, M1-23): private auth endpoints refused when called straight over HTTP, fairer sign-in limits (per address and network, then per address), daily caps on account emails per address, a breached-password check (fails open if the service is down), emails and other devices signed out when a password is added or the email changes, and \"Log out other devices\" in Settings.", where: PRIVATE_AUDIT },
+      { status: "done", owner: "build", title: "Locations: keep verified licences", detail: "Done 2026-11-10 (audit M1-13): removing a location or moving it to another state asks first when its license is verified; the verified license stays on file (not public) and comes back with the state; the Overview says \"Not in search\" when no location is in a verified state.", where: "src/server/provider/actions.ts" },
+      { status: "done", owner: "build", title: "Provider dashboard fixes", detail: "Done 2026-11-10 (audit M1-16 to M1-21): the declined-changes note clears on the next save; Remove and Retry on uploads no longer submit the step; providers asked for changes get their own reminders (1, 3, 7 days, once per request); \"won't be charged\" only when the pause went through; \"Send it again\" asks for the email once the screen forgets it; the data export shows errors and now includes email choices, recovery requests, account events and provider names. New wording approved by the owner (2026-11-10).", where: PRIVATE_AUDIT },
+      { status: "done", owner: "build", title: "Admin account links on the admin host", detail: "Done 2026-11-10 (audit M1-15): a team member's change-email, password-reset and \"password changed\" links open on the admin host, and the admin log-in keeps those pages as its destination.", where: "src/server/url.ts" },
+      { status: "done", owner: "build", title: "Approval email and timeline variants", detail: "Done 2026-11-10 (audit M1-14): one rule (listingNeedsPayment) for the dashboard, the onboarding and submitted timelines and the approval email: \"Activate your listing\" only when a provider has to pay; founding providers and everyone while billing is off get \"you're verified, and you're live\". New wording approved by the owner (2026-11-10).", where: "src/server/emails.ts" },
     ],
   },
   {
@@ -152,7 +215,7 @@ export const TRACKER: TrackerGroup[] = [
       { status: "todo", owner: "build", blocker: true, title: "Provider blog editor", detail: "Figma D3 list and D4/D5 editor: draft, in review, changes requested, published, unpublished; autosave, cover image, excerpt and slug; output cleaned of unsafe HTML. Nothing exists yet: no table, routes or nav item." },
       { status: "todo", owner: "build", blocker: true, title: "Admin blog moderation", detail: "A queue to approve or send back provider posts, with an email at each status change." },
       { status: "todo", owner: "build", blocker: true, title: "Published provider posts on /blog and on profiles", detail: "An \"Articles\" section on the public profile; posts hidden while the provider is suspended. Today the Providers tab on /blog lists Markdown files by invented authors." },
-      { status: "todo", owner: "build", title: "Blog managed in the admin console", detail: "Owner request, 2026-10-28: the team writes and publishes its own posts in Admin (title, excerpt, category, author, cover image), replacing the Decap editor at /cms, with the same states as the provider editor. The current thumbnails are placeholders until real covers are uploaded there.", where: "/cms" },
+      { status: "todo", owner: "build", title: "Blog managed in the admin console", detail: "Owner request, 2026-10-28: the team writes and publishes its own posts in Admin (title, excerpt, category, author, cover image), replacing the Decap editor at /cms, with the same states as the provider editor. The current thumbnails are placeholders until real covers are uploaded there. 2026-11-10: confirmed as the plan, replacing the Decap CMS at /cms (see \"Retire or lock down the CMS\"). Waiting on the owner's research for exactly what the editor should do.", where: "/cms" },
       { status: "todo", owner: "build", title: "Landing page on live data", detail: "Owner request, 2026-10-28: the home page is still all fixed content. Its blog section should show the latest published posts, and its reviews, provider count and figures should come from the app once those exist.", where: "src/app/(site)/page.tsx" },
       { status: "done", owner: "build", title: "Blog index and reader", detail: "After theboringblog.ai (owner request, 2026-10-28): posts by year with a PsychMind team / Providers switch and category chips, infinite scroll, a rendered shore with the girl at the foot (animation/blog-shore), and posts that snap part to part. The blog header has Go back and Subscribe; no footer.", where: "/blog" },
       { status: "done", owner: "build", title: "Blog subscriptions", detail: "Subscribe in the blog header: an email, then a confirmation link (double opt-in, 3 days), rate-limited, with a honeypot; the same answer whether or not the address was known. Stored in blog_subscriber; leaving is the marketing opt-out.", where: "src/server/blog/subscribe-actions.ts" },
@@ -165,7 +228,7 @@ export const TRACKER: TrackerGroup[] = [
       { status: "todo", owner: "client", title: "Blog moderation rule (D25)", detail: "Recommended: an admin approves provider posts before they're published." },
       { status: "todo", owner: "client", title: "Analytics footnote copy", detail: "\"updated everyday\" and \"helps optimizing\" are shown verbatim from Figma D1." },
       // 2026-11-09 audit (private, outside the repo).
-      { status: "doing", owner: "build", blocker: true, title: "Admin account hardening", detail: "Fixed 2026-11-10: team-address sign-up, promotion and removal (M3-01, M3-02), the sign-up redirect regression (M3-04), and the document routes' admin check (M3-10). Still open: admin sessions on the main host, password-reset rules, the audit trail, audit events and session length (audit M3-03, M3-08, M3-09, M3-16, M3-17).", where: PRIVATE_AUDIT },
+      { status: "doing", owner: "build", blocker: true, title: "Admin account hardening", detail: "Fixed 2026-11-10: team-address sign-up, promotion and removal (M3-01, M3-02), the sign-up redirect regression (M3-04), the document routes' admin check (M3-10), and admin sessions on the main site (M3-03: the raw sign-in endpoints are refused over HTTP and a promotion ends the sign-in). Still open: password-reset rules, the audit trail, audit events and session length (audit M3-08, M3-09, M3-16, M3-17).", where: PRIVATE_AUDIT },
       { status: "todo", owner: "build", title: "Safe verification decisions", detail: "Approve exactly what was reviewed, conditional updates so two admins can't both decide, and a Reset access that survives a failed email (audit M3-05 to M3-07).", where: "src/server/admin/actions.ts" },
       { status: "todo", owner: "client", title: "Founding spot rules", detail: "Spots are claimed at sign-up, never released and invisible in the console, and deleting a founding account frees one. Decide when a spot counts and when it's released; then a Founding column and a remove action (audit M3-12).", where: "src/server/founding.ts" },
       { status: "todo", owner: "build", title: "Site-wide analytics on every page", detail: "Only the home page, search, profiles and the request flow report views, so the admin's site-wide visitors and page views undercount (audit M3-13). Also per-provider caps and the Do Not Track wording (M3-28).", where: "src/lib/analytics/events.ts" },
@@ -208,6 +271,8 @@ export const TRACKER: TrackerGroup[] = [
       { status: "todo", owner: "accounts", blocker: true, title: "Domains and inboxes", detail: "Set up inboxes at psychmind.org for the addresses the site uses, then move the legal pages off psychmind.co (not owned; client approves the change), and add a DMARC record for psychmind.org (audit M4-03, M4-04).", where: PRIVATE_AUDIT },
       { status: "todo", owner: "accounts", blocker: true, title: "Repository settings", detail: "Make the repository private, turn on Dependabot alerts and security updates, and protect main (audit M4-05).", where: PRIVATE_AUDIT },
       { status: "todo", owner: "build", blocker: true, title: "Stripe go-live plan", detail: "Test mode on its own database (not production), the three Stripe variables set together, and providers told before billing starts (audit M4-10, M1-05; the notice and any grace period are the client's call).", where: "docs/live-testing.md" },
+      { status: "todo", owner: "client", blocker: true, title: "Payment provider", detail: "To discuss (2026-11-10): Dee's team uses something other than Stripe. Billing is built on Stripe (subscription, grace period, customer portal, renewal terms), so the choice decides what the billing items below become." },
+      { status: "todo", owner: "build", blocker: true, title: "Billing go-live fixes", detail: "Moved from Milestone 1 on 2026-11-10: every payment item waits on the client's choice of payment provider (her team uses something other than Stripe). If it stays Stripe, before it's switched on: an abandoned checkout leaves an \"incomplete\" row that hides Activate for good; \"Stripe on\" must require all three variables; founding providers who already pay; two checkouts both paid; the daily sweep stops on one failed email; the re-check never asks Stripe (audit M1-04, M1-05, M1-09 to M1-12).", where: "src/lib/billing.ts" },
       { status: "todo", owner: "build", title: "Personal data: logs and retention", detail: "No personal or health data in error logs (audit M4-07), and retention rules for guest requests, recovery IDs, sessions and subscribers once the client sets the periods (M4-08).", where: PRIVATE_AUDIT },
       { status: "todo", owner: "build", title: "Upload quotas", detail: "Per-account and recovery upload caps, and a cleanup that runs to completion (audit M4-09).", where: "src/app/api/uploads/route.ts" },
       { status: "todo", owner: "build", title: "Resilience", detail: "Timeouts on Resend, Stripe, Upstash and the database; a daily job that reports failures and runs billing first; an admin-only production config check (audit M4-11 to M4-13).", where: "src/app/api/cron/daily/route.ts" },

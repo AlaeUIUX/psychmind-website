@@ -8,7 +8,7 @@ import { LocalTime } from "@/components/app/local-time";
 import { Badge } from "@/components/ui/badge";
 import journal from "../../../../drizzle/meta/_journal.json";
 import { ProgressBar, ProgressBoard } from "./progress-board";
-import { REVIEWED, TRACKER, groupProgress } from "./tracker";
+import { REVIEWED, TRACKER, UPDATES, groupProgress } from "./tracker";
 
 export const metadata: Metadata = { title: "Progress — PsychMind", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -88,6 +88,36 @@ export default function DevProgressPage() {
               <p className="type-ui-caption text-text-placeholder">{tile.hint}</p>
             </div>
           ))}
+        </section>
+
+        <section aria-labelledby="updates-title" className="flex flex-col gap-3">
+          <h2 id="updates-title" className="type-ui-heading text-text-primary">
+            Latest updates
+          </h2>
+          <ol className="flex flex-col gap-3">
+            {UPDATES.slice(0, 3).map((update) => (
+              <li key={update.date + update.title} className="flex flex-col gap-3 rounded-card border border-warm-200 bg-white p-4 sm:p-5">
+                <p className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="type-ui-heading text-text-primary">{update.title}</span>
+                  <span className="type-ui-caption text-text-tertiary tabular-nums">{update.date}</span>
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {update.changes.map((c) => (
+                    <li key={c.milestone + c.item} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:gap-3">
+                      <Badge variant={c.status === "done" ? "success" : c.status === "doing" ? "info" : "neutral"} className="w-fit shrink-0">
+                        {c.status === "done" ? "Done" : c.status === "doing" ? "In progress" : "To do"}
+                      </Badge>
+                      <p className="type-ui-small text-text-secondary">
+                        <span className="text-text-tertiary">{c.milestone} · </span>
+                        <span className="font-medium text-text-primary">{c.item}</span>
+                        {c.note && <span>. {c.note}</span>}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section aria-labelledby="milestones-title" className="flex flex-col gap-3">

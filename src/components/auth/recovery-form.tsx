@@ -60,13 +60,14 @@ export function RecoveryForm({ signedInEmail, defaultEmail }: { signedInEmail?: 
   if (sentTo) {
     return (
       <div className="flex flex-col gap-7">
-        <AuthTitle eyebrow="Request sent" title="We'll be in touch" description="Our support team will check your details and reply by email, usually within 2 business days." />
+        {/* The request waits for the new address to be confirmed. Copy approved by the owner, 2026-11-10. */}
+        <AuthTitle eyebrow="One more step" title="Check your new inbox" description="We sent a link to confirm this address. Your request goes to our support team once you open it." />
         <div className="flex items-center gap-3 rounded-xl border border-warm-200 p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-700">
             <MailCheckIcon className="size-[18px]" />
           </span>
           <div className="flex min-w-0 flex-col">
-            <span className="type-ui-label text-warm-900">We&apos;ll reply to</span>
+            <span className="type-ui-label text-warm-900">Confirmation link sent to</span>
             <span className="truncate type-ui-small text-warm-600" data-testid="recovery-sent-to">
               {sentTo}
             </span>

@@ -1,3 +1,4 @@
+import { listingNeedsPayment } from "@/lib/billing";
 import { ArrowUpRightIcon, BellIcon, ChevronRightIcon, EyeIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -29,7 +30,10 @@ export default async function SubmittedPage() {
     // When they sent it, in their own time zone (not the time of this visit).
     { title: "Profile submitted", meta: state.submittedAt ? <LocalTime value={state.submittedAt} style="datetime" /> : null, state: "done" as const },
     { title: "License verification", meta: "In review · usually 1–2 business days", state: "current" as const },
-    { title: "Activate your listing", meta: "After you're verified", state: "todo" as const },
+    // Only when they'll have to pay to be listed (lib/billing listingNeedsPayment). Copy approved by the owner, 2026-11-10.
+    listingNeedsPayment(!!state.founding)
+      ? { title: "Activate your listing", meta: "After you're verified", state: "todo" as const }
+      : { title: "Go live", meta: "As soon as you're verified", state: "todo" as const },
   ];
 
   return (

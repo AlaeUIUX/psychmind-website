@@ -36,7 +36,34 @@ export async function readOutbox(): Promise<OutboxEntry[]> {
   }
 }
 
+/** Whether a real sender address is set (EMAIL_FROM). Without it, Resend's
+ *  test sender is used, which only delivers to the Resend account's owner. */
+export const senderConfigured = () => Boolean(process.env.EMAIL_FROM);
+
+/** Sends an email. A failure is recorded for Admin → Failed emails (the
+ *  recipient, subject and error only), then thrown as before, so every
+ *  caller keeps its own handling and nothing fails silently (audit M1-03). */
 export async function sendEmail(email: Email) {
+  try {
+    await deliver(email);
+  } catch (err) {
+    await recordEmailFailure(email, err);
+    throw err;
+  }
+}
+
+async function recordEmailFailure(email: Email, err: unknown) {
+  try {
+    const [{ db }, { emailFailure }] = await Promise.all([import("@/db"), import("@/db/schema")]);
+    const message = (err instanceof Error ? err.message : String(err)).replace(/\s+/g, " ").slice(0, 300);
+    await db.insert(emailFailure).values({ recipient: email.to.slice(0, 254), subject: email.subject.slice(0, 200), error: message || "Unknown error" });
+  } catch (recordErr) {
+    // The database itself may be the problem; the log still has it.
+    console.error("recording an email failure failed", recordErr);
+  }
+}
+
+async function deliver(email: Email) {
   const key = process.env.RESEND_API_KEY;
   // EMAIL_TRANSPORT=outbox forces the local outbox even when a key is set (dev/tests).
   if (key && process.env.EMAIL_TRANSPORT !== "outbox") {

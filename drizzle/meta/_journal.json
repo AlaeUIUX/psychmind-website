@@ -155,6 +155,20 @@
       "when": 1794250535618,
       "tag": "0021_sample_insurance",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794303461847,
+      "tag": "0022_recovery_safeguards",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794305153970,
+      "tag": "0023_email_failures",
+      "breakpoints": true
     }
   ]
 }

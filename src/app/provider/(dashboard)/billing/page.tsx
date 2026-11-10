@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { CheckIcon, LockIcon } from "@/components/ui/hugeicons";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/app/page-header";
@@ -6,7 +6,7 @@ import { StatusBanner } from "@/components/app/status-banner";
 import { ActivateButton, ManageBillingButton, RefreshWhileProcessing } from "@/components/provider/billing-actions";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
-import { providerProfile } from "@/db/schema";
+import { auditLog, providerProfile } from "@/db/schema";
 import { BASE_PLAN, hasSubscription, renewalTerms, shownListing, stripeConfigured } from "@/lib/billing";
 import { locationLimit } from "@/lib/provider/schema";
 import { requireRole } from "@/server/auth/session";
@@ -25,6 +25,15 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const state = await loadProviderState(user.id);
   const [row] = await db.select({ pastDueSince: providerProfile.pastDueSince }).from(providerProfile).where(eq(providerProfile.id, state.id));
   const { listing, billing, graceDays } = await providerOverview(user.id, state, row?.pastDueSince ?? null);
+  // Whether suspending actually paused collection in Stripe (server/billing/pause.ts
+  // audits both outcomes): promise "you won't be charged" only then.
+  const [lastPause] = await db
+    .select({ action: auditLog.action })
+    .from(auditLog)
+    .where(and(eq(auditLog.targetType, "provider_profile"), eq(auditLog.targetId, state.id), inArray(auditLog.action, ["billing.paused", "billing.pause_failed", "billing.resumed"])))
+    .orderBy(desc(auditLog.createdAt))
+    .limit(1);
+  const billingPaused = lastPause?.action === "billing.paused";
   const { checkout } = await searchParams;
   const connected = stripeConfigured() && Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const verified = state.status === "approved";
@@ -121,7 +130,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
               // TODO(client): copy.
               <div className="flex flex-col gap-1">
                 <dt className="type-overline text-text-tertiary">Billing</dt>
-                <dd className="type-small text-text-primary">Paused while your profile isn&apos;t listed. You won&apos;t be charged.</dd>
+                <dd className="type-small text-text-primary">
+                  {billingPaused
+                    ? "Paused while your profile isn't listed. You won't be charged."
+                    : "We're pausing your billing while your profile isn't listed. If you see a charge, contact us."}
+                </dd>
               </div>
             ) : (
               billing.periodEnd &&

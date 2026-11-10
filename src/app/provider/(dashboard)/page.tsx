@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { providerProfile, sessionRequest } from "@/db/schema";
 import { dayOf, parseRange } from "@/lib/analytics/range";
-import { hasSubscription, isListed, shownListing, stripeConfigured } from "@/lib/billing";
+import { hasSubscription, isListed, listingNeedsPayment, shownListing, stripeConfigured } from "@/lib/billing";
 import { sectionStatuses } from "@/lib/provider/completeness";
 import { accountHealth, needsAttention, type HealthTone } from "@/lib/provider/health";
 import { profilePath } from "@/lib/provider/links";
@@ -58,7 +58,11 @@ export default async function ProviderHome() {
   const suspended = state.status === "suspended";
   const subscribed = hasSubscription(billing.status);
   // In the directory now (approval alone lists them until billing is connected).
-  const inDirectory = approved && isListed(shownListing(listing));
+  // Search shows a provider only in states with a verified license (server/directory/data.ts).
+  const verifiedStates = new Set(state.licenses.filter((l) => l.status === "verified").map((l) => l.state));
+  const practised = new Set(state.locations.map((l) => l.state));
+  const searchable = state.locations.some((l) => verifiedStates.has(l.state));
+  const inDirectory = approved && isListed(shownListing(listing)) && searchable;
   const name = (state.displayAsBusiness && state.businessName) || [state.firstName, state.lastName].filter(Boolean).join(" ") || user.name;
   const photo = state.photo ? fileUrl(state.photo.id) : state.externalPhotoUrl;
 
@@ -67,7 +71,9 @@ export default async function ProviderHome() {
     onboardingStep: state.onboardingStep,
     needsReview: state.needsReview,
     sections: sectionStatuses(state),
-    licenses: state.licenses,
+    // Dormant licenses (a removed location's state) aren't counted.
+    licenses: state.licenses.filter((l) => practised.has(l.state)),
+    searchable,
     listing: shownListing(listing),
     graceDays,
     billingConnected: stripeConfigured(),
@@ -90,7 +96,7 @@ export default async function ProviderHome() {
     { label: "Build your profile", done: state.status !== "draft", href: `/provider/onboarding/${state.onboardingStep}` },
     { label: "Get verified by our team", done: approved || suspended, href: null, stopped: rejected ? "We couldn't verify your profile" : undefined },
     // Nothing to activate until billing is connected, or ever for founding providers.
-    ...(stripeConfigured() && !state.founding
+    ...(listingNeedsPayment(!!state.founding)
       ? [{ label: "Activate your listing", done: listing === "live" || listing === "grace" || listing === "paused" || (suspended && subscribed), href: "/provider/billing" }]
       : []),
     { label: "Appear in search", done: inDirectory, href: null, stopped: suspended ? "Suspended" : undefined },

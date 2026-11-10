@@ -12,6 +12,7 @@ import {
   InboxIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
+  MailIcon,
   MegaphoneIcon,
   PanelLeftIcon,
   SettingsIcon,
@@ -44,6 +45,7 @@ const ICONS = {
   queue: ShieldCheckIcon,
   providers: UsersIcon,
   recovery: LifeBuoyIcon,
+  emails: MailIcon,
   admins: UserIcon,
 } as const;
 

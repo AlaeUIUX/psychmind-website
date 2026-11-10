@@ -108,6 +108,14 @@ export function stripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_BASE);
 }
 
+/** Whether a provider has to start a paid plan to be listed: only while
+ *  billing is connected, and never for founding providers (server/founding.ts).
+ *  The dashboard, onboarding, the submitted page and the approval email all
+ *  follow it, so none of them asks a provider to pay for a free listing. */
+export function listingNeedsPayment(founding: boolean) {
+  return stripeConfigured() && !founding;
+}
+
 /** What a provider is told about their listing. Until billing is connected,
  *  approval alone lists them (see listedCondition), so "unpaid" reads as live. */
 export function shownListing(listing: ListingState): ListingState {

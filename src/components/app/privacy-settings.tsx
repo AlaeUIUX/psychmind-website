@@ -1,6 +1,7 @@
 "use client";
 
-import { DownloadIcon, ShieldCheckIcon } from "@/components/ui/hugeicons";
+import { ShieldCheckIcon } from "@/components/ui/hugeicons";
+import { ExportDataButton } from "./export-data-button";
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -78,12 +79,7 @@ export function PrivacySettings({
           )}
         </Row>
         <Row title="Download your data" description="A copy of everything PsychMind stores about your account, as a file.">
-          <Button asChild variant="secondary" size="sm" className="h-9 px-3.5 text-[13px]">
-            <a href="/api/account/export" download>
-              <DownloadIcon />
-              Download
-            </a>
-          </Button>
+          <ExportDataButton />
         </Row>
         <Row
           title="Delete your account"

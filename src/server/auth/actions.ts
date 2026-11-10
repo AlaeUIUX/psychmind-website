@@ -1,6 +1,7 @@
 "use server";
 
 import { hashPassword } from "better-auth/crypto";
+import { BREACHED_PASSWORD, isBreachedPassword } from "./breached";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
@@ -118,6 +119,7 @@ async function signUp(role: "patient" | "provider", form: FormData): Promise<Aut
 
   const v = parsed.data;
   if (await limited("signup", v.email, 5, "10 m")) return { error: TOO_MANY, values };
+  if (await isBreachedPassword(v.password)) return { fieldErrors: { password: BREACHED_PASSWORD }, values };
   await dbReady;
   // Nobody signs up as an admin: their account is made for them, with a
   // temporary password by email. Answer like any other sign-up so this form
@@ -344,6 +346,7 @@ export async function resetPassword(_prev: AuthState, form: FormData): Promise<A
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return { fieldErrors: issues(parsed.error) };
   if (await limited("reset-confirm", "token", 10, "10 m")) return { error: TOO_MANY };
+  if (await isBreachedPassword(parsed.data.password)) return { fieldErrors: { password: BREACHED_PASSWORD } };
   await dbReady;
   try {
     await auth.api.resetPassword({ body: { newPassword: parsed.data.password, token: parsed.data.token }, headers: await headers() });

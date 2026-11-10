@@ -16,7 +16,7 @@ async function logIn(page: Page, email: string, password = TEST_PASSWORD) {
 
 async function logOut(page: Page) {
   await page.goto("/account/settings");
-  await page.getByRole("button", { name: "Log out" }).first().click();
+  await page.getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page).toHaveURL(/\/login/);
 }
 

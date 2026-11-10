@@ -14,7 +14,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { HoverArrow } from "@/components/auth/fields";
 import { Button } from "@/components/ui/button";
-import { BASE_PLAN } from "@/lib/billing";
+import { BASE_PLAN, listingNeedsPayment } from "@/lib/billing";
 import { sectionStatuses } from "@/lib/provider/completeness";
 import { sizeLabel, UPLOAD_RULES } from "@/lib/provider/uploads";
 import { ONBOARDING_STEPS, stepIndex } from "@/lib/provider/steps";
@@ -26,10 +26,13 @@ export const metadata: Metadata = { title: "For providers — PsychMind", robots
 const featureIcons = [CalendarIcon, BadgeCheckIcon, CircleDollarSignIcon, ShieldIcon];
 
 // TODO(client): "How it works" and "What you'll need" are new copy.
-const timeline = [
+const timeline = (needsPayment: boolean) => [
   { title: "Build your profile", body: "Your story, expertise, fees and locations.", badge: "~20 min" },
   { title: "License verification", body: "Our team checks every license by hand.", badge: "1–2 business days" },
-  { title: "Activate your listing", body: "Start your plan and appear in search.", badge: "Same day" },
+  // Only when they'll have to pay to be listed (lib/billing listingNeedsPayment). Copy approved by the owner, 2026-11-10.
+  needsPayment
+    ? { title: "Activate your listing", body: "Start your plan and appear in search.", badge: "Same day" }
+    : { title: "Go live", body: "Your profile appears in search once it's verified.", badge: "Same day" },
 ];
 
 const needs = [
@@ -54,6 +57,7 @@ export default async function OnboardingWelcomePage() {
   // Of all nine steps, so a filled-in profile still has submitting left.
   const percent = Math.round((done / ONBOARDING_STEPS.length) * 100);
   const resume = ONBOARDING_STEPS.find((s) => s.key === state.onboardingStep);
+  const steps = timeline(listingNeedsPayment(!!state.founding));
 
   return (
     <div className="grid items-start gap-10 py-4 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-16 lg:py-10">
@@ -159,9 +163,9 @@ export default async function OnboardingWelcomePage() {
         <div className="animate-ui-enter rounded-2xl border border-warm-200 bg-white p-6" style={{ "--i": 2 } as React.CSSProperties}>
           <h2 className="type-ui-heading text-warm-900">How it works</h2>
           <ol className="mt-5 flex flex-col">
-            {timeline.map((t, i) => (
+            {steps.map((t, i) => (
               <li key={t.title} className="relative flex gap-4 pb-6 last:pb-0">
-                {i < timeline.length - 1 && <span aria-hidden className="absolute top-8 bottom-1 left-[13px] w-px bg-warm-200" />}
+                {i < steps.length - 1 && <span aria-hidden className="absolute top-8 bottom-1 left-[13px] w-px bg-warm-200" />}
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-warm-100 type-ui-mono text-[12px] text-warm-600">{i + 1}</span>
                 <div className="flex flex-1 flex-col gap-1 pt-0.5">
                   <div className="flex flex-wrap items-center gap-2">

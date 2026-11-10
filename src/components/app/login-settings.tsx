@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import {
   changePassword,
   setPassword,
+  signOutOtherDevices,
   startEmailChange,
   startEmailChangeWithCode,
   type SettingsState,
@@ -22,6 +23,29 @@ import {
 // one, the way back is support (/account-recovery). All copy is new: TODO(client).
 
 const compact = "h-9 px-3.5 text-[13px]";
+
+/** Copy approved by the owner, 2026-11-10. */
+function SignOutOthers() {
+  const [pending, start] = useTransition();
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      size="sm"
+      className={compact}
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const result = await signOutOtherDevices().catch(() => ({ ok: false, error: "We couldn't reach PsychMind. Please try again." }));
+          if (result.ok) toast.success("You're logged out everywhere else.");
+          else toast.error(result.error ?? "Something went wrong.");
+        })
+      }
+    >
+      {pending ? "Logging out…" : "Log out other devices"}
+    </Button>
+  );
+}
 
 function Row({ title, description, children }: { title: string; description: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -66,6 +90,9 @@ export function LoginSettings({
           }
         >
           <PasswordDialog hasPassword={hasPassword} role={role} />
+        </Row>
+        <Row title="Other devices" description="Log out everywhere except here, for example after using a shared computer.">
+          <SignOutOthers />
         </Row>
         <Row title="Log out" description="End your session on this device.">
           <form action={signOutAction}>
