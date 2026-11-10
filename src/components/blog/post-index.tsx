@@ -6,8 +6,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { topicChip, topicChipOff, topicChipOn } from "@/components/home/search-styles";
 import type { IndexedPost, PostSource } from "@/lib/blog";
 import { postNumber } from "@/lib/blog-format";
+import { PostCover } from "./post-cover";
 
-// The blog index, after theboringblog.ai's: no pictures, just the posts, newest first,
+// The blog index, after theboringblog.ai's: the posts, newest first, each with its cover,
 // grouped by year (the year and its count in a column of their own on desktop). Each
 // is its title, its line, and its number · date · reading time.
 //
@@ -129,13 +130,20 @@ export function PostIndex({ posts }: { posts: IndexedPost[] }) {
             <ul className="mt-4 lg:col-start-2 lg:mt-16">
               {entries.map((post) => (
                 <li key={post.slug} className="animate-fade-in border-b border-warm-200 last:border-b-0">
-                  <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-1.5 py-5">
-                    <span className="type-reader-entry text-text-primary underline-offset-4 group-hover:underline">
-                      {post.title}
+                  {/* its cover beside it (above it on phones), the same picture as on the
+                      home page and at the top of the post */}
+                  <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-4 py-5 sm:flex-row-reverse sm:items-start sm:gap-6">
+                    <span className="block w-full shrink-0 overflow-hidden rounded-field sm:w-[200px]">
+                      <PostCover spot={post.cover} />
                     </span>
-                    <span className="type-body text-text-tertiary">{post.excerpt}</span>
-                    <span className="type-small text-text-placeholder">
-                      {postNumber(post.number)} · {post.date} · {post.readTime}
+                    <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <span className="type-reader-entry text-text-primary underline-offset-4 group-hover:underline">
+                        {post.title}
+                      </span>
+                      <span className="type-body text-text-tertiary">{post.excerpt}</span>
+                      <span className="type-small text-text-placeholder">
+                        {postNumber(post.number)} · {post.date} · {post.readTime} · {post.author}
+                      </span>
                     </span>
                   </Link>
                 </li>

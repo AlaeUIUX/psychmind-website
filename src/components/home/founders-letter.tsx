@@ -47,8 +47,8 @@ export type Letter = {
 };
 const LANDING: Letter = { note: [NOTE], line: { wide: [LINE], narrow: LINE_NARROW } };
 const SIGNERS = [
-  { name: "Brenda", role: "Co-founder, PsychMind" },
-  { name: "Dee", role: "Co-founder, PsychMind" },
+  { name: "Dani", role: "Co-founder, PsychMind" },
+  { name: "Bri", role: "Co-founder, PsychMind" },
 ];
 
 /** Longer than any letter's outline in the closing line, so a dash this long hides it whole. */

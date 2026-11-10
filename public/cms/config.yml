@@ -47,19 +47,21 @@ collections:
         }
       - { label: "Date", name: "date", widget: "string", hint: "e.g. March 2025" }
       - { label: "Read time", name: "readTime", widget: "string", hint: "e.g. 8 min read" }
-      - {
-          label: "Hero image",
-          name: "heroImage",
-          widget: "image",
-          required: false,
-          hint: "Full-width image shown under the title",
-        }
-      - {
-          label: "Thumbnail (blog grid card)",
-          name: "thumbnail",
-          widget: "image",
-          required: false,
-        }
+      - label: "Cover picture"
+        name: "cover"
+        widget: "select"
+        options:
+          - { label: "The search bar", value: "search" }
+          - { label: "Credentials under a loupe", value: "verified" }
+          - { label: "Search's session format and places", value: "location" }
+          - { label: "Daily totals on the dashboard", value: "analytics" }
+          - { label: "The therapy approach filter", value: "approach" }
+          - { label: "The request card", value: "request" }
+          - { label: "The girl in her boat", value: "boat" }
+          - { label: "The girl where two roads part", value: "two-roads" }
+          - { label: "The girl under a rain cloud", value: "rain-cloud" }
+        default: "search"
+        hint: "Product posts: the UI it's about. Posts about people: one of the girl's pictures. Nothing is written on the cover; the title does that"
       - {
           label: "Featured on blog page",
           name: "featured",

@@ -28,6 +28,8 @@ import { ageOkToken } from "./age";
 import { auth } from "./index";
 import { setPendingEmail } from "./pending-email";
 import { getSession, hasTwoFactor, homeFor } from "./session";
+import { demoAdminCode } from "./demo-admin";
+import { isDemoPatient, resetDemoPatient } from "./demo-patient";
 import { isDemoProvider, resetDemoProvider } from "./demo-provider";
 import { isTestProvider, resetTestProvider } from "./test-provider";
 
@@ -224,6 +226,8 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
   if (testProvider) await resetTestProvider();
   // Local only: the demo provider is rebuilt full of requests and analytics.
   if (isDemoProvider(parsed.data.email)) await resetDemoProvider();
+  // Local only: the demo patient is rebuilt with saved providers and requests.
+  if (isDemoPatient(parsed.data.email)) await resetDemoPatient();
   let role: string | undefined;
   let needsCode = false;
   const next = testProvider ? "/provider/onboarding" : safeNext(form.get("next"));
@@ -277,7 +281,7 @@ export async function verifyTwoFactor(_prev: AuthState, form: FormData): Promise
   try {
     const result = backup
       ? await auth.api.verifyBackupCode({ body: { code }, headers: await headers() })
-      : await auth.api.verifyTOTP({ body: { code }, headers: await headers() });
+      : await auth.api.verifyTOTP({ body: { code: demoAdminCode(code) }, headers: await headers() });
     role = (result.user as { role?: string }).role;
   } catch (err) {
     const message = twoFactorMessage(err);

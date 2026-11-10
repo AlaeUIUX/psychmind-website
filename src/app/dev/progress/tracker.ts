@@ -47,7 +47,73 @@ export type TrackerUpdate = {
 export const UPDATES: TrackerUpdate[] = [
   {
     date: "2026-11-10",
-    title: "Failed emails, approved wording (going live)",
+    title: "Founders shown as Dani and Bri (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Copy for the refreshed pages", status: "todo", note: "The landing's doodle tags, its alt text and the letter's signatures now say Dani and Bri, as the mission page does: the founders chose aliases. Internal notes still call the client Dee." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog posts: a spring between parts (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog index and reader", status: "done", note: "Mouse, trackpad and keys: the landing's smooth scroll (Lenis) with its snap; one wheel notch flows a little, then springs to the next part (about a second, a touch of overshoot). One gesture moves one part. Phones keep the browser's own snap, which is the phone's scroll physics (UIKit paging on iOS)." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog note in the privacy promise's look (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "The note under the posts (written by people who do the work, not a diagnosis, 988) is now drawn like the landing's privacy promise: grey frame, white card, plain lines, the icon only on hover. On the home page and /blog." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Covers on /blog, and the home grid mixed (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "/blog shows each post's cover beside it (above it on phones). The home grid alternates UI and girl covers (post dates moved, placeholders anyway), and posts now sort by real date, not alphabetically." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog cards: title first, author, bigger UI covers (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "UI covers shown close up, about 1.5× real size, as on the landing's bento. The search post's cover is now the session format panel (In person, a ZIP, places by distance) instead of the dot diagram. Card captions: the title in medium, then category · read time · author, smaller." },
+      { milestone: "Milestone 4", item: "Placeholder blog posts", status: "doing", note: "Every post's author is \"John Doe\" for now, until real authors are named." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog covers, fourth pass: no text, the girl for posts about people (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Nothing written on the covers any more; the title beside them does that. Product posts keep their UI; the therapy, CBT and anxiety posts show the girl in the landing's dot print (in her boat, where two roads part, under a rain cloud), rendered from the landing's own 3D pieces at /dev/cover-studio." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog covers, third pass: real product UI, after incident.io (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Drawings replaced: each cover now shows what its post is about in our own UI (search bar, credentials card with a loupe, approach filter, request card, dashboard) or a quiet diagram (search's location rings). One 640 × 360 layout scaled like a picture, title larger and set by hand on two lines, a real blur under it, the red almost gone." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog covers, second pass: one size, depth, a grid (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Every cover 16:9 with its line the same size and height; white shapes with soft shadows, clouds behind, the drawing fading and blurring under the line; a faint red in the grey; simpler drawings. The home page's Resource center is now a plain grid of same-size cards." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Blog covers and new posts, after incident.io (not committed yet)",
+    changes: [
+      { milestone: "Milestone 3", item: "Blog covers, one set", status: "done", note: "Same paper, serif and pencil drawing on every cover; on the home page and at the top of each post." },
+      { milestone: "Milestone 4", item: "Placeholder blog posts", status: "doing", note: "Seven full drafts in place. Waiting on your review and real authors for the two provider posts." },
+      { milestone: "Milestone 3", item: "Blog managed in the admin console", status: "todo", note: "Its editor will pick a cover drawing and a cover line." },
+    ],
+  },
+  {
+    date: "2026-11-10",
+    title: "Failed emails and approved wording, live (commit cbe8f01)",
     changes: [
       { milestone: "Milestone 1", item: "Email failures recorded and visible", status: "done", note: "New Admin → Failed emails page, with a count in the sidebar." },
       { milestone: "Milestone 1", item: "Patient account recovery: what evidence is enough", status: "todo", note: "Suggested rule ready for your call with Dee." },
@@ -57,7 +123,7 @@ export const UPDATES: TrackerUpdate[] = [
   },
   {
     date: "2026-11-10",
-    title: "Milestone 1 fixes (going live with the entry above)",
+    title: "Milestone 1 fixes, live (commit cbe8f01)",
     changes: [
       { milestone: "Milestone 1", item: "Safer account recovery", status: "done", note: "Confirm the new address, 72-hour wait, one-click \"This wasn't me\", sign-ins since the request." },
       { milestone: "Milestone 1", item: "Account security hardening", status: "done", note: "Private endpoints closed, fairer limits, breached-password check, Log out other devices." },
@@ -215,12 +281,13 @@ export const TRACKER: TrackerGroup[] = [
       { status: "todo", owner: "build", blocker: true, title: "Provider blog editor", detail: "Figma D3 list and D4/D5 editor: draft, in review, changes requested, published, unpublished; autosave, cover image, excerpt and slug; output cleaned of unsafe HTML. Nothing exists yet: no table, routes or nav item." },
       { status: "todo", owner: "build", blocker: true, title: "Admin blog moderation", detail: "A queue to approve or send back provider posts, with an email at each status change." },
       { status: "todo", owner: "build", blocker: true, title: "Published provider posts on /blog and on profiles", detail: "An \"Articles\" section on the public profile; posts hidden while the provider is suspended. Today the Providers tab on /blog lists Markdown files by invented authors." },
-      { status: "todo", owner: "build", title: "Blog managed in the admin console", detail: "Owner request, 2026-10-28: the team writes and publishes its own posts in Admin (title, excerpt, category, author, cover image), replacing the Decap editor at /cms, with the same states as the provider editor. The current thumbnails are placeholders until real covers are uploaded there. 2026-11-10: confirmed as the plan, replacing the Decap CMS at /cms (see \"Retire or lock down the CMS\"). Waiting on the owner's research for exactly what the editor should do.", where: "/cms" },
+      { status: "todo", owner: "build", title: "Blog managed in the admin console", detail: "Owner request, 2026-10-28: the team writes and publishes its own posts in Admin (title, excerpt, category, author, cover image), replacing the Decap editor at /cms, with the same states as the provider editor. 2026-11-10: confirmed as the plan, replacing the Decap CMS at /cms (see \"Retire or lock down the CMS\"). Waiting on the owner's research for exactly what the editor should do. Covers are now drawn (see \"Blog covers, one set\"): the editor picks a cover drawing and types a cover line instead of uploading an image.", where: "/cms" },
       { status: "todo", owner: "build", title: "Landing page on live data", detail: "Owner request, 2026-10-28: the home page is still all fixed content. Its blog section should show the latest published posts, and its reviews, provider count and figures should come from the app once those exist.", where: "src/app/(site)/page.tsx" },
       { status: "done", owner: "build", title: "Blog index and reader", detail: "After theboringblog.ai (owner request, 2026-10-28): posts by year with a PsychMind team / Providers switch and category chips, infinite scroll, a rendered shore with the girl at the foot (animation/blog-shore), and posts that snap part to part. The blog header has Go back and Subscribe; no footer.", where: "/blog" },
+      { status: "done", owner: "build", title: "Blog covers, one set", detail: "Owner request, 2026-11-10, after incident.io/blog: every cover is one 640 × 360 picture scaled to its box, on the landing's grey with the faintest trace of red, with nothing written on it (the title beside it says what it is). Posts about the product show the actual thing in our own UI or a quiet diagram (search bar, credentials under a loupe, location rings, dashboard daily totals, approach filter, request card); posts about people show the girl in the landing's dot print (in her boat, where two roads part, under a rain cloud), rendered from the landing's own 3D pieces at /dev/cover-studio and saved by scripts/render-covers.mjs. Depth from the landing's focus pull; the picture blurs and fades at its foot. The same picture in the home page's Resource center (a plain grid of same-size cards) and at the top of each post. A post picks `cover:`; the CMS offers the same choices, and a unit test keeps them in step. All of them at /dev/covers.", where: "/dev/covers" },
       { status: "done", owner: "build", title: "Blog subscriptions", detail: "Subscribe in the blog header: an email, then a confirmation link (double opt-in, 3 days), rate-limited, with a honeypot; the same answer whether or not the address was known. Stored in blog_subscriber; leaving is the marketing opt-out.", where: "src/server/blog/subscribe-actions.ts" },
       { status: "done", owner: "build", title: "Marketing pages refreshed", detail: "Owner requests, 2026-10-28: How it works (hero and drifting showcase, the steps card, reviews, questions, the voyage to the provider band); How it works for providers (in the footer as \"For providers\"); the mission as the founders' letter; and Contact as one screen, the form in the portal's style beside the hero's voyage, sent through the app's email.", where: "/how-it-works/providers" },
-      { status: "todo", owner: "client", blocker: true, title: "Copy for the refreshed pages", detail: "New wording marked TODO(client): the provider steps and questions, the mission's lede, the contact page's errors and sent view, the footer's \"For providers\". Also: the mission text names Dani and Bri, the letter's doodle and signatures Brenda and Dee." },
+      { status: "todo", owner: "client", blocker: true, title: "Copy for the refreshed pages", detail: "New wording marked TODO(client): the provider steps and questions, the mission's lede, the contact page's errors and sent view, the footer's \"For providers\". The founders go by the aliases Dani and Bri everywhere (owner, 2026-11-10)." },
       { status: "todo", owner: "build", title: "Email new posts to blog subscribers", detail: "Nothing is sent to subscribers yet, though the Subscribe dialog promises it: when a post is published, email the confirmed subscribers through server/marketing.ts (unsubscribe link, postal address)." },
       { status: "todo", owner: "build", title: "Blog fixes", detail: "Six of seven excerpts are a reading time and date (\"4 min read · Jan 2025\"), which becomes the meta description and the post's first line; the home Resource center sorts by month name as text (February after January); on computers the blog has no footer or legal links (only the /blog index gets the site footer on phones; post pages have none on any device), and Subscribe has no privacy link.", where: "src/lib/blog.ts" },
       { status: "todo", owner: "build", title: "License expiry tracking", detail: "provider_license.expires_at exists, but nothing collects or reads it. Plan (D13): collect the date, hide the state on expiry, remind at 60, 30 and 7 days." },
@@ -258,7 +325,7 @@ export const TRACKER: TrackerGroup[] = [
       { status: "todo", owner: "accounts", blocker: true, title: "Email sending domain", detail: "Verify psychmind.org in Resend so EMAIL_FROM can be hello@psychmind.org." },
       { status: "todo", owner: "build", blocker: true, title: "Remove the sample providers, or load the client's real ones", detail: "They're live in search on www.psychmind.org. Admin → All providers → Remove samples." },
       { status: "todo", owner: "client", blocker: true, title: "Made-up figures, reviews and providers on the home page", detail: "\"< 24h\" to first session and a \"4.8\" rating (there are no ratings); placeholder testimonials, two praising messaging, which doesn't exist; three fictional \"verified\" providers with stock photos; \"Meet 2,400+ verified providers\". Replace with real ones or remove.", where: "src/components/home" },
-      { status: "todo", owner: "client", blocker: true, title: "Placeholder blog posts", detail: "6 of 7 posts say \"This is placeholder content\", including a \"$850K pre-seed round\" and an \"AI search tool\" story, some by invented \"Dr.\" authors.", where: "content/blog" },
+      { status: "doing", owner: "client", blocker: true, title: "Placeholder blog posts", detail: "2026-11-10: replaced with seven full drafts in incident.io's voice, in the same categories and the same team / provider split, saying only what the product really does (verification, search rules, private stats). The \"$850K pre-seed round\" and \"AI search tool\" posts are gone. Still open: the client reviews every post, and the two provider posts get real provider authors (\"Dr. Danny Schwelberg\" and \"Dr. Sara Olisz\" are invented) and a clinician's read.", where: "content/blog" },
       { status: "todo", owner: "client", blocker: true, title: "Legal pages match the app", detail: "Cookie policy: describes analytics cookies, a consent banner and a cookie-settings link that don't exist. Privacy: claims messages and bookings, leaves out the in-house analytics, marketing email and ID uploads, and §8 is a placeholder. Terms: §6 repeats §5, the guardian line contradicts 18+, jurisdiction \"still being established\", nothing on the subscription's renewal. Every address is @psychmind.co, the app uses psychmind.org. Ideally a lawyer reads it.", where: AUDIT },
       { status: "todo", owner: "client", blocker: true, title: "Final copy review", detail: "The roughly 50 copy and consistency issues from the Figma audit (D27), \"thousands of verified psychologists\" (D26), and the How it works FAQ, whose placeholder answers promise an insurance filter, messaging and a cancellation policy.", where: "docs/build-plan/BUILD-PLAN.md §4" },
       { status: "todo", owner: "client", blocker: true, title: "Hero music licence", detail: "The track on the home page has no confirmed licence (TODO(client)).", where: "src/components/home/showcase.tsx" },

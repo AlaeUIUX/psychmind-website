@@ -15,8 +15,11 @@ export type PostFrontmatter = {
   authorAvatar?: string;
   date: string;
   readTime: string;
+  /** The cover's picture, by name (components/blog/cover-spots.tsx): the same cover
+   *  on the home page's Resource center and at the top of the post. */
+  cover?: string;
+  /** Legacy pictures, no longer shown: the covers are drawn (`cover`). */
   heroImage?: string;
-  /** Use a built-in vector doodle as the lead art instead of `heroImage`. */
   art?: "magnifier";
   thumbnail?: string;
   featured?: boolean;
@@ -34,7 +37,8 @@ export function getAllPosts(): Post[] {
     const { data } = matter(raw);
     return { slug, ...(data as PostFrontmatter) };
   });
-  return posts.sort((a, b) => (a.date < b.date ? 1 : -1));
+  // newest first, by the date itself ("November 2026" sorts after "September 2026")
+  return posts.sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
 }
 
 export function getPostBySlug(slug: string): { frontmatter: Post; content: string } | null {

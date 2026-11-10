@@ -4,8 +4,9 @@ import { useRef } from "react";
 import { DoodleHookArrow } from "@/components/ui/doodles";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 
-// The founders' doodle with handwritten name tags: Brenda on the left,
-// Dee (curly hair) on the right. Tags and pencil arrows draw in on scroll.
+// The founders' doodle with handwritten name tags: Dani on the left,
+// Bri (curly hair) on the right. Tags and pencil arrows draw in on scroll.
+// (Aliases: the founders chose not to show their own names; owner, 2026-11-10.)
 // It sits on top of the founders' letter and is pinned with it.
 export function CreatorsIllustration() {
   const root = useRef<HTMLDivElement>(null);
@@ -37,23 +38,23 @@ export function CreatorsIllustration() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/home/mission-illustration.png"
-        alt="Brenda and Dee, the founders of PsychMind"
+        alt="Dani and Bri, the founders of PsychMind"
         className="block h-[132px] w-[167px] sm:h-[187px] sm:w-[236px]"
       />
 
-      {/* Brenda — above her bun, arrow down to her */}
+      {/* Dani — above her bun, arrow down to her */}
       <span data-tag className="pointer-events-none absolute -top-7 left-[2%] flex items-start gap-0.5 text-warm-700 sm:-top-8">
         <span data-name className="font-display text-[17px] italic sm:text-xl">
-          Brenda
+          Dani
         </span>
         <DoodleHookArrow className="mt-3 h-9 w-5 sm:h-11 sm:w-6" />
       </span>
 
-      {/* Dee — just right of her curly bun, arrow curling down onto it */}
+      {/* Bri — just right of her curly bun, arrow curling down onto it */}
       <span data-tag className="pointer-events-none absolute -top-5 left-[76%] flex items-start gap-0.5 text-warm-700 sm:-top-6">
         <DoodleHookArrow className="mt-3 h-9 w-5 -scale-x-100 sm:h-11 sm:w-6" />
         <span data-name className="font-display text-[17px] italic sm:text-xl">
-          Dee
+          Bri
         </span>
       </span>
     </div>

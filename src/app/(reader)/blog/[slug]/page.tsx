@@ -4,15 +4,16 @@ import { notFound } from "next/navigation";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { postNumber } from "@/lib/blog-format";
+import { PostCover } from "@/components/blog/post-cover";
 import { Beat, Reader, type ReaderPart } from "@/components/blog/reader";
 import { AuthorBar } from "@/components/shared/author-bar";
 import { CtaArrowIcon } from "@/components/ui/hugeicons";
 import { getPostBySlug, getPostIndex } from "@/lib/blog";
 
 // A post, after theboringblog.ai's: a title screen (its number and year, the title, its
-// line, who wrote it and how long), then each of its parts (its ## sections) a screen
-// of its own, counted, the page snapping from one to the next, and at the end who
-// wrote it, the next post, and the way back. No pictures but the ones in the text.
+// line, who wrote it and how long, and its cover), then each of its parts (its ##
+// sections) a screen of its own, counted, the page snapping from one to the next, and
+// at the end who wrote it, the next post, and the way back.
 
 export function generateStaticParams() {
   return getPostIndex().map((post) => ({ slug: post.slug }));
@@ -99,6 +100,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           By <span className="text-text-secondary">{frontmatter.author}</span> · {frontmatter.date} · {frontmatter.readTime} ·{" "}
           {parts.length} {parts.length === 1 ? "part" : "parts"}
         </p>
+        {/* its cover, as on the home page's Resource center (incident.io's posts open the same way) */}
+        <div className="mt-10 overflow-hidden rounded-card">
+          <PostCover spot={frontmatter.cover} />
+        </div>
         {/* TODO(client): new microcopy */}
         <p aria-hidden className="type-overline absolute inset-x-0 bottom-10 text-center text-text-placeholder">
           Scroll

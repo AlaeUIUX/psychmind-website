@@ -9,9 +9,8 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { getAllPosts } from "@/lib/blog";
 
 // "Resource center": the blog's latest posts (content/blog, newest first; the
-// featured one leads the blog page instead), stacked as Catalyst's selected
-// work (post-stack.tsx). Six fill the rhythm once: two thirds and a third, one
-// full width, three across.
+// featured one leads the blog page instead), in a plain grid of same-size covers
+// (post-stack.tsx): six make two rows of three.
 export function ResourcePreview() {
   const posts = getAllPosts()
     .filter((p) => !p.featured)
